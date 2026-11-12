@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { BookOpen, ClipboardList, Handshake, Settings } from "lucide-react";
 
 import { AgendaPanels } from "@/components/dashboard/agenda-panels";
+import { FriendsPanel } from "@/components/dashboard/friends-panel";
 import { PageHeader } from "@/components/shared/page-header";
 import { StudiAvatar } from "@/components/shared/studi-avatar";
 import { SubjectCard } from "@/components/subjects/subject-card";
@@ -11,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { requireProfile } from "@/lib/auth";
 import { resolveAvatarSrc } from "@/lib/avatar-server";
 import { getDashboardAgenda } from "@/lib/data/calendar";
+import { getFriendsDashboard } from "@/lib/data/friends";
 import { listSubjects, listTopicsForSubject } from "@/lib/data/subjects";
 import { canResumeOnboarding } from "@/lib/onboarding";
 import { topicProgressSummary } from "@/lib/subjects";
@@ -49,10 +51,11 @@ async function DashboardContent({
   const name = profile.display_name || profile.username;
   const confirmed = params.confirmed === "1" || params.confirmed === "true";
   const resetSuccess = params.reset === "success";
-  const [subjects, agenda, avatarSrc] = await Promise.all([
+  const [subjects, agenda, avatarSrc, friendsDash] = await Promise.all([
     listSubjects(),
     getDashboardAgenda(),
     resolveAvatarSrc(profile),
+    getFriendsDashboard(),
   ]);
 
   const subjectCards = await Promise.all(
@@ -131,6 +134,19 @@ async function DashboardContent({
       ) : null}
 
       <AgendaPanels {...agenda} subjects={subjects} />
+
+      <div className="mb-10">
+        <FriendsPanel
+          friendCount={friendsDash.friendCount}
+          pendingIncoming={friendsDash.pendingIncoming}
+          studying={friendsDash.studying}
+          preview={
+            friendsDash.studying.length > 0
+              ? friendsDash.studying
+              : friendsDash.friends
+          }
+        />
+      </div>
 
       <section className="mb-10">
         <div className="mb-4 flex items-end justify-between gap-3">

@@ -17,6 +17,7 @@ const PROTECTED_PREFIXES = [
   "/statistics",
   "/settings",
   "/onboarding",
+  "/u",
 ];
 
 function matchesPrefix(pathname: string, prefixes: string[]) {

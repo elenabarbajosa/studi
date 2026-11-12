@@ -80,7 +80,8 @@ export function SettingsForm({ profile, avatarSrc }: SettingsFormProps) {
         <div className="mb-6">
           <h2 className="font-display text-2xl tracking-tight">Profile</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Your username is unique and private in Phase 1.
+            Your username is unique. Discovery and visibility are controlled in
+            Privacy below.
           </p>
         </div>
 

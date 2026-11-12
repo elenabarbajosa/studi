@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { FocusPreferencesForm } from "@/components/settings/focus-preferences-form";
+import { PrivacySettingsForm } from "@/components/settings/privacy-settings-form";
 import { SettingsForm } from "@/components/settings/settings-form";
 import { StudyPreferencesForm } from "@/components/settings/study-preferences-form";
 import { buttonVariants } from "@/components/ui/button";
@@ -53,6 +54,7 @@ async function SettingsContent() {
 
       <div className="space-y-8">
         <SettingsForm profile={profile} avatarSrc={avatarSrc} />
+        <PrivacySettingsForm profile={profile} />
         <StudyPreferencesForm preferences={preferences} />
         <FocusPreferencesForm preferences={toFocusPrefs(preferences)} />
 

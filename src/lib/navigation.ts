@@ -63,7 +63,6 @@ export const mainNav: NavItem[] = [
     href: "/friends",
     icon: Users,
     description: "Study companions",
-    comingSoon: true,
   },
   {
     title: "Study Together",

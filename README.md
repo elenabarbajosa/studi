@@ -4,7 +4,9 @@ A calm, Notion-inspired study and productivity web app for university students.
 
 **Phase 1** covers authentication, private profiles, and theme preferences.  
 **Phase 2** adds onboarding, subjects, topics/subtopics, materials, and study preferences.  
-**Phase 3** adds the academic calendar, assessments, tasks/subtasks, study sessions, and a live dashboard agenda.
+**Phase 3** adds the academic calendar, assessments, tasks/subtasks, study sessions, and a live dashboard agenda.  
+**Phase 5** adds Focus Mode, Pomodoro, soundscapes, and study statistics.  
+**Phase 6** adds friends, social profiles, privacy controls, and optional study presence.
 
 ## Stack
 
@@ -58,8 +60,10 @@ In the Supabase dashboard → **SQL Editor**, run in order:
    **Required for profile pictures.** Adds avatar preference columns on `profiles`, creates the private `avatars` Storage bucket, and owner-only Storage RLS policies.
 6. [`supabase/migrations/006_phase5_focus.sql`](supabase/migrations/006_phase5_focus.sql)  
    **Required for Focus Mode.** Extends `study_sessions` with focus metrics, adds `focus_active_sessions`, Pomodoro/soundscape columns on `study_preferences`, and RLS.
+7. [`supabase/migrations/007_phase6_friends.sql`](supabase/migrations/007_phase6_friends.sql)  
+   **Required for Friends.** Adds social preference columns, `friendships`, `friend_requests`, `user_blocks`, `user_presence`, discovery/social RPCs, avatar Storage SELECT for friends/public, and optional Realtime policies.
 
-Confirm in **Table Editor** that these tables exist with RLS enabled: `profiles`, `study_preferences`, `subjects`, `topics`, `materials`, `assessments`, `tasks`, `subtasks`, `calendar_events`, `study_sessions`, `focus_active_sessions`.
+Confirm in **Table Editor** that these tables exist with RLS enabled: `profiles`, `study_preferences`, `subjects`, `topics`, `materials`, `assessments`, `tasks`, `subtasks`, `calendar_events`, `study_sessions`, `focus_active_sessions`, `friendships`, `friend_requests`, `user_blocks`, `user_presence`.
 
 Confirm in **Storage** that the `avatars` bucket exists and is **private** (not public).
 
@@ -170,6 +174,30 @@ All ambience is **procedurally generated in the browser** with the Web Audio API
 | `forest` | Band-passed texture + light chirps | Original code |
 
 No third-party sample packs are bundled. Playback starts only after a user click (autoplay-safe). To swap in recorded libraries later, place licensed files under `public/sounds/` and document source + license here.
+
+## Phase 6 — Friends & social profiles
+
+| Feature | Route |
+| --- | --- |
+| Friends board (lists, search, requests, studying now) | `/friends` |
+| Social profile by username | `/u/[username]` |
+| Privacy & discovery settings | Settings → Privacy & discovery |
+
+### Security model
+
+- `profiles` RLS stays **owner-only**. Username search and social profile reads go through security-definer RPCs (`search_discoverable_profiles`, `get_social_profile`, `list_my_friends`) that return only allowed fields.
+- Friendships are mutual ordered pairs (`user_low`, `user_high`). Accept/remove/block run as atomic RPCs.
+- Email, calendar events, exams, tasks, notes, and grades are never exposed through social RPCs.
+- Custom avatars stay in a private Storage bucket; the app mints short-lived signed URLs server-side when visibility allows.
+
+### Study presence & Realtime
+
+- Focus Mode upserts `user_presence` on start/phase change and ~60s heartbeats (never per-second). Rows older than 3 minutes are treated as offline.
+- Friends page optionally listens to `postgres_changes` on `user_presence` (RLS enforced) and refreshes at most every 15s.
+- Migration also attempts private Presence policies on topic `friends-presence` for a future channel. In the Supabase dashboard:
+  1. **Database → Replication**: enable Realtime for `user_presence` if the publication step was skipped.
+  2. **Realtime**: keep public/anonymous channel access disabled; only authenticated clients should join private topics.
+  3. Do not broadcast goals, subjects, timers, or academic IDs on Presence payloads.
 
 ## Scripts
 

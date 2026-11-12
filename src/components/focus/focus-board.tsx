@@ -23,12 +23,14 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useFocusTimer } from "@/hooks/use-focus-timer";
+import { useStudyPresence } from "@/hooks/use-study-presence";
 import type { SoundscapeId } from "@/lib/calendar";
 import { formatDurationMinutes } from "@/lib/focus/timer-engine";
 import {
   defaultFocusConfig,
   type FocusPreferences,
 } from "@/lib/focus/types";
+import type { PresenceStatus } from "@/lib/social";
 import { cn } from "@/lib/utils";
 import type { Subject, StudySession, Task, Topic } from "@/types/database";
 
@@ -98,6 +100,25 @@ export function FocusBoard({
           : "Stopwatch";
 
   const active = timer.engine.runState === "running" || timer.engine.runState === "paused";
+
+  const presenceStatus: PresenceStatus =
+    !active
+      ? "offline"
+      : timer.engine.phase === "short_break" ||
+          timer.engine.phase === "long_break"
+        ? "on_break"
+        : "focusing";
+
+  useStudyPresence({
+    enabled: active,
+    status: presenceStatus,
+    activityLabel:
+      presenceStatus === "focusing"
+        ? "Focusing"
+        : presenceStatus === "on_break"
+          ? "On break"
+          : null,
+  });
 
   useEffect(() => {
     timer.setOnPhaseComplete((phase) => {

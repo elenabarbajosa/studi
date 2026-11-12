@@ -16,6 +16,12 @@ import type {
   WeekdayAvailability,
 } from "@/lib/subjects";
 
+import type {
+  FriendRequestStatus,
+  PresenceStatus,
+  SocialVisibility,
+} from "@/lib/social";
+
 export type AvatarPreference = "custom" | "google" | "initials";
 export type AvatarVisibility = "private" | "friends" | "public";
 
@@ -29,6 +35,10 @@ export type Profile = {
   google_avatar_url: string | null;
   avatar_preference: AvatarPreference;
   avatar_visibility: AvatarVisibility;
+  discoverable: boolean;
+  online_status_visibility: SocialVisibility;
+  study_status_visibility: SocialVisibility;
+  stats_visibility: SocialVisibility;
   bio: string | null;
   appearance: AppearanceMode;
   accent_color: AccentColor;
@@ -48,6 +58,10 @@ export type ProfileUpdate = Partial<
     | "google_avatar_url"
     | "avatar_preference"
     | "avatar_visibility"
+    | "discoverable"
+    | "online_status_visibility"
+    | "study_status_visibility"
+    | "stats_visibility"
     | "bio"
     | "appearance"
     | "accent_color"
@@ -55,6 +69,37 @@ export type ProfileUpdate = Partial<
     | "onboarding_step"
   >
 >;
+
+export type Friendship = {
+  id: string;
+  user_low: string;
+  user_high: string;
+  requested_by: string;
+  created_at: string;
+};
+
+export type FriendRequest = {
+  id: string;
+  requester_id: string;
+  recipient_id: string;
+  status: FriendRequestStatus;
+  created_at: string;
+  responded_at: string | null;
+};
+
+export type UserBlock = {
+  id: string;
+  blocker_id: string;
+  blocked_id: string;
+  created_at: string;
+};
+
+export type UserPresence = {
+  user_id: string;
+  status: PresenceStatus;
+  activity_label: string | null;
+  updated_at: string;
+};
 
 export type StudyPreferences = {
   user_id: string;
@@ -229,6 +274,10 @@ export type Database = {
           google_avatar_url?: string | null;
           avatar_preference?: AvatarPreference;
           avatar_visibility?: AvatarVisibility;
+          discoverable?: boolean;
+          online_status_visibility?: SocialVisibility;
+          study_status_visibility?: SocialVisibility;
+          stats_visibility?: SocialVisibility;
           bio?: string | null;
           appearance?: AppearanceMode;
           accent_color?: AccentColor;
@@ -465,12 +514,131 @@ export type Database = {
         >;
         Relationships: [];
       };
+      friendships: {
+        Row: Friendship;
+        Insert: {
+          id?: string;
+          user_low: string;
+          user_high: string;
+          requested_by: string;
+          created_at?: string;
+        };
+        Update: Partial<Omit<Friendship, "id" | "created_at">>;
+        Relationships: [];
+      };
+      friend_requests: {
+        Row: FriendRequest;
+        Insert: {
+          id?: string;
+          requester_id: string;
+          recipient_id: string;
+          status?: FriendRequestStatus;
+          created_at?: string;
+          responded_at?: string | null;
+        };
+        Update: Partial<
+          Pick<FriendRequest, "status" | "responded_at">
+        >;
+        Relationships: [];
+      };
+      user_blocks: {
+        Row: UserBlock;
+        Insert: {
+          id?: string;
+          blocker_id: string;
+          blocked_id: string;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
+      user_presence: {
+        Row: UserPresence;
+        Insert: {
+          user_id: string;
+          status?: PresenceStatus;
+          activity_label?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Pick<UserPresence, "status" | "activity_label" | "updated_at">
+        >;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
       username_is_available: {
         Args: { desired: string };
         Returns: boolean;
+      };
+      are_friends: {
+        Args: { a: string; b: string };
+        Returns: boolean;
+      };
+      send_friend_request: {
+        Args: { target_username: string };
+        Returns: string;
+      };
+      accept_friend_request: {
+        Args: { request_id: string };
+        Returns: boolean;
+      };
+      remove_friend: {
+        Args: { friend_user_id: string };
+        Returns: boolean;
+      };
+      block_user: {
+        Args: { target_user_id: string };
+        Returns: boolean;
+      };
+      search_discoverable_profiles: {
+        Args: {
+          query: string;
+          result_limit?: number;
+          result_offset?: number;
+        };
+        Returns: {
+          id: string;
+          username: string;
+          display_name: string | null;
+          accent_color: AccentColor;
+          avatar_preference: AvatarPreference;
+          avatar_visibility: AvatarVisibility;
+          google_avatar_url: string | null;
+          has_custom_avatar: boolean;
+          storage_path: string | null;
+          friendship_status: string;
+          request_id: string | null;
+          bio: string | null;
+        }[];
+      };
+      get_social_profile: {
+        Args: { target_username: string };
+        Returns: Record<string, unknown> | null;
+      };
+      get_social_profile_by_id: {
+        Args: { target_id: string };
+        Returns: Record<string, unknown> | null;
+      };
+      list_my_friends: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          username: string;
+          display_name: string | null;
+          accent_color: AccentColor;
+          avatar_preference: AvatarPreference;
+          avatar_visibility: AvatarVisibility;
+          google_avatar_url: string | null;
+          has_custom_avatar: boolean;
+          storage_path: string | null;
+          can_view_avatar: boolean;
+          presence_status: PresenceStatus;
+          presence_label: string | null;
+          presence_updated_at: string | null;
+          weekly_focus_seconds: number | null;
+        }[];
       };
     };
     Enums: {
@@ -488,6 +656,9 @@ export type Database = {
       focus_timer_mode: FocusTimerMode;
       study_session_source: StudySessionSource;
       soundscape_id: SoundscapeId;
+      social_visibility: SocialVisibility;
+      friend_request_status: FriendRequestStatus;
+      presence_status: PresenceStatus;
     };
     CompositeTypes: Record<string, never>;
   };
