@@ -13,11 +13,19 @@ import type {
   WeekdayAvailability,
 } from "@/lib/subjects";
 
+export type AvatarPreference = "custom" | "google" | "initials";
+export type AvatarVisibility = "private" | "friends" | "public";
+
 export type Profile = {
   id: string;
   username: string;
   display_name: string | null;
+  /** @deprecated Legacy column; prefer avatar_path + avatar_preference. */
   avatar_url: string | null;
+  avatar_path: string | null;
+  google_avatar_url: string | null;
+  avatar_preference: AvatarPreference;
+  avatar_visibility: AvatarVisibility;
   bio: string | null;
   appearance: AppearanceMode;
   accent_color: AccentColor;
@@ -33,6 +41,10 @@ export type ProfileUpdate = Partial<
     | "username"
     | "display_name"
     | "avatar_url"
+    | "avatar_path"
+    | "google_avatar_url"
+    | "avatar_preference"
+    | "avatar_visibility"
     | "bio"
     | "appearance"
     | "accent_color"
@@ -174,6 +186,10 @@ export type Database = {
           username: string;
           display_name?: string | null;
           avatar_url?: string | null;
+          avatar_path?: string | null;
+          google_avatar_url?: string | null;
+          avatar_preference?: AvatarPreference;
+          avatar_visibility?: AvatarVisibility;
           bio?: string | null;
           appearance?: AppearanceMode;
           accent_color?: AccentColor;
@@ -392,6 +408,8 @@ export type Database = {
       priority_level: PriorityLevel;
       task_status: TaskStatus;
       study_session_status: StudySessionStatus;
+      avatar_preference: AvatarPreference;
+      avatar_visibility: AvatarVisibility;
     };
     CompositeTypes: Record<string, never>;
   };

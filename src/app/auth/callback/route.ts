@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { syncGoogleAvatarFromUser } from "@/actions/avatar";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -32,6 +33,9 @@ export async function GET(request: Request) {
       } = await supabase.auth.getUser();
 
       if (user) {
+        // Refresh Google picture URL; never overwrite a custom avatar preference.
+        await syncGoogleAvatarFromUser(user);
+
         const { data: profile } = await supabase
           .from("profiles")
           .select("id, onboarding_status")

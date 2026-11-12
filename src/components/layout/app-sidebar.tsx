@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { Brand } from "@/components/shared/brand";
+import { StudiAvatar } from "@/components/shared/studi-avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -13,6 +14,7 @@ import type { Profile } from "@/types/database";
 
 type AppSidebarProps = {
   profile: Profile;
+  avatarSrc: string | null;
 };
 
 function NavLink({
@@ -56,7 +58,7 @@ function NavLink({
   );
 }
 
-export function AppSidebar({ profile }: AppSidebarProps) {
+export function AppSidebar({ profile, avatarSrc }: AppSidebarProps) {
   return (
     <aside className="hidden h-svh w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar/90 backdrop-blur-md md:flex">
       <div className="flex h-16 items-center px-5">
@@ -87,9 +89,7 @@ export function AppSidebar({ profile }: AppSidebarProps) {
             "h-auto w-full justify-start gap-3 px-2 py-2",
           )}
         >
-          <span className="flex size-9 items-center justify-center rounded-full bg-brand-soft text-sm font-semibold text-primary">
-            {(profile.display_name || profile.username).slice(0, 1).toUpperCase()}
-          </span>
+          <StudiAvatar profile={profile} src={avatarSrc} size="md" />
           <span className="min-w-0 flex-1 text-left">
             <span className="block truncate text-sm font-medium">
               {profile.display_name || profile.username}

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 
 import { Brand } from "@/components/shared/brand";
+import { StudiAvatar } from "@/components/shared/studi-avatar";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -19,9 +20,10 @@ import type { Profile } from "@/types/database";
 
 type MobileNavProps = {
   profile: Profile;
+  avatarSrc: string | null;
 };
 
-export function MobileNav({ profile }: MobileNavProps) {
+export function MobileNav({ profile, avatarSrc }: MobileNavProps) {
   const pathname = usePathname();
 
   return (
@@ -61,11 +63,16 @@ export function MobileNav({ profile }: MobileNavProps) {
               );
             })}
           </nav>
-          <div className="mt-auto border-t border-border px-4 py-4 text-sm">
-            <p className="font-medium">
-              {profile.display_name || profile.username}
-            </p>
-            <p className="text-muted-foreground">@{profile.username}</p>
+          <div className="mt-auto flex items-center gap-3 border-t border-border px-4 py-4 text-sm">
+            <StudiAvatar profile={profile} src={avatarSrc} size="md" />
+            <div className="min-w-0">
+              <p className="truncate font-medium">
+                {profile.display_name || profile.username}
+              </p>
+              <p className="truncate text-muted-foreground">
+                @{profile.username}
+              </p>
+            </div>
           </div>
         </SheetContent>
       </Sheet>

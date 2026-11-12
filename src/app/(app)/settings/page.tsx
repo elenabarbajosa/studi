@@ -7,6 +7,7 @@ import { StudyPreferencesForm } from "@/components/settings/study-preferences-fo
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireProfile } from "@/lib/auth";
+import { resolveAvatarSrc } from "@/lib/avatar-server";
 import { getStudyPreferences } from "@/lib/data/subjects";
 import { canResumeOnboarding, onboardingLabel } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
@@ -15,7 +16,10 @@ export const metadata = { title: "Settings" };
 
 async function SettingsContent() {
   const { profile } = await requireProfile();
-  const preferences = await getStudyPreferences();
+  const [preferences, avatarSrc] = await Promise.all([
+    getStudyPreferences(),
+    resolveAvatarSrc(profile),
+  ]);
 
   return (
     <div>
@@ -25,7 +29,7 @@ async function SettingsContent() {
       />
 
       <div className="space-y-8">
-        <SettingsForm profile={profile} />
+        <SettingsForm profile={profile} avatarSrc={avatarSrc} />
         <StudyPreferencesForm preferences={preferences} />
 
         {canResumeOnboarding(profile) ? (

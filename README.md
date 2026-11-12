@@ -54,8 +54,12 @@ In the Supabase dashboard → **SQL Editor**, run in order:
    **Required for Phase 2.** Adds onboarding columns, `study_preferences`, `subjects`, `topics`, `materials`, and RLS. Existing Phase 1 profiles are marked `onboarding_status = skipped` so they are not forced through the wizard.
 4. [`supabase/migrations/004_phase3_calendar.sql`](supabase/migrations/004_phase3_calendar.sql)  
    **Required for Phase 3.** Adds `assessments`, `tasks`, `subtasks`, `calendar_events`, `study_sessions`, ownership triggers, indexes, and RLS.
+5. [`supabase/migrations/005_avatars.sql`](supabase/migrations/005_avatars.sql)  
+   **Required for profile pictures.** Adds avatar preference columns on `profiles`, creates the private `avatars` Storage bucket, and owner-only Storage RLS policies.
 
 Confirm in **Table Editor** that these tables exist with RLS enabled: `profiles`, `study_preferences`, `subjects`, `topics`, `materials`, `assessments`, `tasks`, `subtasks`, `calendar_events`, `study_sessions`.
+
+Confirm in **Storage** that the `avatars` bucket exists and is **private** (not public).
 
 ### 2. Auth providers & URLs
 
@@ -120,6 +124,18 @@ Onboarding progress is stored on `profiles.onboarding_status` / `onboarding_step
 | Dashboard agenda (real user data) | `/dashboard` |
 
 Create exams, personal events, and study sessions from the calendar (click a slot). Drag to reschedule; failed saves revert the event visually. Study sessions stay `planned` until you change status — they are not auto-completed when time passes.
+
+## Profile pictures & avatars
+
+| Feature | Details |
+| --- | --- |
+| Upload / crop / zoom | Settings → Profile picture |
+| Preference model | `custom` · `google` · `initials` |
+| Storage | Private `avatars` bucket; signed URLs for display |
+| Google OAuth | Picture stored in `google_avatar_url`; never overwrites a custom upload |
+| Visibility column | `avatar_visibility` defaults to `private` (friends/public prepared for later) |
+
+Uploads are validated by MIME magic bytes and capped at 5 MB. Cropped images are resized to 512×512 WebP/JPEG before upload. Paths look like `{user_id}/{uuid}.webp` so browsers do not keep stale caches.
 
 ## Scripts
 

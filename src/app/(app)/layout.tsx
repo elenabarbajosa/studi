@@ -3,6 +3,7 @@ import { io } from "next/cache";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { requireProfile } from "@/lib/auth";
+import { resolveAvatarSrc } from "@/lib/avatar-server";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const instant = false;
@@ -17,7 +18,12 @@ async function AuthenticatedShell({
   // in the prerender/static shell (see Next.js `io()` + Suspense guidance).
   await io();
   const { profile } = await requireProfile();
-  return <AppShell profile={profile}>{children}</AppShell>;
+  const avatarSrc = await resolveAvatarSrc(profile);
+  return (
+    <AppShell profile={profile} avatarSrc={avatarSrc}>
+      {children}
+    </AppShell>
+  );
 }
 
 function AppShellFallback() {

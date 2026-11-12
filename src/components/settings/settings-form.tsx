@@ -11,6 +11,7 @@ import {
   updateProfile,
   type ProfileActionState,
 } from "@/actions/profile";
+import { AvatarSettings } from "@/components/settings/avatar-settings";
 import { useAccent } from "@/components/theme/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,11 +29,12 @@ import type { Profile } from "@/types/database";
 
 type SettingsFormProps = {
   profile: Profile;
+  avatarSrc: string | null;
 };
 
 const initialState: ProfileActionState = {};
 
-export function SettingsForm({ profile }: SettingsFormProps) {
+export function SettingsForm({ profile, avatarSrc }: SettingsFormProps) {
   const [state, formAction, pending] = useActionState(
     updateProfile,
     initialState,
@@ -72,6 +74,8 @@ export function SettingsForm({ profile }: SettingsFormProps) {
 
   return (
     <div className="space-y-8">
+      <AvatarSettings profile={profile} initialSrc={avatarSrc} />
+
       <section className="studi-panel p-6 sm:p-8">
         <div className="mb-6">
           <h2 className="font-display text-2xl tracking-tight">Profile</h2>

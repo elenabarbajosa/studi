@@ -10,10 +10,12 @@ import {
 
 import { AgendaPanels } from "@/components/dashboard/agenda-panels";
 import { PageHeader } from "@/components/shared/page-header";
+import { StudiAvatar } from "@/components/shared/studi-avatar";
 import { SubjectCard } from "@/components/subjects/subject-card";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireProfile } from "@/lib/auth";
+import { resolveAvatarSrc } from "@/lib/avatar-server";
 import { getDashboardAgenda } from "@/lib/data/calendar";
 import { listSubjects, listTopicsForSubject } from "@/lib/data/subjects";
 import { canResumeOnboarding } from "@/lib/onboarding";
@@ -59,9 +61,10 @@ async function DashboardContent({
   const name = profile.display_name || profile.username;
   const confirmed = params.confirmed === "1" || params.confirmed === "true";
   const resetSuccess = params.reset === "success";
-  const [subjects, agenda] = await Promise.all([
+  const [subjects, agenda, avatarSrc] = await Promise.all([
     listSubjects(),
     getDashboardAgenda(),
+    resolveAvatarSrc(profile),
   ]);
 
   const subjectCards = await Promise.all(
@@ -73,27 +76,37 @@ async function DashboardContent({
 
   return (
     <div>
-      <PageHeader
-        title={`Hello, ${name}`}
-        description="Your academic workspace — tasks, exams, and study sessions from your own data."
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/tasks"
-              className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
-            >
-              Tasks
-            </Link>
-            <Link
-              href="/settings"
-              className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
-            >
-              <Settings className="size-4" aria-hidden />
-              Preferences
-            </Link>
-          </div>
-        }
-      />
+      <div className="flex flex-wrap items-start gap-4">
+        <StudiAvatar
+          profile={profile}
+          src={avatarSrc}
+          size={56}
+          className="mt-1"
+        />
+        <div className="min-w-0 flex-1">
+          <PageHeader
+            title={`Hello, ${name}`}
+            description="Your academic workspace — tasks, exams, and study sessions from your own data."
+            actions={
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href="/tasks"
+                  className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+                >
+                  Tasks
+                </Link>
+                <Link
+                  href="/settings"
+                  className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+                >
+                  <Settings className="size-4" aria-hidden />
+                  Preferences
+                </Link>
+              </div>
+            }
+          />
+        </div>
+      </div>
 
       {confirmed ? (
         <p
