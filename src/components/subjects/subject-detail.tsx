@@ -6,6 +6,7 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { deleteSubject } from "@/actions/subjects";
+import { AssessmentsPanel } from "@/components/subjects/assessments-panel";
 import { MaterialsPanel } from "@/components/subjects/materials-panel";
 import { SubjectForm } from "@/components/subjects/subject-form";
 import { SubjectProgress } from "@/components/subjects/subject-progress";
@@ -13,18 +14,20 @@ import { TopicsPanel } from "@/components/subjects/topics-panel";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { SUBJECT_COLOR_META, topicProgressSummary } from "@/lib/subjects";
 import { cn } from "@/lib/utils";
-import type { Material, Subject, Topic } from "@/types/database";
+import type { Assessment, Material, Subject, Topic } from "@/types/database";
 
 type SubjectDetailProps = {
   subject: Subject;
   topics: Topic[];
   materials: Material[];
+  assessments: Assessment[];
 };
 
 const tabs = [
   { id: "overview", label: "Overview" },
   { id: "topics", label: "Topics & Checklist" },
   { id: "materials", label: "Materials" },
+  { id: "assessments", label: "Exams & deadlines" },
   { id: "progress", label: "Progress" },
 ] as const;
 
@@ -34,6 +37,7 @@ export function SubjectDetail({
   subject,
   topics,
   materials,
+  assessments,
 }: SubjectDetailProps) {
   const [tab, setTab] = useState<TabId>("overview");
   const [editing, setEditing] = useState(false);
@@ -167,6 +171,9 @@ export function SubjectDetail({
           materials={materials}
           topics={topics}
         />
+      ) : null}
+      {tab === "assessments" ? (
+        <AssessmentsPanel subject={subject} assessments={assessments} />
       ) : null}
       {tab === "progress" ? <SubjectProgress topics={topics} /> : null}
     </div>

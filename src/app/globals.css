@@ -509,3 +509,77 @@
     animation: studi-soft-pulse 6s ease-in-out infinite;
   }
 }
+
+/* FullCalendar — Studi theme bridge */
+.studi-calendar {
+  --fc-border-color: color-mix(in oklch, var(--border) 85%, transparent);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: color-mix(in oklch, var(--muted) 70%, transparent);
+  --fc-list-event-hover-bg-color: var(--muted);
+  --fc-today-bg-color: color-mix(in oklch, var(--primary) 8%, transparent);
+  --fc-button-bg-color: transparent;
+  --fc-button-border-color: var(--border);
+  --fc-button-text-color: var(--foreground);
+  --fc-button-hover-bg-color: var(--muted);
+  --fc-button-hover-border-color: var(--border);
+  --fc-button-active-bg-color: var(--brand-soft, var(--muted));
+  --fc-button-active-border-color: var(--border);
+  --fc-event-border-color: transparent;
+  --fc-event-text-color: white;
+  font-size: 0.875rem;
+}
+
+.studi-calendar .fc {
+  color: var(--foreground);
+}
+
+.studi-calendar .fc-toolbar-title {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.studi-calendar .fc-button {
+  border-radius: 0.5rem !important;
+  box-shadow: none !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  padding: 0.35rem 0.65rem !important;
+}
+
+.studi-calendar .fc-col-header-cell-cushion,
+.studi-calendar .fc-daygrid-day-number {
+  color: var(--muted-foreground);
+  text-decoration: none !important;
+  padding: 0.35rem;
+}
+
+.studi-calendar .fc-event {
+  border-radius: 0.35rem;
+  border: none;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.25rem;
+  cursor: pointer;
+}
+
+.studi-calendar .fc-timegrid-event {
+  border-radius: 0.4rem;
+}
+
+.studi-calendar .fc-daygrid-day.fc-day-today,
+.studi-calendar .fc-timegrid-col.fc-day-today {
+  background: color-mix(in oklch, var(--primary) 6%, transparent);
+}
+
+@media (max-width: 640px) {
+  .studi-calendar .fc-toolbar {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start !important;
+  }
+
+  .studi-calendar .fc-toolbar-title {
+    font-size: 1.05rem;
+  }
+}

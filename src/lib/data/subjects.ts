@@ -69,6 +69,26 @@ export const listTopicsForSubject = cache(
   },
 );
 
+export const listAllTopics = cache(async (): Promise<Topic[]> => {
+  const user = await getSessionUser();
+  if (!user) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("topics")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("listAllTopics:", error.message);
+    return [];
+  }
+
+  return data ?? [];
+});
+
 export const listMaterialsForSubject = cache(
   async (subjectId: string): Promise<Material[]> => {
     const user = await getSessionUser();

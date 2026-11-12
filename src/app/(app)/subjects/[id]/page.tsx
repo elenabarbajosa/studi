@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { SubjectDetail } from "@/components/subjects/subject-detail";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireProfile } from "@/lib/auth";
+import { listAssessmentsForSubject } from "@/lib/data/calendar";
 import {
   getSubject,
   listMaterialsForSubject,
@@ -24,13 +25,19 @@ async function SubjectPageContent({ params }: SubjectPageProps) {
     notFound();
   }
 
-  const [topics, materials] = await Promise.all([
+  const [topics, materials, assessments] = await Promise.all([
     listTopicsForSubject(subject.id),
     listMaterialsForSubject(subject.id),
+    listAssessmentsForSubject(subject.id),
   ]);
 
   return (
-    <SubjectDetail subject={subject} topics={topics} materials={materials} />
+    <SubjectDetail
+      subject={subject}
+      topics={topics}
+      materials={materials}
+      assessments={assessments}
+    />
   );
 }
 

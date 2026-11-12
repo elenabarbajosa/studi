@@ -2,18 +2,19 @@ import Link from "next/link";
 import { Suspense } from "react";
 import {
   BookOpen,
-  CalendarDays,
   ClipboardList,
   Focus,
   Handshake,
   Settings,
 } from "lucide-react";
 
+import { AgendaPanels } from "@/components/dashboard/agenda-panels";
 import { PageHeader } from "@/components/shared/page-header";
 import { SubjectCard } from "@/components/subjects/subject-card";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireProfile } from "@/lib/auth";
+import { getDashboardAgenda } from "@/lib/data/calendar";
 import { listSubjects, listTopicsForSubject } from "@/lib/data/subjects";
 import { canResumeOnboarding } from "@/lib/onboarding";
 import { topicProgressSummary } from "@/lib/subjects";
@@ -23,18 +24,12 @@ export const metadata = {
   title: "Dashboard",
 };
 
-const upcoming = [
-  {
-    title: "Calendar",
-    href: "/calendar",
-    icon: CalendarDays,
-    copy: "Deadlines and academic events will land here.",
-  },
+const laterModules = [
   {
     title: "Study Planner",
     href: "/planner",
     icon: ClipboardList,
-    copy: "Build weekly study plans without clutter.",
+    copy: "Automatic weekly plans arrive in Phase 4.",
   },
   {
     title: "Focus",
@@ -64,7 +59,10 @@ async function DashboardContent({
   const name = profile.display_name || profile.username;
   const confirmed = params.confirmed === "1" || params.confirmed === "true";
   const resetSuccess = params.reset === "success";
-  const subjects = await listSubjects();
+  const [subjects, agenda] = await Promise.all([
+    listSubjects(),
+    getDashboardAgenda(),
+  ]);
 
   const subjectCards = await Promise.all(
     subjects.slice(0, 3).map(async (subject) => {
@@ -77,15 +75,23 @@ async function DashboardContent({
     <div>
       <PageHeader
         title={`Hello, ${name}`}
-        description="Your academic workspace — subjects, topics, and preferences without invented stats."
+        description="Your academic workspace — tasks, exams, and study sessions from your own data."
         actions={
-          <Link
-            href="/settings"
-            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
-          >
-            <Settings className="size-4" aria-hidden />
-            Preferences
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/tasks"
+              className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+            >
+              Tasks
+            </Link>
+            <Link
+              href="/settings"
+              className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+            >
+              <Settings className="size-4" aria-hidden />
+              Preferences
+            </Link>
+          </div>
         }
       />
 
@@ -117,14 +123,13 @@ async function DashboardContent({
               keep exploring and return later.
             </p>
           </div>
-          <Link
-            href="/onboarding?resume=1"
-            className={cn(buttonVariants())}
-          >
+          <Link href="/onboarding?resume=1" className={cn(buttonVariants())}>
             Continue onboarding
           </Link>
         </div>
       ) : null}
+
+      <AgendaPanels {...agenda} subjects={subjects} />
 
       <section className="mb-10">
         <div className="mb-4 flex items-end justify-between gap-3">
@@ -138,7 +143,10 @@ async function DashboardContent({
           </div>
           <Link
             href="/subjects"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-2")}
+            className={cn(
+              buttonVariants({ variant: "outline", size: "sm" }),
+              "gap-2",
+            )}
           >
             <BookOpen className="size-4" />
             Manage
@@ -171,8 +179,8 @@ async function DashboardContent({
         )}
       </section>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {upcoming.map((item) => (
+      <div className="grid gap-4 md:grid-cols-3">
+        {laterModules.map((item) => (
           <Link
             key={item.href}
             href={item.href}
@@ -203,11 +211,11 @@ function DashboardFallback() {
         <Skeleton className="h-10 w-56" />
         <Skeleton className="h-4 w-80 max-w-full" />
       </div>
-      <Skeleton className="h-40 w-full rounded-2xl" />
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <Skeleton className="h-36 rounded-2xl" />
-        <Skeleton className="h-36 rounded-2xl" />
-        <Skeleton className="h-36 rounded-2xl" />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Skeleton className="h-48 rounded-2xl" />
+        <Skeleton className="h-48 rounded-2xl" />
+        <Skeleton className="h-48 rounded-2xl" />
+        <Skeleton className="h-48 rounded-2xl" />
       </div>
     </div>
   );

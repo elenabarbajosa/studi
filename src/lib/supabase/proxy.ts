@@ -8,6 +8,7 @@ const RECOVERY_ROUTES = ["/reset-password"];
 const PROTECTED_PREFIXES = [
   "/dashboard",
   "/calendar",
+  "/tasks",
   "/subjects",
   "/planner",
   "/focus",

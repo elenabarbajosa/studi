@@ -2,6 +2,7 @@ import {
   BookOpen,
   CalendarDays,
   ChartColumn,
+  CheckSquare,
   Focus,
   Handshake,
   LayoutDashboard,
@@ -31,7 +32,12 @@ export const mainNav: NavItem[] = [
     href: "/calendar",
     icon: CalendarDays,
     description: "Academic calendar",
-    comingSoon: true,
+  },
+  {
+    title: "Tasks",
+    href: "/tasks",
+    icon: CheckSquare,
+    description: "Personal task list",
   },
   {
     title: "Subjects",

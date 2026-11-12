@@ -1,3 +1,9 @@
+import type {
+  AssessmentType,
+  PriorityLevel,
+  StudySessionStatus,
+  TaskStatus,
+} from "@/lib/calendar";
 import type { AccentColor, AppearanceMode } from "@/lib/theme";
 import type {
   OnboardingStatus,
@@ -79,6 +85,81 @@ export type Material = {
   resource_type: ResourceType;
   url: string;
   description: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Assessment = {
+  id: string;
+  user_id: string;
+  subject_id: string | null;
+  title: string;
+  assessment_type: AssessmentType;
+  starts_at: string;
+  ends_at: string | null;
+  all_day: boolean;
+  location: string | null;
+  description: string | null;
+  priority: PriorityLevel;
+  completed: boolean;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Task = {
+  id: string;
+  user_id: string;
+  subject_id: string | null;
+  topic_id: string | null;
+  title: string;
+  description: string | null;
+  due_at: string | null;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  priority: PriorityLevel;
+  estimated_minutes: number | null;
+  status: TaskStatus;
+  completed_at: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Subtask = {
+  id: string;
+  user_id: string;
+  task_id: string;
+  title: string;
+  completed: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CalendarEvent = {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  all_day: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StudySession = {
+  id: string;
+  user_id: string;
+  subject_id: string | null;
+  topic_id: string | null;
+  task_id: string | null;
+  starts_at: string;
+  ends_at: string;
+  planned_duration_minutes: number;
+  status: StudySessionStatus;
+  notes: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -188,6 +269,111 @@ export type Database = {
         >;
         Relationships: [];
       };
+      assessments: {
+        Row: Assessment;
+        Insert: {
+          id?: string;
+          user_id: string;
+          subject_id?: string | null;
+          title: string;
+          assessment_type?: AssessmentType;
+          starts_at: string;
+          ends_at?: string | null;
+          all_day?: boolean;
+          location?: string | null;
+          description?: string | null;
+          priority?: PriorityLevel;
+          completed?: boolean;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Omit<Assessment, "id" | "user_id" | "created_at" | "updated_at">
+        >;
+        Relationships: [];
+      };
+      tasks: {
+        Row: Task;
+        Insert: {
+          id?: string;
+          user_id: string;
+          subject_id?: string | null;
+          topic_id?: string | null;
+          title: string;
+          description?: string | null;
+          due_at?: string | null;
+          scheduled_start?: string | null;
+          scheduled_end?: string | null;
+          priority?: PriorityLevel;
+          estimated_minutes?: number | null;
+          status?: TaskStatus;
+          completed_at?: string | null;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Omit<Task, "id" | "user_id" | "created_at" | "updated_at">
+        >;
+        Relationships: [];
+      };
+      subtasks: {
+        Row: Subtask;
+        Insert: {
+          id?: string;
+          user_id: string;
+          task_id: string;
+          title: string;
+          completed?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Pick<Subtask, "title" | "completed" | "sort_order">
+        >;
+        Relationships: [];
+      };
+      calendar_events: {
+        Row: CalendarEvent;
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          description?: string | null;
+          starts_at: string;
+          ends_at?: string | null;
+          all_day?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Omit<CalendarEvent, "id" | "user_id" | "created_at" | "updated_at">
+        >;
+        Relationships: [];
+      };
+      study_sessions: {
+        Row: StudySession;
+        Insert: {
+          id?: string;
+          user_id: string;
+          subject_id?: string | null;
+          topic_id?: string | null;
+          task_id?: string | null;
+          starts_at: string;
+          ends_at: string;
+          planned_duration_minutes?: number;
+          status?: StudySessionStatus;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Omit<StudySession, "id" | "user_id" | "created_at" | "updated_at">
+        >;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -202,6 +388,10 @@ export type Database = {
       onboarding_status: OnboardingStatus;
       topic_status: TopicStatus;
       resource_type: ResourceType;
+      assessment_type: AssessmentType;
+      priority_level: PriorityLevel;
+      task_status: TaskStatus;
+      study_session_status: StudySessionStatus;
     };
     CompositeTypes: Record<string, never>;
   };

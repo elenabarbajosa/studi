@@ -3,7 +3,8 @@
 A calm, Notion-inspired study and productivity web app for university students.
 
 **Phase 1** covers authentication, private profiles, and theme preferences.  
-**Phase 2** adds onboarding, subjects, topics/subtopics, materials, and study preferences.
+**Phase 2** adds onboarding, subjects, topics/subtopics, materials, and study preferences.  
+**Phase 3** adds the academic calendar, assessments, tasks/subtasks, study sessions, and a live dashboard agenda.
 
 ## Stack
 
@@ -51,8 +52,10 @@ In the Supabase dashboard → **SQL Editor**, run in order:
    Required for signup username checks. Safe if already included at the end of `001`.
 3. [`supabase/migrations/003_phase2_subjects.sql`](supabase/migrations/003_phase2_subjects.sql)  
    **Required for Phase 2.** Adds onboarding columns, `study_preferences`, `subjects`, `topics`, `materials`, and RLS. Existing Phase 1 profiles are marked `onboarding_status = skipped` so they are not forced through the wizard.
+4. [`supabase/migrations/004_phase3_calendar.sql`](supabase/migrations/004_phase3_calendar.sql)  
+   **Required for Phase 3.** Adds `assessments`, `tasks`, `subtasks`, `calendar_events`, `study_sessions`, ownership triggers, indexes, and RLS.
 
-Confirm in **Table Editor** that these tables exist with RLS enabled: `profiles`, `study_preferences`, `subjects`, `topics`, `materials`.
+Confirm in **Table Editor** that these tables exist with RLS enabled: `profiles`, `study_preferences`, `subjects`, `topics`, `materials`, `assessments`, `tasks`, `subtasks`, `calendar_events`, `study_sessions`.
 
 ### 2. Auth providers & URLs
 
@@ -106,6 +109,17 @@ Protected app routes redirect to `/login` when there is no session. Sessions are
 | Study preferences | Settings |
 
 Onboarding progress is stored on `profiles.onboarding_status` / `onboarding_step`. Incomplete (`pending` / `in_progress`) users are redirected to `/onboarding`. Skipped users can resume from Settings.
+
+## Phase 3 features
+
+| Feature | Route |
+| --- | --- |
+| Interactive calendar (month / week / day, DnD, resize) | `/calendar` |
+| Tasks (Today / Upcoming / All / Completed) | `/tasks` |
+| Exams & deadlines from subject pages | `/subjects/[id]` → Exams & deadlines |
+| Dashboard agenda (real user data) | `/dashboard` |
+
+Create exams, personal events, and study sessions from the calendar (click a slot). Drag to reschedule; failed saves revert the event visually. Study sessions stay `planned` until you change status — they are not auto-completed when time passes.
 
 ## Scripts
 
