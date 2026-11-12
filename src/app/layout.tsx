@@ -4,6 +4,7 @@ import { Fraunces, Source_Sans_3 } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { accentBootstrapScript } from "@/lib/accent-cookie";
 import { DEFAULT_ACCENT } from "@/lib/theme";
 
 import "./globals.css";
@@ -38,9 +39,15 @@ export default function RootLayout({
     <html
       lang="en"
       data-accent={DEFAULT_ACCENT}
+      data-scroll-behavior="smooth"
       className={`${sourceSans.variable} ${fraunces.variable} h-full`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{ __html: accentBootstrapScript }}
+        />
+      </head>
       <body className="min-h-full font-sans antialiased">
         <ThemeProvider defaultAccent={DEFAULT_ACCENT} defaultAppearance="system">
           <TooltipProvider>

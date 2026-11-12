@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import {
   BookOpen,
   CalendarDays,
@@ -9,8 +10,13 @@ import {
 } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/page-header";
+import { SubjectCard } from "@/components/subjects/subject-card";
 import { buttonVariants } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { requireProfile } from "@/lib/auth";
+import { listSubjects, listTopicsForSubject } from "@/lib/data/subjects";
+import { canResumeOnboarding } from "@/lib/onboarding";
+import { topicProgressSummary } from "@/lib/subjects";
 import { cn } from "@/lib/utils";
 
 export const metadata = {
@@ -23,12 +29,6 @@ const upcoming = [
     href: "/calendar",
     icon: CalendarDays,
     copy: "Deadlines and academic events will land here.",
-  },
-  {
-    title: "Subjects",
-    href: "/subjects",
-    icon: BookOpen,
-    copy: "Organize courses, notes, and materials.",
   },
   {
     title: "Study Planner",
@@ -50,15 +50,34 @@ const upcoming = [
   },
 ];
 
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+async function DashboardContent({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { profile } = await requireProfile();
+  const params = await searchParams;
   const name = profile.display_name || profile.username;
+  const confirmed = params.confirmed === "1" || params.confirmed === "true";
+  const resetSuccess = params.reset === "success";
+  const subjects = await listSubjects();
+
+  const subjectCards = await Promise.all(
+    subjects.slice(0, 3).map(async (subject) => {
+      const topics = await listTopicsForSubject(subject.id);
+      return { subject, summary: topicProgressSummary(topics) };
+    }),
+  );
 
   return (
     <div>
       <PageHeader
         title={`Hello, ${name}`}
-        description="Your workspace is ready. Features below are scaffolded with empty states until later phases."
+        description="Your academic workspace — subjects, topics, and preferences without invented stats."
         actions={
           <Link
             href="/settings"
@@ -70,19 +89,89 @@ export default async function DashboardPage() {
         }
       />
 
-      <section className="studi-panel mb-6 p-6 sm:p-8">
-        <p className="text-sm font-medium text-primary">Phase 1 complete</p>
-        <h2 className="mt-2 font-display text-2xl tracking-tight md:text-3xl">
-          Account, themes, and private profiles are live.
-        </h2>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
-          No simulated study stats or placeholder charts — only real setup.
-          Customize your accent in Settings, then explore the navigation as
-          each module arrives.
+      {confirmed ? (
+        <p
+          className="mb-6 rounded-xl border border-border bg-brand-soft px-4 py-3 text-sm text-foreground"
+          role="status"
+        >
+          Email confirmed. Your private Studi profile is ready.
         </p>
+      ) : null}
+
+      {resetSuccess ? (
+        <p
+          className="mb-6 rounded-xl border border-border bg-brand-soft px-4 py-3 text-sm text-foreground"
+          role="status"
+        >
+          Password updated successfully.
+        </p>
+      ) : null}
+
+      {canResumeOnboarding(profile) &&
+      profile.onboarding_status !== "completed" ? (
+        <div className="studi-panel mb-6 flex flex-wrap items-center justify-between gap-4 p-5">
+          <div>
+            <p className="text-sm font-medium text-primary">Finish setup</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Complete onboarding to add subjects and study preferences — or
+              keep exploring and return later.
+            </p>
+          </div>
+          <Link
+            href="/onboarding?resume=1"
+            className={cn(buttonVariants())}
+          >
+            Continue onboarding
+          </Link>
+        </div>
+      ) : null}
+
+      <section className="mb-10">
+        <div className="mb-4 flex items-end justify-between gap-3">
+          <div>
+            <h2 className="font-display text-2xl tracking-tight">Subjects</h2>
+            <p className="text-sm text-muted-foreground">
+              {subjects.length === 0
+                ? "No subjects yet."
+                : `${subjects.length} subject${subjects.length === 1 ? "" : "s"} in your library.`}
+            </p>
+          </div>
+          <Link
+            href="/subjects"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-2")}
+          >
+            <BookOpen className="size-4" />
+            Manage
+          </Link>
+        </div>
+
+        {subjectCards.length === 0 ? (
+          <div className="studi-panel px-5 py-10 text-center">
+            <p className="text-sm text-muted-foreground">
+              Create a subject to organize topics and materials.
+            </p>
+            <Link
+              href="/subjects"
+              className={cn(buttonVariants(), "mt-4 inline-flex")}
+            >
+              Add a subject
+            </Link>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {subjectCards.map(({ subject, summary }) => (
+              <SubjectCard
+                key={subject.id}
+                subject={subject}
+                topicCount={summary.total}
+                masteredCount={summary.mastered}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {upcoming.map((item) => (
           <Link
             key={item.href}
@@ -98,11 +187,36 @@ export default async function DashboardPage() {
               {item.copy}
             </p>
             <p className="mt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Empty state ready
+              Coming later
             </p>
           </Link>
         ))}
       </div>
     </div>
+  );
+}
+
+function DashboardFallback() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Skeleton className="h-10 w-56" />
+        <Skeleton className="h-4 w-80 max-w-full" />
+      </div>
+      <Skeleton className="h-40 w-full rounded-2xl" />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <Skeleton className="h-36 rounded-2xl" />
+        <Skeleton className="h-36 rounded-2xl" />
+        <Skeleton className="h-36 rounded-2xl" />
+      </div>
+    </div>
+  );
+}
+
+export default function DashboardPage({ searchParams }: DashboardPageProps) {
+  return (
+    <Suspense fallback={<DashboardFallback />}>
+      <DashboardContent searchParams={searchParams} />
+    </Suspense>
   );
 }

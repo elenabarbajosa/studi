@@ -151,3 +151,20 @@ using (auth.uid() = id);
 -- Phase 1: profiles stay private. Public friend lookups arrive in a later phase.
 revoke all on table public.profiles from anon;
 grant select, insert, update, delete on table public.profiles to authenticated;
+
+-- Username availability for signup (also in 002 for projects that already ran 001).
+create or replace function public.username_is_available(desired text)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select not exists (
+    select 1
+    from public.profiles
+    where username = lower(desired)::citext
+  );
+$$;
+
+revoke all on function public.username_is_available(text) from public;
+grant execute on function public.username_is_available(text) to anon, authenticated;

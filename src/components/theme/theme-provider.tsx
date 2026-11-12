@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 
+import { writeAccentCookie } from "@/lib/accent-cookie";
 import {
   DEFAULT_ACCENT,
   type AccentColor,
@@ -29,13 +30,10 @@ export function ThemeProvider({
 }: ThemeProviderProps) {
   const [accent, setAccentState] = React.useState<AccentColor>(defaultAccent);
 
-  React.useEffect(() => {
-    document.documentElement.setAttribute("data-accent", accent);
-  }, [accent]);
-
   const setAccent = React.useCallback((next: AccentColor) => {
     setAccentState(next);
     document.documentElement.setAttribute("data-accent", next);
+    writeAccentCookie(next);
   }, []);
 
   return (
@@ -44,6 +42,7 @@ export function ThemeProvider({
       defaultTheme={defaultAppearance}
       enableSystem
       disableTransitionOnChange
+      storageKey="studi-appearance"
     >
       <AccentContext.Provider value={{ accent, setAccent }}>
         {children}

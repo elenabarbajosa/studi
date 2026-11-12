@@ -2,7 +2,8 @@
 
 A calm, Notion-inspired study and productivity web app for university students.
 
-**Phase 1** covers the product foundation: design system, authentication, private profiles, theme preferences, dashboard shell, and empty states for upcoming modules.
+**Phase 1** covers authentication, private profiles, and theme preferences.  
+**Phase 2** adds onboarding, subjects, topics/subtopics, materials, and study preferences.
 
 ## Stack
 
@@ -16,72 +17,126 @@ A calm, Notion-inspired study and productivity web app for university students.
 ```bash
 npm install
 cp .env.example .env.local
+# Fill in Supabase values, then:
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-Without Supabase keys the landing page still runs. Auth and dashboard routes need a configured project.
+## Environment variables
 
-## Supabase setup
+Create `.env.local` (gitignored) with:
 
-1. Create a project at [supabase.com](https://supabase.com).
-2. In **Project Settings → API**, copy:
-   - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
-   - `anon` `public` key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. Put them in `.env.local` (never commit real values; never expose the **service role** key as `NEXT_PUBLIC_*`).
-4. In the Supabase SQL editor, run:
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
 
-   [`supabase/migrations/001_profiles.sql`](supabase/migrations/001_profiles.sql)
+- Prefer `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (current Supabase dashboard name).
+- Legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` is still accepted as a fallback.
+- Never put the **service role** key in `NEXT_PUBLIC_*` variables.
 
-   This creates:
-   - `profiles` table with unique usernames
-   - appearance + accent preference columns
-   - trigger to create a profile on signup
-   - Row Level Security so users only access their own profile
+## Manual Supabase setup (required)
 
-5. **Authentication → Providers**
-   - Enable **Email** (password)
-   - Optionally enable **Google** and add OAuth client ID/secret from Google Cloud Console
-6. **Authentication → URL configuration**
-   - Site URL: `http://localhost:3000` (or your Vercel URL in production)
-   - Redirect URLs: `http://localhost:3000/auth/callback` and your production callback URL
+These steps are **not** completed by the app automatically.
+
+### 1. Run SQL migrations
+
+In the Supabase dashboard → **SQL Editor**, run in order:
+
+1. [`supabase/migrations/001_profiles.sql`](supabase/migrations/001_profiles.sql)  
+   Creates `profiles`, unique usernames, theme columns, signup trigger, and RLS.
+2. [`supabase/migrations/002_username_availability.sql`](supabase/migrations/002_username_availability.sql)  
+   Required for signup username checks. Safe if already included at the end of `001`.
+3. [`supabase/migrations/003_phase2_subjects.sql`](supabase/migrations/003_phase2_subjects.sql)  
+   **Required for Phase 2.** Adds onboarding columns, `study_preferences`, `subjects`, `topics`, `materials`, and RLS. Existing Phase 1 profiles are marked `onboarding_status = skipped` so they are not forced through the wizard.
+
+Confirm in **Table Editor** that these tables exist with RLS enabled: `profiles`, `study_preferences`, `subjects`, `topics`, `materials`.
+
+### 2. Auth providers & URLs
+
+In **Authentication → Providers**:
+
+- Enable **Email** (email + password).
+- Optionally enable **Google** and add Google Cloud OAuth credentials.
+
+In **Authentication → URL configuration**:
+
+- **Site URL:** `http://localhost:3000` (production URL later)
+- **Redirect URLs** (add all that apply):
+  - `http://localhost:3000/auth/callback`
+  - `https://YOUR_PRODUCTION_DOMAIN/auth/callback`
+
+### 3. Email confirmation (recommended)
+
+In **Authentication → Sign In / Methods** (or Providers → Email):
+
+- Keep **Confirm email** enabled for production-like testing, **or**
+- Disable it temporarily for local speed (signup then signs in immediately).
+
+Confirmation and password-reset emails use Supabase’s email templates. For local testing, open links from the Supabase **Authentication → Users** email logs or your inbox.
+
+### 4. Restart the Next.js app
+
+After changing `.env.local`, restart `npm run dev`.
+
+## Auth features
+
+| Flow | Route / action |
+| --- | --- |
+| Sign up | `/signup` |
+| Sign in | `/login` |
+| Sign out | Settings → Sign out |
+| Email confirmation | `/auth/callback` |
+| Forgot password | `/forgot-password` |
+| Reset password | `/reset-password` (via email link) |
+| Google OAuth | Login/signup button (requires Google provider) |
+| Theme prefs | Saved on `profiles.appearance` + `profiles.accent_color` |
+
+Protected app routes redirect to `/login` when there is no session. Sessions are refreshed in `src/proxy.ts`.
+
+## Phase 2 features
+
+| Feature | Route |
+| --- | --- |
+| Onboarding (3 steps, skippable) | `/onboarding` |
+| Subjects list + create | `/subjects` |
+| Subject detail (overview, topics, materials, progress) | `/subjects/[id]` |
+| Study preferences | Settings |
+
+Onboarding progress is stored on `profiles.onboarding_status` / `onboarding_step`. Incomplete (`pending` / `in_progress`) users are redirected to `/onboarding`. Skipped users can resume from Settings.
 
 ## Scripts
 
 ```bash
-npm run dev      # local development
-npm run lint     # ESLint
-npm run build    # production build
-npx tsc --noEmit # TypeScript check
+npm run dev
+npm run lint
+npm run typecheck
+npm run build
 ```
 
-## Phase 1 routes
+## Test plan: two separate accounts
 
-| Route | Purpose |
-| --- | --- |
-| `/` | Landing |
-| `/login`, `/signup` | Email/password + Google OAuth |
-| `/auth/callback` | OAuth / email confirmation exchange |
-| `/dashboard` | Authenticated home |
-| `/calendar`, `/subjects`, `/planner`, `/focus`, `/friends`, `/study-together`, `/statistics` | Empty states |
-| `/settings` | Profile, appearance, accent |
-| `/onboarding` | Fallback profile creation if the signup trigger did not run |
-
-## Design tokens
-
-- Appearance: light / dark / system (`next-themes`)
-- Accents: pink (default), blue, green, purple, peach, neutral via `data-accent` on `<html>`
-- Tokens live in `src/app/globals.css`; accent metadata in `src/lib/theme.ts`
-
-## Privacy notes
-
-- Profiles are **private** in Phase 1 (owner-only RLS).
-- Later social features should add explicit, least-privilege policies — do not open profiles globally without a design pass.
+1. Apply both SQL migrations and set redirect URLs as above.
+2. Restart `npm run dev`.
+3. **Browser A / Account 1**
+   - Open `/signup`
+   - Register with a unique email + username (e.g. `alice_studi`)
+   - Confirm email if required, then open `/dashboard`
+   - Go to **Settings**, change accent + appearance, reload — preferences should stick
+4. **Browser B or private window / Account 2**
+   - Register another user (e.g. `bob_studi`)
+   - Confirm you land on your own dashboard with `@bob_studi`
+5. **Privacy check**
+   - As Alice, you should never see Bob’s profile data in Settings
+   - Try claiming Bob’s username in Alice’s Settings → should fail as taken
+6. **Password reset**
+   - From `/forgot-password`, request a reset for Account 1
+   - Open the email link → set a new password → land on dashboard
 
 ## Deploying to Vercel
 
-1. Push the repo and import it in Vercel.
-2. Add the same `NEXT_PUBLIC_SUPABASE_*` (and optional `NEXT_PUBLIC_SITE_URL`) env vars.
-3. Update Supabase redirect URLs to the production domain.
-4. Deploy.
+1. Add the same `NEXT_PUBLIC_SUPABASE_*` and `NEXT_PUBLIC_SITE_URL` env vars.
+2. Update Supabase Site URL + redirect allow list to the production domain.
+3. Deploy.

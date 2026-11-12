@@ -7,11 +7,11 @@ import { getSupabaseEnv } from "./env";
 export async function createClient() {
   const env = getSupabaseEnv();
   const url = env?.url ?? "https://placeholder.supabase.co";
-  const anonKey = env?.anonKey ?? "public-anon-key";
+  const key = env?.publishableKey ?? "public-anon-key";
 
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(url, anonKey, {
+  return createServerClient<Database>(url, key, {
     cookies: {
       getAll() {
         return cookieStore.getAll();

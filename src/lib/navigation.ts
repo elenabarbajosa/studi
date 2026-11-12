@@ -38,7 +38,6 @@ export const mainNav: NavItem[] = [
     href: "/subjects",
     icon: BookOpen,
     description: "Courses and notes",
-    comingSoon: true,
   },
   {
     title: "Study Planner",

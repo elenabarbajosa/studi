@@ -6,7 +6,7 @@ import { getSupabaseEnv } from "./env";
 export function createClient() {
   const env = getSupabaseEnv();
   const url = env?.url ?? "https://placeholder.supabase.co";
-  const anonKey = env?.anonKey ?? "public-anon-key";
+  const key = env?.publishableKey ?? "public-anon-key";
 
-  return createBrowserClient<Database>(url, anonKey);
+  return createBrowserClient<Database>(url, key);
 }

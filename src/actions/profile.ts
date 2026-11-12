@@ -1,12 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
+import { ACCENT_COOKIE } from "@/lib/accent-cookie";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import {
-  ACCENT_COLORS,
-  APPEARANCE_MODES,
   isAccentColor,
   isAppearanceMode,
   type AccentColor,
@@ -49,9 +49,9 @@ export async function updateProfile(
   const { error } = await supabase
     .from("profiles")
     .update({
-      username: parsed.data.username,
-      display_name: parsed.data.display_name,
-      bio: parsed.data.bio || null,
+      username: parsed.data.username.toLowerCase(),
+      display_name: parsed.data.display_name.trim(),
+      bio: parsed.data.bio?.trim() || null,
     })
     .eq("id", user.id);
 
@@ -96,8 +96,9 @@ export async function updateAppearance(
     return { error: error.message };
   }
 
-  revalidatePath("/settings");
-  revalidatePath("/dashboard");
+  // Do not revalidatePath here: client theme state is already applied and a
+  // full RSC refresh feels like an unexpected reload. Persistence is verified
+  // on the next navigation/refresh via ThemeSync + profiles.appearance.
   return { success: "Appearance updated." };
 }
 
@@ -130,9 +131,12 @@ export async function updateAccentColor(
     return { error: error.message };
   }
 
-  revalidatePath("/settings");
-  revalidatePath("/dashboard");
+  const cookieStore = await cookies();
+  cookieStore.set(ACCENT_COOKIE, accent, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+  });
+
   return { success: "Accent color updated." };
 }
-
-export { APPEARANCE_MODES, ACCENT_COLORS };

@@ -40,6 +40,8 @@ export function SettingsForm({ profile }: SettingsFormProps) {
   const { setTheme, theme } = useTheme();
   const { accent, setAccent } = useAccent();
   const [isPending, startTransition] = useTransition();
+  // Prefer live next-themes value after hydration; fall back to saved profile.
+  const selectedAppearance = theme ?? profile.appearance;
 
   function handleAppearance(next: AppearanceMode) {
     setTheme(next);
@@ -47,21 +49,24 @@ export function SettingsForm({ profile }: SettingsFormProps) {
       const result = await updateAppearance(next);
       if (result.error) {
         toast.error(result.error);
+        setTheme(profile.appearance);
         return;
       }
-      toast.success("Appearance updated");
+      toast.success("Appearance saved");
     });
   }
 
   function handleAccent(next: AccentColor) {
+    const previous = accent;
     setAccent(next);
     startTransition(async () => {
       const result = await updateAccentColor(next);
       if (result.error) {
         toast.error(result.error);
+        setAccent(previous);
         return;
       }
-      toast.success("Accent updated");
+      toast.success("Accent saved");
     });
   }
 
@@ -146,7 +151,7 @@ export function SettingsForm({ profile }: SettingsFormProps) {
                   onClick={() => handleAppearance(mode)}
                   className={cn(
                     "rounded-xl border px-4 py-2 text-sm capitalize transition-colors",
-                    (theme ?? profile.appearance) === mode
+                    selectedAppearance === mode
                       ? "border-primary bg-brand-soft text-foreground"
                       : "border-border bg-background hover:bg-muted",
                   )}

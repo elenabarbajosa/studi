@@ -10,6 +10,7 @@ import {
   signUpWithPassword,
   type AuthActionState,
 } from "@/actions/auth";
+import { AuthMessage } from "@/components/auth/auth-message";
 import { Brand } from "@/components/shared/brand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,8 @@ import { Label } from "@/components/ui/label";
 type AuthFormProps = {
   mode: "login" | "signup";
   nextPath?: string;
+  bannerError?: string;
+  bannerNotice?: string;
 };
 
 const initialState: AuthActionState = {};
@@ -45,7 +48,12 @@ function GoogleButton() {
   );
 }
 
-export function AuthForm({ mode, nextPath = "/dashboard" }: AuthFormProps) {
+export function AuthForm({
+  mode,
+  nextPath = "/dashboard",
+  bannerError,
+  bannerNotice,
+}: AuthFormProps) {
   const action = mode === "login" ? signInWithPassword : signUpWithPassword;
   const [state, formAction] = useActionState(action, initialState);
   const [googleState, googleAction] = useActionState(
@@ -68,6 +76,8 @@ export function AuthForm({ mode, nextPath = "/dashboard" }: AuthFormProps) {
           </p>
         </div>
       </div>
+
+      <AuthMessage error={bannerError} notice={bannerNotice} />
 
       <div className="studi-panel space-y-6 p-6 sm:p-8">
         <form action={googleAction}>
@@ -126,7 +136,17 @@ export function AuthForm({ mode, nextPath = "/dashboard" }: AuthFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor="password">Password</Label>
+              {mode === "login" ? (
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              ) : null}
+            </div>
             <Input
               id="password"
               name="password"

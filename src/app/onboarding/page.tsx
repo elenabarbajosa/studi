@@ -1,63 +1,102 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
+import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 import { Brand } from "@/components/shared/brand";
-import { buttonVariants } from "@/components/ui/button";
-import { requireUser, getCurrentProfile } from "@/lib/auth";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getCurrentProfile, requireUser } from "@/lib/auth";
+import { getStudyPreferences, listSubjects } from "@/lib/data/subjects";
 import { createClient } from "@/lib/supabase/server";
-import { cn } from "@/lib/utils";
-import Link from "next/link";
+import type { Profile } from "@/types/database";
 
 export const instant = false;
 
-export const metadata = { title: "Finish setup" };
+export const metadata = { title: "Onboarding" };
 
-export default async function OnboardingPage() {
-  const user = await requireUser();
+async function ensureProfile(userId: string, email?: string | null) {
   const existing = await getCurrentProfile();
-  if (existing) {
-    redirect("/dashboard");
-  }
+  if (existing) return existing;
 
   const supabase = await createClient();
-  const emailLocal = user.email?.split("@")[0] ?? "student";
+  const emailLocal = email?.split("@")[0] ?? "student";
   const base = emailLocal
     .toLowerCase()
     .replace(/[^a-z0-9_]/g, "_")
     .slice(0, 20);
-  const username = base.length >= 3 ? base : `student_${user.id.slice(0, 6)}`;
+  const username = base.length >= 3 ? base : `student_${userId.slice(0, 6)}`;
 
-  const { error } = await supabase.from("profiles").insert({
-    id: user.id,
+  await supabase.from("profiles").insert({
+    id: userId,
     username,
-    display_name:
-      (user.user_metadata?.display_name as string | undefined) ||
-      (user.user_metadata?.full_name as string | undefined) ||
-      username,
+    display_name: username,
+    onboarding_status: "pending",
+    onboarding_step: 1,
   });
 
-  if (!error) {
+  return (await getCurrentProfile()) as Profile | null;
+}
+
+async function OnboardingContent({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const user = await requireUser();
+  const params = await searchParams;
+  const resume =
+    params.resume === "1" ||
+    params.resume === "true" ||
+    (Array.isArray(params.resume) && params.resume[0] === "1");
+
+  const profile = await ensureProfile(user.id, user.email);
+  if (!profile) {
+    return (
+      <div className="mx-auto flex min-h-svh max-w-lg flex-col justify-center px-6">
+        <Brand href="/" />
+        <h1 className="mt-8 font-display text-3xl tracking-tight">
+          Profile unavailable
+        </h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Run the Phase 1 and Phase 2 SQL migrations in Supabase, then refresh.
+        </p>
+      </div>
+    );
+  }
+
+  if (profile.onboarding_status === "completed" && !resume) {
     redirect("/dashboard");
   }
 
+  const [subjects, preferences] = await Promise.all([
+    listSubjects(),
+    getStudyPreferences(),
+  ]);
+
   return (
-    <div className="mx-auto flex min-h-svh max-w-lg flex-col justify-center px-6 py-12">
-      <Brand href="/" />
-      <h1 className="mt-8 font-display text-3xl tracking-tight">
-        We need one more step
-      </h1>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        Your account exists, but a profile row could not be created
-        automatically. Make sure the Phase 1 migration has been applied in
-        Supabase, then try again.
-      </p>
-      {error ? (
-        <p className="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error.message}
-        </p>
-      ) : null}
-      <Link href="/dashboard" className={cn(buttonVariants(), "mt-6 w-fit")}>
-        Retry dashboard
-      </Link>
-    </div>
+    <OnboardingWizard
+      profile={profile}
+      subjects={subjects}
+      preferences={preferences}
+    />
+  );
+}
+
+export default function OnboardingPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto flex min-h-svh max-w-3xl flex-col px-6 py-10">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="mt-8 h-10 w-72" />
+          <Skeleton className="mt-6 h-64 w-full rounded-2xl" />
+        </div>
+      }
+    >
+      <OnboardingContent searchParams={searchParams} />
+    </Suspense>
   );
 }
