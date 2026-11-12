@@ -1,6 +1,9 @@
 import type {
   AssessmentType,
+  FocusTimerMode,
   PriorityLevel,
+  SoundscapeId,
+  StudySessionSource,
   StudySessionStatus,
   TaskStatus,
 } from "@/lib/calendar";
@@ -59,6 +62,16 @@ export type StudyPreferences = {
   session_duration_minutes: number;
   break_duration_minutes: number;
   weekly_goal_hours: number | null;
+  pomodoro_focus_minutes: number;
+  pomodoro_short_break_minutes: number;
+  pomodoro_long_break_minutes: number;
+  pomodoro_intervals_before_long: number;
+  auto_start_breaks: boolean;
+  focus_sound_enabled: boolean;
+  soundscape_primary: SoundscapeId;
+  soundscape_secondary: SoundscapeId;
+  soundscape_volume: number;
+  soundscape_secondary_volume: number;
   created_at: string;
   updated_at: string;
 };
@@ -168,10 +181,36 @@ export type StudySession = {
   topic_id: string | null;
   task_id: string | null;
   starts_at: string;
-  ends_at: string;
+  ends_at: string | null;
   planned_duration_minutes: number;
   status: StudySessionStatus;
   notes: string | null;
+  source: StudySessionSource;
+  timer_mode: FocusTimerMode | null;
+  focus_seconds: number;
+  break_seconds: number;
+  goal: string | null;
+  goal_completed: boolean | null;
+  client_session_id: string | null;
+  pomodoro_cycles: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FocusActiveSession = {
+  id: string;
+  user_id: string;
+  client_session_id: string;
+  timer_mode: FocusTimerMode;
+  subject_id: string | null;
+  topic_id: string | null;
+  task_id: string | null;
+  goal: string | null;
+  engine_state: Record<string, unknown>;
+  focus_seconds: number;
+  break_seconds: number;
+  started_at: string;
+  last_heartbeat_at: string;
   created_at: string;
   updated_at: string;
 };
@@ -209,17 +248,21 @@ export type Database = {
           session_duration_minutes?: number;
           break_duration_minutes?: number;
           weekly_goal_hours?: number | null;
+          pomodoro_focus_minutes?: number;
+          pomodoro_short_break_minutes?: number;
+          pomodoro_long_break_minutes?: number;
+          pomodoro_intervals_before_long?: number;
+          auto_start_breaks?: boolean;
+          focus_sound_enabled?: boolean;
+          soundscape_primary?: SoundscapeId;
+          soundscape_secondary?: SoundscapeId;
+          soundscape_volume?: number;
+          soundscape_secondary_volume?: number;
           created_at?: string;
           updated_at?: string;
         };
         Update: Partial<
-          Pick<
-            StudyPreferences,
-            | "weekday_availability"
-            | "session_duration_minutes"
-            | "break_duration_minutes"
-            | "weekly_goal_hours"
-          >
+          Omit<StudyPreferences, "user_id" | "created_at" | "updated_at">
         >;
         Relationships: [];
       };
@@ -378,15 +421,47 @@ export type Database = {
           topic_id?: string | null;
           task_id?: string | null;
           starts_at: string;
-          ends_at: string;
+          ends_at?: string | null;
           planned_duration_minutes?: number;
           status?: StudySessionStatus;
           notes?: string | null;
+          source?: StudySessionSource;
+          timer_mode?: FocusTimerMode | null;
+          focus_seconds?: number;
+          break_seconds?: number;
+          goal?: string | null;
+          goal_completed?: boolean | null;
+          client_session_id?: string | null;
+          pomodoro_cycles?: number;
           created_at?: string;
           updated_at?: string;
         };
         Update: Partial<
           Omit<StudySession, "id" | "user_id" | "created_at" | "updated_at">
+        >;
+        Relationships: [];
+      };
+      focus_active_sessions: {
+        Row: FocusActiveSession;
+        Insert: {
+          id?: string;
+          user_id: string;
+          client_session_id: string;
+          timer_mode: FocusTimerMode;
+          subject_id?: string | null;
+          topic_id?: string | null;
+          task_id?: string | null;
+          goal?: string | null;
+          engine_state?: Record<string, unknown>;
+          focus_seconds?: number;
+          break_seconds?: number;
+          started_at?: string;
+          last_heartbeat_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Omit<FocusActiveSession, "id" | "user_id" | "created_at" | "updated_at">
         >;
         Relationships: [];
       };
@@ -410,6 +485,9 @@ export type Database = {
       study_session_status: StudySessionStatus;
       avatar_preference: AvatarPreference;
       avatar_visibility: AvatarVisibility;
+      focus_timer_mode: FocusTimerMode;
+      study_session_source: StudySessionSource;
+      soundscape_id: SoundscapeId;
     };
     CompositeTypes: Record<string, never>;
   };

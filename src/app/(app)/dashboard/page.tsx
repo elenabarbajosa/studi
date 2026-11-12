@@ -1,12 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import {
-  BookOpen,
-  ClipboardList,
-  Focus,
-  Handshake,
-  Settings,
-} from "lucide-react";
+import { BookOpen, ClipboardList, Handshake, Settings } from "lucide-react";
 
 import { AgendaPanels } from "@/components/dashboard/agenda-panels";
 import { PageHeader } from "@/components/shared/page-header";
@@ -32,12 +26,6 @@ const laterModules = [
     href: "/planner",
     icon: ClipboardList,
     copy: "Automatic weekly plans arrive in Phase 4.",
-  },
-  {
-    title: "Focus",
-    href: "/focus",
-    icon: Focus,
-    copy: "Pomodoro sessions with honest tracking.",
   },
   {
     title: "Study Together",
@@ -192,7 +180,7 @@ async function DashboardContent({
         )}
       </section>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         {laterModules.map((item) => (
           <Link
             key={item.href}

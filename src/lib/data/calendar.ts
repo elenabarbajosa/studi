@@ -102,6 +102,8 @@ export const listStudySessions = cache(async (): Promise<StudySession[]> => {
     .from("study_sessions")
     .select("*")
     .eq("user_id", user.id)
+    .in("status", ["planned", "completed"])
+    .not("ends_at", "is", null)
     .order("starts_at", { ascending: true });
   if (error) {
     console.error("listStudySessions:", error.message);

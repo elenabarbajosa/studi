@@ -57,7 +57,6 @@ export const mainNav: NavItem[] = [
     href: "/focus",
     icon: Focus,
     description: "Pomodoro timer",
-    comingSoon: true,
   },
   {
     title: "Friends",
@@ -78,7 +77,6 @@ export const mainNav: NavItem[] = [
     href: "/statistics",
     icon: ChartColumn,
     description: "Productivity insights",
-    comingSoon: true,
   },
 ];
 

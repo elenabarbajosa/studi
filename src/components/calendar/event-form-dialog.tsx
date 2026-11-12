@@ -542,7 +542,7 @@ function SessionForm({
           type="time"
           required
           defaultValue={
-            existing
+            existing?.ends_at
               ? toLocalTimeInput(existing.ends_at)
               : draft.endTime || "11:00"
           }

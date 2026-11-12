@@ -157,7 +157,7 @@ export function CalendarBoard({
         id: `study_session:${s.id}`,
         title: `Study${subject ? `: ${subject.name}` : ""}`,
         start: s.starts_at,
-        end: s.ends_at,
+        end: s.ends_at ?? undefined,
         allDay: false,
         backgroundColor: subjectEventColor(subject?.color ?? "teal"),
         borderColor: subjectEventColor(subject?.color ?? "teal"),

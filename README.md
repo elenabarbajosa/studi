@@ -56,10 +56,14 @@ In the Supabase dashboard → **SQL Editor**, run in order:
    **Required for Phase 3.** Adds `assessments`, `tasks`, `subtasks`, `calendar_events`, `study_sessions`, ownership triggers, indexes, and RLS.
 5. [`supabase/migrations/005_avatars.sql`](supabase/migrations/005_avatars.sql)  
    **Required for profile pictures.** Adds avatar preference columns on `profiles`, creates the private `avatars` Storage bucket, and owner-only Storage RLS policies.
+6. [`supabase/migrations/006_phase5_focus.sql`](supabase/migrations/006_phase5_focus.sql)  
+   **Required for Focus Mode.** Extends `study_sessions` with focus metrics, adds `focus_active_sessions`, Pomodoro/soundscape columns on `study_preferences`, and RLS.
 
-Confirm in **Table Editor** that these tables exist with RLS enabled: `profiles`, `study_preferences`, `subjects`, `topics`, `materials`, `assessments`, `tasks`, `subtasks`, `calendar_events`, `study_sessions`.
+Confirm in **Table Editor** that these tables exist with RLS enabled: `profiles`, `study_preferences`, `subjects`, `topics`, `materials`, `assessments`, `tasks`, `subtasks`, `calendar_events`, `study_sessions`, `focus_active_sessions`.
 
 Confirm in **Storage** that the `avatars` bucket exists and is **private** (not public).
+
+If `006` errors on using a newly added enum value in the same transaction, run the two `alter type … add value` lines at the top of the file first, then re-run the rest.
 
 ### 2. Auth providers & URLs
 
@@ -136,6 +140,36 @@ Create exams, personal events, and study sessions from the calendar (click a slo
 | Visibility column | `avatar_visibility` defaults to `private` (friends/public prepared for later) |
 
 Uploads are validated by MIME magic bytes and capped at 5 MB. Cropped images are resized to 512×512 WebP/JPEG before upload. Paths look like `{user_id}/{uuid}.webp` so browsers do not keep stale caches.
+
+## Phase 5 — Focus & statistics
+
+| Feature | Route |
+| --- | --- |
+| Pomodoro + stopwatch Focus Mode | `/focus` |
+| Distraction-free / fullscreen-style view | Focus page → Focus view |
+| Study statistics (real focus seconds only) | `/statistics` |
+| Pomodoro + soundscape preferences | Settings → Focus & Pomodoro |
+
+### Timer architecture
+
+- Pure engine in `src/lib/focus/timer-engine.ts` (timestamp-based; Study Together can later drive the same state from a server clock).
+- Live recovery via `localStorage` + `focus_active_sessions` heartbeats.
+- Gaps longer than 5 minutes pause the timer instead of counting unattended time.
+- Finished sessions save to `study_sessions` with `source = 'focus'` and idempotent `client_session_id`.
+
+### Soundscapes (licensing)
+
+All ambience is **procedurally generated in the browser** with the Web Audio API (`src/lib/focus/soundscapes.ts`):
+
+| Id | Implementation | License |
+| --- | --- | --- |
+| `silence` | No audio | n/a |
+| `white_noise` | Generated noise buffer | Original code |
+| `rain` | Filtered noise + sparse droplets | Original code |
+| `cafe` | Brown-noise texture | Original code |
+| `forest` | Band-passed texture + light chirps | Original code |
+
+No third-party sample packs are bundled. Playback starts only after a user click (autoplay-safe). To swap in recorded libraries later, place licensed files under `public/sounds/` and document source + license here.
 
 ## Scripts
 

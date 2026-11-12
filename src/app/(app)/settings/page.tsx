@@ -2,17 +2,40 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { PageHeader } from "@/components/shared/page-header";
+import { FocusPreferencesForm } from "@/components/settings/focus-preferences-form";
 import { SettingsForm } from "@/components/settings/settings-form";
 import { StudyPreferencesForm } from "@/components/settings/study-preferences-form";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireProfile } from "@/lib/auth";
 import { resolveAvatarSrc } from "@/lib/avatar-server";
+import type { SoundscapeId } from "@/lib/calendar";
 import { getStudyPreferences } from "@/lib/data/subjects";
+import type { FocusPreferences } from "@/lib/focus/types";
 import { canResumeOnboarding, onboardingLabel } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Settings" };
+
+function toFocusPrefs(
+  prefs: Awaited<ReturnType<typeof getStudyPreferences>>,
+): FocusPreferences {
+  return {
+    pomodoro_focus_minutes: prefs?.pomodoro_focus_minutes ?? 25,
+    pomodoro_short_break_minutes: prefs?.pomodoro_short_break_minutes ?? 5,
+    pomodoro_long_break_minutes: prefs?.pomodoro_long_break_minutes ?? 15,
+    pomodoro_intervals_before_long:
+      prefs?.pomodoro_intervals_before_long ?? 4,
+    auto_start_breaks: prefs?.auto_start_breaks ?? false,
+    focus_sound_enabled: prefs?.focus_sound_enabled ?? true,
+    soundscape_primary: (prefs?.soundscape_primary ??
+      "silence") as SoundscapeId,
+    soundscape_secondary: (prefs?.soundscape_secondary ??
+      "silence") as SoundscapeId,
+    soundscape_volume: prefs?.soundscape_volume ?? 0.45,
+    soundscape_secondary_volume: prefs?.soundscape_secondary_volume ?? 0,
+  };
+}
 
 async function SettingsContent() {
   const { profile } = await requireProfile();
@@ -31,6 +54,7 @@ async function SettingsContent() {
       <div className="space-y-8">
         <SettingsForm profile={profile} avatarSrc={avatarSrc} />
         <StudyPreferencesForm preferences={preferences} />
+        <FocusPreferencesForm preferences={toFocusPrefs(preferences)} />
 
         {canResumeOnboarding(profile) ? (
           <section className="studi-panel p-6 sm:p-8">

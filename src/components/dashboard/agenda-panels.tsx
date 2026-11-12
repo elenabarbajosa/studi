@@ -193,7 +193,8 @@ export function AgendaPanels({
                   {" "}
                   · {toLocalDateInput(s.starts_at)}{" "}
                   {toLocalTimeInput(s.starts_at)}–
-                  {toLocalTimeInput(s.ends_at)} · {s.planned_duration_minutes}
+                  {s.ends_at ? toLocalTimeInput(s.ends_at) : "—"} ·{" "}
+                  {s.planned_duration_minutes}
                   m
                 </span>
               </li>
