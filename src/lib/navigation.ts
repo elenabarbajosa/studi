@@ -69,7 +69,6 @@ export const mainNav: NavItem[] = [
     href: "/study-together",
     icon: Handshake,
     description: "Virtual study rooms",
-    comingSoon: true,
   },
   {
     title: "Statistics",

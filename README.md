@@ -62,12 +62,16 @@ In the Supabase dashboard → **SQL Editor**, run in order:
    **Required for Focus Mode.** Extends `study_sessions` with focus metrics, adds `focus_active_sessions`, Pomodoro/soundscape columns on `study_preferences`, and RLS.
 7. [`supabase/migrations/007_phase6_friends.sql`](supabase/migrations/007_phase6_friends.sql)  
    **Required for Friends.** Adds social preference columns, `friendships`, `friend_requests`, `user_blocks`, `user_presence`, discovery/social RPCs, avatar Storage SELECT for friends/public, and optional Realtime policies.
+8. [`supabase/migrations/008_repair_studi_friends.sql`](supabase/migrations/008_repair_studi_friends.sql)  
+   Restores Phase 6 RPCs if an earlier partial `007` deploy left them missing.
+9. [`supabase/migrations/009_phase7_study_together.sql`](supabase/migrations/009_phase7_study_together.sql)  
+   **Required for Study Together.** Rooms, members, invite token hashes, authoritative timer state, chat, `study_together` session source, and Realtime Presence policies.
 
-Confirm in **Table Editor** that these tables exist with RLS enabled: `profiles`, `study_preferences`, `subjects`, `topics`, `materials`, `assessments`, `tasks`, `subtasks`, `calendar_events`, `study_sessions`, `focus_active_sessions`, `friendships`, `friend_requests`, `user_blocks`, `user_presence`.
+Confirm in **Table Editor** that these tables exist with RLS enabled, including `study_rooms`, `study_room_members`, `study_room_invitations`, `study_room_timer_state`, `study_room_messages`.
 
 Confirm in **Storage** that the `avatars` bucket exists and is **private** (not public).
 
-If `006` errors on using a newly added enum value in the same transaction, run the two `alter type … add value` lines at the top of the file first, then re-run the rest.
+If `006` or `009` errors on using a newly added enum value in the same transaction, run the `alter type … add value` lines at the top of the file first, then re-run the rest.
 
 ### 2. Auth providers & URLs
 
@@ -199,12 +203,38 @@ No third-party sample packs are bundled. Playback starts only after a user click
   2. **Realtime**: keep public/anonymous channel access disabled; only authenticated clients should join private topics.
   3. Do not broadcast goals, subjects, timers, or academic IDs on Presence payloads.
 
+## Phase 7 — Study Together
+
+| Feature | Route |
+| --- | --- |
+| Study Together hub | `/study-together` |
+| Room (sync timer + presence + chat) | `/study-together/[roomId]` |
+| Invite link join | `/study-together/join?token=…` |
+
+### Timer & host policy
+
+- Shared Pomodoro state lives in `study_room_timer_state` (server timestamps + monotonic `revision`).
+- Clients render remaining time from `phase_ends_at` with a clock offset; no per-second network ticks.
+- `reconcile_room_timer` advances an expired phase idempotently when an authorized member reads or the host commands. **Unattended rooms do not auto-advance without a client (or a future cron).**
+- Host leave transfers to the longest-standing active member; alone-host leave ends the room. Presence disconnect does **not** remove membership or host role.
+
+### Realtime configuration
+
+1. Enable Realtime for `study_room_timer_state` and `study_room_messages`.
+2. Disable **Allow public access** on Realtime channels so Presence topics require authorization.
+3. Presence topic pattern: `study-room:<room_uuid>` (private). Membership is checked via `is_active_room_member`.
+
+### Chat retention
+
+Messages persist until soft-deleted by the sender or purged after **7 days** (manual/cron). Focus phases hide chat in the UI; members can still access history when chat is enabled.
+
 ## Scripts
 
 ```bash
 npm run dev
 npm run lint
 npm run typecheck
+npm run test
 npm run build
 ```
 

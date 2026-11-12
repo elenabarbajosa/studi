@@ -21,6 +21,20 @@ import type {
   PresenceStatus,
   SocialVisibility,
 } from "@/lib/social";
+import type {
+  StudyRoom,
+  StudyRoomInvitation,
+  StudyRoomMember,
+  StudyRoomMessage,
+  StudyRoomTimerState,
+  StudyRoomVisibility,
+  StudyRoomStatus,
+  StudyRoomPhase,
+  StudyRoomRunState,
+  StudyRoomMemberRole,
+  StudyRoomMemberStatus,
+  StudyRoomInviteStatus,
+} from "@/lib/study-together/types";
 
 export type AvatarPreference = "custom" | "google" | "initials";
 export type AvatarVisibility = "private" | "friends" | "public";
@@ -238,6 +252,7 @@ export type StudySession = {
   goal_completed: boolean | null;
   client_session_id: string | null;
   pomodoro_cycles: number;
+  room_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -482,6 +497,7 @@ export type Database = {
           goal_completed?: boolean | null;
           client_session_id?: string | null;
           pomodoro_cycles?: number;
+          room_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -565,6 +581,51 @@ export type Database = {
         >;
         Relationships: [];
       };
+      study_rooms: {
+        Row: StudyRoom;
+        Insert: Omit<StudyRoom, "id" | "created_at" | "updated_at" | "ended_at"> & {
+          id?: string;
+          ended_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<StudyRoom, "id" | "created_at">>;
+        Relationships: [];
+      };
+      study_room_members: {
+        Row: StudyRoomMember;
+        Insert: StudyRoomMember;
+        Update: Partial<Omit<StudyRoomMember, "room_id" | "user_id">>;
+        Relationships: [];
+      };
+      study_room_invitations: {
+        Row: StudyRoomInvitation;
+        Insert: Omit<StudyRoomInvitation, "id" | "created_at" | "responded_at"> & {
+          id?: string;
+          responded_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<
+          Pick<StudyRoomInvitation, "status" | "responded_at" | "expires_at" | "token_hash">
+        >;
+        Relationships: [];
+      };
+      study_room_timer_state: {
+        Row: StudyRoomTimerState;
+        Insert: StudyRoomTimerState;
+        Update: Partial<Omit<StudyRoomTimerState, "room_id">>;
+        Relationships: [];
+      };
+      study_room_messages: {
+        Row: StudyRoomMessage;
+        Insert: Omit<StudyRoomMessage, "id" | "created_at" | "deleted_at"> & {
+          id?: string;
+          created_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: Partial<Pick<StudyRoomMessage, "body" | "deleted_at">>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -640,6 +701,102 @@ export type Database = {
           weekly_focus_seconds: number | null;
         }[];
       };
+      is_active_room_member: {
+        Args: { p_room_id: string; p_user_id: string };
+        Returns: boolean;
+      };
+      create_study_room: {
+        Args: {
+          p_name: string;
+          p_description?: string | null;
+          p_visibility?: StudyRoomVisibility;
+          p_max_participants?: number;
+          p_focus_minutes?: number;
+          p_short_break_minutes?: number;
+          p_long_break_minutes?: number;
+          p_intervals_before_long?: number;
+          p_chat_enabled?: boolean;
+          p_members_can_invite?: boolean;
+        };
+        Returns: string;
+      };
+      create_study_room_invite: {
+        Args: {
+          p_room_id: string;
+          p_invitee_id: string;
+          p_token_hash: string;
+          p_expires_at: string;
+        };
+        Returns: string;
+      };
+      accept_study_room_invite: {
+        Args: { p_token_hash: string };
+        Returns: string;
+      };
+      respond_study_room_invite: {
+        Args: { p_invite_id: string; p_accept: boolean };
+        Returns: boolean;
+      };
+      cancel_study_room_invite: {
+        Args: { p_invite_id: string };
+        Returns: boolean;
+      };
+      join_friends_study_room: {
+        Args: { p_room_id: string };
+        Returns: boolean;
+      };
+      leave_study_room: {
+        Args: { p_room_id: string };
+        Returns: boolean;
+      };
+      kick_study_room_member: {
+        Args: { p_room_id: string; p_user_id: string };
+        Returns: boolean;
+      };
+      end_study_room: {
+        Args: { p_room_id: string };
+        Returns: boolean;
+      };
+      transfer_study_room_host: {
+        Args: { p_room_id: string; p_new_host_id?: string | null };
+        Returns: string | null;
+      };
+      reconcile_room_timer: {
+        Args: { p_room_id: string };
+        Returns: StudyRoomTimerState;
+      };
+      room_timer_command: {
+        Args: {
+          p_room_id: string;
+          p_action: string;
+          p_expected_revision: number;
+        };
+        Returns: StudyRoomTimerState;
+      };
+      update_study_room_settings: {
+        Args: {
+          p_room_id: string;
+          p_name?: string | null;
+          p_description?: string | null;
+          p_visibility?: StudyRoomVisibility | null;
+          p_max_participants?: number | null;
+          p_focus_minutes?: number | null;
+          p_short_break_minutes?: number | null;
+          p_long_break_minutes?: number | null;
+          p_intervals_before_long?: number | null;
+          p_chat_enabled?: boolean | null;
+          p_members_can_invite?: boolean | null;
+        };
+        Returns: boolean;
+      };
+      send_study_room_message: {
+        Args: {
+          p_room_id: string;
+          p_body: string;
+          p_client_message_id: string;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       appearance_mode: AppearanceMode;
@@ -659,6 +816,13 @@ export type Database = {
       social_visibility: SocialVisibility;
       friend_request_status: FriendRequestStatus;
       presence_status: PresenceStatus;
+      study_room_visibility: StudyRoomVisibility;
+      study_room_status: StudyRoomStatus;
+      study_room_phase: StudyRoomPhase;
+      study_room_run_state: StudyRoomRunState;
+      study_room_member_role: StudyRoomMemberRole;
+      study_room_member_status: StudyRoomMemberStatus;
+      study_room_invite_status: StudyRoomInviteStatus;
     };
     CompositeTypes: Record<string, never>;
   };

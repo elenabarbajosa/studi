@@ -47,7 +47,7 @@ export const listCompletedFocusSessions = cache(
       .from("study_sessions")
       .select("*")
       .eq("user_id", user.id)
-      .eq("source", "focus")
+      .in("source", ["focus", "study_together"])
       .eq("status", "completed")
       .order("starts_at", { ascending: false })
       .limit(limit);
@@ -99,7 +99,7 @@ export const getFocusStats = cache(async (): Promise<FocusStats> => {
       .from("study_sessions")
       .select("focus_seconds, subject_id, starts_at")
       .eq("user_id", user.id)
-      .eq("source", "focus")
+      .in("source", ["focus", "study_together"])
       .eq("status", "completed")
       .gte("starts_at", historyStart.toISOString())
       .order("starts_at", { ascending: true }),

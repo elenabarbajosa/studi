@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { BookOpen, ClipboardList, Handshake, Settings } from "lucide-react";
+import { BookOpen, ClipboardList, Settings } from "lucide-react";
 
 import { AgendaPanels } from "@/components/dashboard/agenda-panels";
 import { FriendsPanel } from "@/components/dashboard/friends-panel";
@@ -27,13 +27,7 @@ const laterModules = [
     title: "Study Planner",
     href: "/planner",
     icon: ClipboardList,
-    copy: "Automatic weekly plans arrive in Phase 4.",
-  },
-  {
-    title: "Study Together",
-    href: "/study-together",
-    icon: Handshake,
-    copy: "Virtual rooms for co-working sessions.",
+    copy: "Automatic weekly plans arrive in a later phase.",
   },
 ];
 

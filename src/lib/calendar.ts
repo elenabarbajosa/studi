@@ -62,7 +62,11 @@ export const STUDY_SESSION_STATUS_META: Record<
 export const FOCUS_TIMER_MODES = ["pomodoro", "stopwatch"] as const;
 export type FocusTimerMode = (typeof FOCUS_TIMER_MODES)[number];
 
-export const STUDY_SESSION_SOURCES = ["calendar", "focus"] as const;
+export const STUDY_SESSION_SOURCES = [
+  "calendar",
+  "focus",
+  "study_together",
+] as const;
 export type StudySessionSource = (typeof STUDY_SESSION_SOURCES)[number];
 
 export const SOUNDSCAPE_IDS = [
