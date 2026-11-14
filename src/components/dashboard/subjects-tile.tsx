@@ -3,6 +3,7 @@ import { useId } from "react";
 import { Plus } from "lucide-react";
 
 import { Tile, TileHeader, tileLinkClass } from "@/components/dashboard/tile";
+import { SegmentBar } from "@/components/studi/progress-bits";
 import { subjectTone, type SubjectColor } from "@/lib/subjects";
 import { cn } from "@/lib/utils";
 
@@ -15,40 +16,8 @@ export type SubjectRow = {
 };
 
 const MAX_ROWS = 5;
-const MAX_SEGMENTS = 12;
 
 const BAR_WIDTH = "w-[clamp(64px,28%,128px)] shrink-0";
-
-function SegmentBar({ row }: { row: SubjectRow }) {
-  const dot = subjectTone(row.color).dot;
-  if (row.topicCount === 0) {
-    return <span className={cn("h-1.5 rounded-full bg-hairline", BAR_WIDTH)} aria-hidden />;
-  }
-  if (row.topicCount > MAX_SEGMENTS) {
-    return (
-      <span
-        className={cn("h-1.5 overflow-hidden rounded-full bg-hairline", BAR_WIDTH)}
-        aria-hidden
-      >
-        <span
-          className="block h-full rounded-full"
-          style={{ width: `${(row.masteredCount / row.topicCount) * 100}%`, background: dot }}
-        />
-      </span>
-    );
-  }
-  return (
-    <span className={cn("flex gap-[3px]", BAR_WIDTH)} aria-hidden>
-      {Array.from({ length: row.topicCount }, (_, i) => (
-        <span
-          key={i}
-          className={cn("h-1.5 flex-1 rounded-full", i >= row.masteredCount && "bg-hairline")}
-          style={i < row.masteredCount ? { background: dot } : undefined}
-        />
-      ))}
-    </span>
-  );
-}
 
 export function SubjectsTile({ rows }: { rows: SubjectRow[] }) {
   const titleId = useId();
@@ -98,7 +67,12 @@ export function SubjectsTile({ rows }: { rows: SubjectRow[] }) {
                 <span className="min-w-0 flex-1 truncate text-[14.5px] text-ink">
                   {row.name}
                 </span>
-                <SegmentBar row={row} />
+                <SegmentBar
+                  total={row.topicCount}
+                  filled={row.masteredCount}
+                  color={subjectTone(row.color).dot}
+                  className={BAR_WIDTH}
+                />
                 <span className="w-16 shrink-0 text-right text-[12.5px] text-ink-2 tabular-nums">
                   {row.topicCount === 0
                     ? "No topics"

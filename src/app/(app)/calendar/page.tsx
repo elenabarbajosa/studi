@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 
 import { CalendarBoard } from "@/components/calendar/calendar-board";
-import { PageHeader } from "@/components/shared/page-header";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CalendarSkeleton } from "@/components/calendar/calendar-skeleton";
 import { requireProfile } from "@/lib/auth";
 import {
   listAssessments,
@@ -33,36 +32,20 @@ async function CalendarContent() {
   ]);
 
   return (
-    <div>
-      <PageHeader
-        title="Calendar"
-        description="Exams, deadlines, personal events, and study sessions in one place."
-      />
-      <CalendarBoard
-        assessments={assessments}
-        personalEvents={personalEvents}
-        studySessions={studySessions}
-        subjects={subjects}
-        topics={topics}
-        tasks={tasks}
-      />
-    </div>
-  );
-}
-
-function CalendarFallback() {
-  return (
-    <div className="space-y-4">
-      <Skeleton className="h-10 w-48" />
-      <Skeleton className="h-8 w-72" />
-      <Skeleton className="h-[32rem] w-full rounded-2xl" />
-    </div>
+    <CalendarBoard
+      assessments={assessments}
+      personalEvents={personalEvents}
+      studySessions={studySessions}
+      subjects={subjects}
+      topics={topics}
+      tasks={tasks}
+    />
   );
 }
 
 export default function CalendarPage() {
   return (
-    <Suspense fallback={<CalendarFallback />}>
+    <Suspense fallback={<CalendarSkeleton />}>
       <CalendarContent />
     </Suspense>
   );

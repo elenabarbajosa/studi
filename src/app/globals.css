@@ -461,76 +461,268 @@
   }
 }
 
-/* FullCalendar — Studi theme bridge */
-.studi-calendar {
-  --fc-border-color: color-mix(in srgb, var(--hairline) 85%, transparent);
-  --fc-page-bg-color: transparent;
-  --fc-neutral-bg-color: color-mix(in srgb, var(--sunken) 70%, transparent);
-  --fc-list-event-hover-bg-color: var(--hover);
-  --fc-today-bg-color: color-mix(in srgb, var(--accent) 14%, transparent);
-  --fc-button-bg-color: transparent;
-  --fc-button-border-color: var(--hairline);
-  --fc-button-text-color: var(--ink);
-  --fc-button-hover-bg-color: var(--hover);
-  --fc-button-hover-border-color: var(--hairline);
-  --fc-button-active-bg-color: var(--accent-soft);
-  --fc-button-active-border-color: var(--hairline);
-  --fc-event-border-color: transparent;
-  --fc-event-text-color: white;
-  font-size: 0.875rem;
+/* Calendar entries: kind sets the treatment, subject sets the colour. */
+.studi-ev {
+  --subject-dot: var(--accent);
+  --subject-tint: var(--accent-soft);
+  --subject-text: var(--accent-text);
+  transition: filter 150ms var(--ease);
 }
 
-.studi-calendar .fc {
+.studi-ev[data-kind="exam"] {
+  background: var(--ink);
+  color: var(--canvas);
+}
+
+.studi-ev[data-kind="deadline"] {
+  background: var(--subject-tint);
+  color: var(--subject-text);
+}
+
+.studi-ev[data-kind="session_done"] {
+  background: var(--subject-dot);
+  color: #fff;
+}
+
+.studi-ev[data-kind="session_planned"] {
+  background: var(--raised);
+  border: 1.5px dashed var(--subject-dot);
+  color: var(--subject-text);
+}
+
+.studi-ev[data-kind="session_other"] {
+  background: var(--sunken);
+  border: 1.5px dashed var(--hairline);
+  color: var(--ink-3);
+}
+
+.studi-ev[data-kind="task"] {
+  background: var(--sunken);
+  color: var(--ink-2);
+}
+
+.studi-ev[data-kind="personal"] {
+  background: var(--hover);
+  color: var(--ink-2);
+}
+
+.dark .studi-ev[data-kind="deadline"] {
+  background: color-mix(in srgb, var(--subject-dot) 22%, var(--raised));
+  color: color-mix(in srgb, var(--subject-dot) 70%, white);
+}
+
+.dark .studi-ev[data-kind="session_done"] {
+  background: color-mix(in srgb, var(--subject-dot) 72%, var(--canvas));
+}
+
+.dark .studi-ev[data-kind="session_planned"] {
+  color: color-mix(in srgb, var(--subject-dot) 70%, white);
+}
+
+/* FullCalendar, restyled to the 2b week view. */
+.studi-calendar {
+  --fc-border-color: color-mix(in srgb, var(--hairline) 70%, transparent);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: transparent;
+  --fc-today-bg-color: transparent;
+  --fc-event-bg-color: transparent;
+  --fc-event-border-color: transparent;
+  --fc-event-text-color: inherit;
+  --fc-highlight-color: color-mix(in srgb, var(--accent) 16%, transparent);
+  --fc-small-font-size: 12px;
+  --studi-now: var(--accent-ink);
+  height: 100%;
+  font-size: 13px;
   color: var(--ink);
 }
 
-.studi-calendar .fc-toolbar-title {
-  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-  font-size: 1.25rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+.dark .studi-calendar {
+  --studi-now: var(--accent);
 }
 
-.studi-calendar .fc-button {
-  border-radius: var(--radius-sm) !important;
-  box-shadow: none !important;
-  text-transform: none !important;
-  font-weight: 500 !important;
-  padding: 0.35rem 0.65rem !important;
+.studi-calendar .fc {
+  height: 100%;
 }
 
-.studi-calendar .fc-col-header-cell-cushion,
-.studi-calendar .fc-daygrid-day-number {
-  color: var(--ink-3);
-  text-decoration: none !important;
-  padding: 0.35rem;
-}
-
-.studi-calendar .fc-event {
-  border-radius: 0.35rem;
+.studi-calendar .fc-theme-standard .fc-scrollgrid {
   border: none;
-  font-size: 0.75rem;
-  padding: 0.1rem 0.25rem;
+}
+
+.studi-calendar .fc-theme-standard th {
+  border-color: transparent;
+}
+
+.studi-calendar .fc-theme-standard td {
+  border-color: var(--fc-border-color);
+}
+
+.studi-calendar .fc-scrollgrid-section-header > th,
+.studi-calendar .fc-scrollgrid-section-header > td {
+  border-bottom: 1px solid var(--fc-border-color);
+}
+
+.studi-calendar .fc-col-header-cell-cushion {
+  display: block;
+  padding: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.studi-calendar .fc-timegrid-slot {
+  height: 21px;
+}
+
+.studi-calendar .fc-timegrid-slot-minor {
+  border-top-color: transparent;
+}
+
+.studi-calendar .fc-timegrid-slot-label {
+  vertical-align: top;
+}
+
+.studi-calendar .fc-timegrid-slot-label-cushion,
+.studi-calendar .fc-timegrid-axis-cushion {
+  padding: 0 8px 0 0;
+  font-size: 11px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  transform: translateY(-7px);
+}
+
+.studi-calendar .fc-timegrid-axis-cushion {
+  transform: none;
+  padding-top: 6px;
+}
+
+.studi-calendar .fc-timegrid-divider {
+  padding: 0;
+  border-bottom-width: 0;
+}
+
+.studi-calendar .fc-timegrid-col.fc-day-sat,
+.studi-calendar .fc-timegrid-col.fc-day-sun {
+  background: color-mix(in srgb, var(--sunken) 32%, transparent);
+}
+
+.studi-calendar .fc-timegrid-col.fc-day-today {
+  background: color-mix(in srgb, var(--accent-soft) 32%, transparent);
+}
+
+.studi-calendar .fc-direction-ltr .fc-timegrid-col-events {
+  margin: 0 3px;
+}
+
+.studi-calendar .fc-event,
+.studi-calendar .fc-event:focus {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 10px;
   cursor: pointer;
 }
 
-.studi-calendar .fc-timegrid-event {
-  border-radius: 0.4rem;
+.studi-calendar .fc-event:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--raised), 0 0 0 4px var(--accent);
 }
 
-.studi-calendar .fc-daygrid-day.fc-day-today,
-.studi-calendar .fc-timegrid-col.fc-day-today {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+.studi-calendar .fc-event:hover .studi-ev {
+  filter: brightness(0.96);
 }
 
-@media (max-width: 640px) {
-  .studi-calendar .fc-toolbar {
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: flex-start !important;
-  }
+.studi-calendar .fc-event.fc-event-past .studi-ev {
+  opacity: 0.82;
+}
 
-  .studi-calendar .fc-toolbar-title {
-    font-size: 1.05rem;
-  }
+.studi-calendar .fc-timegrid-event .fc-event-main,
+.studi-calendar .fc-daygrid-event .fc-event-main {
+  padding: 0;
+  height: 100%;
+}
+
+.studi-calendar .fc-timegrid-event-harness-inset .fc-timegrid-event {
+  box-shadow: 0 0 0 1.5px var(--raised);
+}
+
+.studi-calendar .fc-daygrid-event-harness {
+  margin: 0 3px 2px;
+}
+
+.studi-calendar .fc-daygrid-event {
+  margin: 0 !important;
+}
+
+.studi-calendar .fc-daygrid-day-frame {
+  padding: 2px 0;
+}
+
+.studi-calendar .fc-daygrid-day-top {
+  flex-direction: row;
+  padding: 2px 4px 0;
+}
+
+.studi-calendar .fc-daygrid-day-number {
+  padding: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.studi-calendar .fc-day-other .fc-daygrid-day-top {
+  opacity: 0.45;
+}
+
+.studi-calendar .fc-daygrid-more-link {
+  margin: 0 3px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+.studi-calendar .fc-popover {
+  overflow: hidden;
+  border: none;
+  border-radius: 16px;
+  background: var(--raised);
+  box-shadow: var(--shadow-pop), 0 0 0 1px var(--hairline);
+}
+
+.studi-calendar .fc-popover-header {
+  padding: 10px 12px 4px;
+  background: transparent;
+  font-weight: 600;
+}
+
+.studi-calendar .fc-highlight {
+  border-radius: 10px;
+}
+
+.studi-calendar .fc-event-mirror .studi-ev {
+  border: 1.5px dashed var(--accent-ink);
+  background: color-mix(in srgb, var(--accent-soft) 60%, var(--raised));
+  color: var(--accent-text);
+}
+
+.studi-calendar .fc-timegrid-now-indicator-line {
+  border-color: var(--studi-now);
+  border-width: 2px 0 0;
+}
+
+.studi-calendar .fc-timegrid-now-indicator-line::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: -6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--studi-now);
+}
+
+.studi-calendar .fc-timegrid-now-indicator-arrow {
+  display: none;
+}
+
+.studi-calendar .fc-scroller {
+  scrollbar-width: thin;
+  scrollbar-color: var(--hairline) transparent;
 }

@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/study-together/timer-sync.test.ts src/lib/progress/streaks.test.ts src/lib/dashboard.test.ts"
+    "test": "tsx --test src/lib/study-together/timer-sync.test.ts src/lib/progress/streaks.test.ts src/lib/dashboard.test.ts src/lib/planning.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

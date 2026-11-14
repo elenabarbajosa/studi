@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { Check, Play, Plus } from "lucide-react";
+import { Play, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { setTaskStatus } from "@/actions/tasks";
 import { useOpenNewTask } from "@/components/dashboard/new-task-provider";
 import { Tile, TileHeader, tileLinkClass } from "@/components/dashboard/tile";
+import { RoundCheckbox } from "@/components/studi/round-checkbox";
 import type { PriorityLevel } from "@/lib/calendar";
 import { PRIORITY_MARK } from "@/lib/dashboard";
 import { cn } from "@/lib/utils";
@@ -75,34 +76,17 @@ function TaskCheckbox({
   row,
   checked,
   onToggle,
-  size,
 }: {
   row: TodayTaskRow;
   checked: boolean;
   onToggle: () => void;
-  size: "sm" | "md";
 }) {
   return (
-    <button
-      type="button"
-      role="checkbox"
-      aria-checked={checked}
-      aria-label={`Complete “${row.title}”`}
-      onClick={onToggle}
-      className="group/check -m-2.5 flex size-[42px] shrink-0 items-center justify-center rounded-full outline-none"
-    >
-      <span
-        className={cn(
-          "flex items-center justify-center rounded-full border-[1.8px] transition-colors duration-200 group-focus-visible/check:ring-2 group-focus-visible/check:ring-ring group-focus-visible/check:ring-offset-2 group-focus-visible/check:ring-offset-raised",
-          size === "md" ? "size-[22px]" : "size-5",
-          checked
-            ? "border-primary bg-primary text-primary-foreground dark:border-accent dark:bg-accent dark:text-ink-on-accent"
-            : "border-ink-4 group-hover/check:border-ink-3",
-        )}
-      >
-        {checked ? <Check className="size-3" strokeWidth={3} aria-hidden /> : null}
-      </span>
-    </button>
+    <RoundCheckbox
+      checked={checked}
+      onToggle={onToggle}
+      label={`Complete “${row.title}”`}
+    />
   );
 }
 
@@ -191,7 +175,7 @@ export function TodayTasksTile({ rows }: { rows: TodayTaskRow[] }) {
                 key={row.id}
                 className="flex min-h-11 items-center gap-[11px] border-b border-hairline last:border-b-0"
               >
-                <TaskCheckbox row={row} checked={checked} onToggle={() => toggle(row)} size="md" />
+                <TaskCheckbox row={row} checked={checked} onToggle={() => toggle(row)} />
                 <span
                   className={cn(
                     "min-w-0 flex-1 truncate text-[14.5px] transition-colors duration-200",
@@ -247,7 +231,7 @@ export function MobileTodayTasks({ rows }: { rows: TodayTaskRow[] }) {
                 key={row.id}
                 className="flex h-[50px] items-center gap-3 border-b border-sunken last:border-b-0"
               >
-                <TaskCheckbox row={row} checked={checked} onToggle={() => toggle(row)} size="md" />
+                <TaskCheckbox row={row} checked={checked} onToggle={() => toggle(row)} />
                 <span
                   className={cn(
                     "min-w-0 flex-1 truncate text-[15px]",

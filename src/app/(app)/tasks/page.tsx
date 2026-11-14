@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 
-import { PageHeader } from "@/components/shared/page-header";
 import { TasksBoard, type TaskView } from "@/components/tasks/tasks-board";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireProfile } from "@/lib/auth";
@@ -37,29 +36,28 @@ async function TasksContent({ searchParams }: TasksPageProps) {
   const subtasks = await listSubtasksForTasks(tasks.map((t) => t.id));
 
   return (
-    <div>
-      <PageHeader
-        title="Tasks"
-        description="Personal to-dos with due dates, priorities, and optional study blocks."
-      />
-      <TasksBoard
-        tasks={tasks}
-        subtasks={subtasks}
-        subjects={subjects}
-        topics={topics}
-        initialView={parseView(params.view)}
-      />
-    </div>
+    <TasksBoard
+      tasks={tasks}
+      subtasks={subtasks}
+      subjects={subjects}
+      topics={topics}
+      initialView={parseView(params.view)}
+    />
   );
 }
 
 function TasksFallback() {
   return (
-    <div className="space-y-4">
-      <Skeleton className="h-10 w-40" />
-      <Skeleton className="h-8 w-64" />
-      <Skeleton className="h-24 w-full rounded-2xl" />
-      <Skeleton className="h-24 w-full rounded-2xl" />
+    <div className="mx-auto flex w-full max-w-[900px] flex-col gap-4" aria-busy="true" aria-label="Loading tasks">
+      <div className="flex items-center justify-between gap-3">
+        <Skeleton className="h-8 w-28 rounded-full" />
+        <Skeleton className="hidden h-9 w-80 rounded-full md:block" />
+      </div>
+      <Skeleton className="h-8 w-full max-w-lg rounded-full" />
+      <Skeleton className="hidden h-[50px] w-full rounded-[14px] md:block" />
+      {Array.from({ length: 5 }, (_, i) => (
+        <Skeleton key={i} className="h-[52px] w-full rounded-[14px]" />
+      ))}
     </div>
   );
 }

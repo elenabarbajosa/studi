@@ -1,85 +1,61 @@
 import { Suspense } from "react";
-import { BookOpen } from "lucide-react";
 
-import { EmptyState } from "@/components/shared/empty-state";
-import { PageHeader } from "@/components/shared/page-header";
-import { SubjectCard } from "@/components/subjects/subject-card";
-import { SubjectForm } from "@/components/subjects/subject-form";
+import type { SubjectTileData } from "@/components/subjects/subject-card";
+import { SubjectsOverview } from "@/components/subjects/subjects-overview";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireProfile } from "@/lib/auth";
+import { listAssessments } from "@/lib/data/calendar";
 import { listSubjects, listTopicsForSubject } from "@/lib/data/subjects";
+import { daysUntil } from "@/lib/dashboard";
 import { topicProgressSummary } from "@/lib/subjects";
 
 export const metadata = { title: "Subjects" };
 
 async function SubjectsContent() {
   await requireProfile();
-  const subjects = await listSubjects();
+  const [subjects, assessments] = await Promise.all([listSubjects(), listAssessments()]);
+  const now = new Date();
 
-  const cards = await Promise.all(
+  const tiles: SubjectTileData[] = await Promise.all(
     subjects.map(async (subject) => {
       const topics = await listTopicsForSubject(subject.id);
       const summary = topicProgressSummary(topics);
-      return { subject, summary };
+      const next = assessments
+        .filter(
+          (a) => a.subject_id === subject.id && !a.completed && daysUntil(a.starts_at, now) >= 0,
+        )
+        .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())[0];
+      return {
+        subject,
+        topicCount: summary.total,
+        masteredCount: summary.mastered,
+        nextAssessment: next ? { title: next.title, days: daysUntil(next.starts_at, now) } : null,
+      };
     }),
   );
 
+  return <SubjectsOverview tiles={tiles} />;
+}
+
+function SubjectsFallback() {
   return (
-    <div>
-      <PageHeader
-        title="Subjects"
-        description="Organize courses with topics, materials, and honest progress."
-      />
-
-      {cards.length === 0 ? (
-        <div className="mb-8">
-          <EmptyState
-            icon={BookOpen}
-            title="No subjects yet"
-            description="Create your first course to start building topics and materials. Nothing is simulated."
-            hint="Private to your account"
-          />
-        </div>
-      ) : (
-        <div className="mb-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {cards.map(({ subject, summary }) => (
-            <SubjectCard
-              key={subject.id}
-              subject={subject}
-              topicCount={summary.total}
-              masteredCount={summary.mastered}
-            />
-          ))}
-        </div>
-      )}
-
-      <section className="studi-panel p-6 sm:p-8">
-        <h2 className="font-display text-2xl tracking-tight">
-          {cards.length === 0 ? "Create your first subject" : "Add another subject"}
-        </h2>
-        <p className="mt-1 mb-6 text-sm text-muted-foreground">
-          Choose a color and optional difficulty so your workspace stays scannable.
-        </p>
-        <SubjectForm />
-      </section>
+    <div className="flex flex-col gap-5" aria-busy="true" aria-label="Loading subjects">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-9 w-40 rounded-full" />
+        <Skeleton className="h-9 w-36 rounded-full" />
+      </div>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,260px),1fr))] gap-3">
+        {Array.from({ length: 6 }, (_, i) => (
+          <Skeleton key={i} className="h-[190px] rounded-[24px]" />
+        ))}
+      </div>
     </div>
   );
 }
 
 export default function SubjectsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="space-y-6">
-          <Skeleton className="h-10 w-48" />
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <Skeleton className="h-40 rounded-2xl" />
-            <Skeleton className="h-40 rounded-2xl" />
-            <Skeleton className="h-40 rounded-2xl" />
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<SubjectsFallback />}>
       <SubjectsContent />
     </Suspense>
   );
