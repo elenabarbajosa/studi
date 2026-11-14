@@ -41,7 +41,6 @@ export function ThemeProvider({
       attribute="class"
       defaultTheme={defaultAppearance}
       enableSystem
-      disableTransitionOnChange
       storageKey="studi-appearance"
     >
       <AccentContext.Provider value={{ accent, setAccent }}>

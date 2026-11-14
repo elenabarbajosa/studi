@@ -13,20 +13,90 @@ export const SUBJECT_COLORS = [
 
 export type SubjectColor = (typeof SUBJECT_COLORS)[number];
 
+export type SubjectTone = { dot: string; tint: string; text: string };
+
+/** Approved subject palette, keyed by the stored dot hex. */
+export const SUBJECT_TONES: Record<string, SubjectTone> = {
+  "#D46A80": { dot: "#D46A80", tint: "#FBE9EC", text: "#A23A55" },
+  "#4C93C9": { dot: "#4C93C9", tint: "#E5F0F9", text: "#2B6896" },
+  "#4E9E78": { dot: "#4E9E78", tint: "#E6F3EC", text: "#2F6E50" },
+  "#8E7CCB": { dot: "#8E7CCB", tint: "#EFEBFA", text: "#5B4A99" },
+  "#E08A5B": { dot: "#E08A5B", tint: "#FBEBE1", text: "#9A4F24" },
+  "#6B7280": { dot: "#6B7280", tint: "#EEEFF1", text: "#3F4550" },
+  "#D9706B": { dot: "#D9706B", tint: "#FBE7E5", text: "#A1302C" },
+  "#C98A2E": { dot: "#C98A2E", tint: "#FAF0DF", text: "#8A5A12" },
+  "#3E9C96": { dot: "#3E9C96", tint: "#E1F2F0", text: "#226B66" },
+  "#6A7BCF": { dot: "#6A7BCF", tint: "#E9ECFA", text: "#3E4FA0" },
+};
+
+/**
+ * Existing subject rows store color names, not hex.
+ * Each name maps once onto the approved palette. Pink and rose stay distinct:
+ * pink uses rose, rose uses coral.
+ */
+const SUBJECT_COLOR_HEX: Record<SubjectColor, keyof typeof SUBJECT_TONES> = {
+  pink: "#D46A80",
+  blue: "#4C93C9",
+  green: "#4E9E78",
+  purple: "#8E7CCB",
+  peach: "#E08A5B",
+  neutral: "#6B7280",
+  rose: "#D9706B",
+  amber: "#C98A2E",
+  teal: "#3E9C96",
+  indigo: "#6A7BCF",
+};
+
+const SUBJECT_COLOR_LABEL: Record<SubjectColor, string> = {
+  pink: "Pink",
+  blue: "Blue",
+  green: "Green",
+  purple: "Purple",
+  peach: "Peach",
+  neutral: "Neutral",
+  rose: "Rose",
+  amber: "Amber",
+  teal: "Teal",
+  indigo: "Indigo",
+};
+
+export function subjectTone(color: SubjectColor): SubjectTone {
+  return SUBJECT_TONES[SUBJECT_COLOR_HEX[color]];
+}
+
+export function subjectToneVars(color: SubjectColor) {
+  const tone = subjectTone(color);
+  return {
+    "--subject-dot": tone.dot,
+    "--subject-tint": tone.tint,
+    "--subject-text": tone.text,
+  } as const;
+}
+
+function subjectColorMeta(color: SubjectColor) {
+  const tone = subjectTone(color);
+  return {
+    label: SUBJECT_COLOR_LABEL[color],
+    swatch: tone.dot,
+    tint: tone.tint,
+    text: tone.text,
+  };
+}
+
 export const SUBJECT_COLOR_META: Record<
   SubjectColor,
-  { label: string; swatch: string }
+  { label: string; swatch: string; tint: string; text: string }
 > = {
-  pink: { label: "Pink", swatch: "oklch(0.78 0.1 10)" },
-  blue: { label: "Blue", swatch: "oklch(0.72 0.1 245)" },
-  green: { label: "Green", swatch: "oklch(0.75 0.1 160)" },
-  purple: { label: "Purple", swatch: "oklch(0.72 0.1 300)" },
-  peach: { label: "Peach", swatch: "oklch(0.8 0.1 50)" },
-  neutral: { label: "Neutral", swatch: "oklch(0.55 0.02 260)" },
-  rose: { label: "Rose", swatch: "oklch(0.7 0.14 15)" },
-  amber: { label: "Amber", swatch: "oklch(0.8 0.12 75)" },
-  teal: { label: "Teal", swatch: "oklch(0.72 0.09 190)" },
-  indigo: { label: "Indigo", swatch: "oklch(0.65 0.12 275)" },
+  pink: subjectColorMeta("pink"),
+  blue: subjectColorMeta("blue"),
+  green: subjectColorMeta("green"),
+  purple: subjectColorMeta("purple"),
+  peach: subjectColorMeta("peach"),
+  neutral: subjectColorMeta("neutral"),
+  rose: subjectColorMeta("rose"),
+  amber: subjectColorMeta("amber"),
+  teal: subjectColorMeta("teal"),
+  indigo: subjectColorMeta("indigo"),
 };
 
 export const TOPIC_STATUSES = [

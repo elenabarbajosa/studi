@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
-import { Fraunces, Source_Sans_3 } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -9,14 +9,14 @@ import { DEFAULT_ACCENT } from "@/lib/theme";
 
 import "./globals.css";
 
-const sourceSans = Source_Sans_3({
+const geist = Geist({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
 });
 
-const fraunces = Fraunces({
-  variable: "--font-display",
+const geistMono = Geist_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
   display: "swap",
 });
@@ -30,6 +30,14 @@ export const metadata: Metadata = {
     "A calm, Notion-inspired workspace for academic planning, focus, and studying together.",
 };
 
+export const viewport: Viewport = {
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F4EFEB" },
+    { media: "(prefers-color-scheme: dark)", color: "#171315" },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -40,7 +48,7 @@ export default function RootLayout({
       lang="en"
       data-accent={DEFAULT_ACCENT}
       data-scroll-behavior="smooth"
-      className={`${sourceSans.variable} ${fraunces.variable} h-full`}
+      className={`${geist.variable} ${geistMono.variable} h-full`}
       suppressHydrationWarning
     >
       <head>

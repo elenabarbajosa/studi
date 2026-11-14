@@ -1,9 +1,11 @@
 import { Suspense } from "react";
 import { io } from "next/cache";
+import { cookies } from "next/headers";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { requireProfile } from "@/lib/auth";
 import { resolveAvatarSrc } from "@/lib/avatar-server";
+import { parseSidebarCollapsed, SIDEBAR_COOKIE } from "@/lib/sidebar-cookie";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const instant = false;
@@ -19,8 +21,16 @@ async function AuthenticatedShell({
   await io();
   const { profile } = await requireProfile();
   const avatarSrc = await resolveAvatarSrc(profile);
+  const cookieStore = await cookies();
+  const sidebarCollapsed = parseSidebarCollapsed(
+    cookieStore.get(SIDEBAR_COOKIE)?.value,
+  );
   return (
-    <AppShell profile={profile} avatarSrc={avatarSrc}>
+    <AppShell
+      profile={profile}
+      avatarSrc={avatarSrc}
+      sidebarCollapsed={sidebarCollapsed}
+    >
       {children}
     </AppShell>
   );
@@ -28,7 +38,7 @@ async function AuthenticatedShell({
 
 function AppShellFallback() {
   return (
-    <div className="flex min-h-svh items-center justify-center p-8">
+    <div className="flex min-h-svh items-center justify-center bg-chrome p-8">
       <div className="w-full max-w-sm space-y-3">
         <Skeleton className="h-8 w-32" />
         <Skeleton className="h-4 w-full" />

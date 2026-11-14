@@ -139,8 +139,8 @@ export function SettingsForm({ profile, avatarSrc }: SettingsFormProps) {
         <div className="mb-6">
           <h2 className="font-display text-2xl tracking-tight">Appearance</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Choose light, dark, or match your system. Accent colors tint the
-            whole workspace.
+            Choose light, dark, or match your system. Accent colors mark
+            buttons, links, and focus.
           </p>
         </div>
 

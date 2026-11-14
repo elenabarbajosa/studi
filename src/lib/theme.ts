@@ -14,39 +14,43 @@ export type AccentColor = (typeof ACCENT_COLORS)[number];
 export const DEFAULT_APPEARANCE: AppearanceMode = "system";
 export const DEFAULT_ACCENT: AccentColor = "pink";
 
+/**
+ * Swatches are the approved accent base colors.
+ * `green` and `purple` stay as stored profile values and render Sage and Lavender.
+ */
 export const ACCENT_META: Record<
   AccentColor,
   { label: string; swatch: string; description: string }
 > = {
   pink: {
-    label: "Soft Pink",
-    swatch: "oklch(0.82 0.08 10)",
-    description: "Warm pastel rose — the default Studi look",
+    label: "Pink",
+    swatch: "#D98A9B",
+    description: "Warm rose — the default Studi accent",
   },
   blue: {
-    label: "Sky Blue",
-    swatch: "oklch(0.78 0.08 240)",
+    label: "Blue",
+    swatch: "#7FA8D9",
     description: "Calm study blue",
   },
   green: {
-    label: "Mint",
-    swatch: "oklch(0.82 0.08 160)",
-    description: "Fresh focus green",
+    label: "Sage",
+    swatch: "#86B79B",
+    description: "Quiet sage",
   },
   purple: {
     label: "Lavender",
-    swatch: "oklch(0.78 0.08 300)",
-    description: "Soft lilac accent",
+    swatch: "#A99BDB",
+    description: "Soft lilac",
   },
   peach: {
     label: "Peach",
-    swatch: "oklch(0.84 0.08 50)",
-    description: "Gentle warm peach",
+    swatch: "#E7A57F",
+    description: "Warm peach",
   },
   neutral: {
     label: "Neutral",
-    swatch: "oklch(0.55 0.01 260)",
-    description: "Quiet graphite",
+    swatch: "#9C9094",
+    description: "Quiet stone",
   },
 };
 
