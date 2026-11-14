@@ -8,6 +8,7 @@ export type UpNextContent = {
   label: string;
   title: string;
   meta: string | null;
+  focusHref?: string;
 };
 
 type UpNextTileProps = {
@@ -23,6 +24,7 @@ const startButtonClass =
   "inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-[14.5px] font-semibold text-primary-foreground shadow-[0_10px_22px_-10px_var(--primary)] outline-none transition-[filter] hover:brightness-[.92] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-accent-soft dark:bg-accent dark:text-ink-on-accent dark:shadow-none";
 
 export function UpNextTile({ content, focusMinutes, breakMinutes }: UpNextTileProps) {
+  const href = content.focusHref ?? "/focus";
   return (
     <Tile
       variant="hero"
@@ -55,7 +57,7 @@ export function UpNextTile({ content, focusMinutes, breakMinutes }: UpNextTilePr
         <span className="mt-2 text-[13px] font-medium text-ink-2 tabular-nums">
           {breakMinutes > 0 ? `${breakMinutes}m break` : "No break"}
         </span>
-        <Link href="/focus" className={`${startButtonClass} mt-3`}>
+        <Link href={href} className={`${startButtonClass} mt-3`}>
           <Play className="size-3.5 fill-current" aria-hidden />
           Start
           <span className="sr-only"> a {focusMinutes}-minute focus session</span>
@@ -66,6 +68,7 @@ export function UpNextTile({ content, focusMinutes, breakMinutes }: UpNextTilePr
 }
 
 export function MobileUpNextTile({ content, focusMinutes }: UpNextTileProps) {
+  const href = content.focusHref ?? "/focus";
   return (
     <Tile
       variant="hero"
@@ -94,7 +97,7 @@ export function MobileUpNextTile({ content, focusMinutes }: UpNextTileProps) {
         trackClassName="stroke-canvas/60"
       >
         <Link
-          href="/focus"
+          href={href}
           className="flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-accent-soft active:scale-95 dark:bg-accent dark:text-ink-on-accent"
         >
           <Play className="ml-[3px] size-[22px] fill-current" aria-hidden />

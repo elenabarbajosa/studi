@@ -17,6 +17,7 @@ export type TodayTaskRow = {
   id: string;
   title: string;
   priority: PriorityLevel;
+  subjectId: string | null;
   subjectName: string | null;
   subjectDot: string | null;
   overdueLabel: string | null;
@@ -186,7 +187,7 @@ export function TodayTasksTile({ rows }: { rows: TodayTaskRow[] }) {
                 </span>
                 <TaskMeta row={row} />
                 <Link
-                  href="/focus"
+                  href={`/focus?task=${row.id}${row.subjectId ? `&subject=${row.subjectId}` : ""}`}
                   title="Start focus"
                   className="flex size-7 shrink-0 items-center justify-center rounded-full text-ink-3 outline-none transition-colors hover:bg-sunken hover:text-ink focus-visible:ring-2 focus-visible:ring-ring"
                 >

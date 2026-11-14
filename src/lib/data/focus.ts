@@ -3,22 +3,16 @@ import "server-only";
 import { cache } from "react";
 
 import { getSessionUser } from "@/lib/auth";
+import { buildDailyFocusSeries } from "@/lib/focus/stats-days";
+import { getGamificationPreferences } from "@/lib/data/progress";
+import {
+  addLocalDays,
+  localDateKey,
+  localMidnightIso,
+  startOfLocalWeekKey,
+} from "@/lib/progress/timezone";
 import { createClient } from "@/lib/supabase/server";
 import type { FocusActiveSession, StudySession } from "@/types/database";
-
-function startOfLocalDay(d = new Date()) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
-
-function startOfLocalWeek(d = new Date()) {
-  const x = startOfLocalDay(d);
-  const day = x.getDay(); // 0 Sun
-  const diff = day === 0 ? -6 : 1 - day; // Monday start
-  x.setDate(x.getDate() + diff);
-  return x;
-}
 
 export const getActiveFocusSession = cache(
   async (): Promise<FocusActiveSession | null> => {
@@ -88,11 +82,14 @@ export const getFocusStats = cache(async (): Promise<FocusStats> => {
   if (!user) return empty;
 
   const supabase = await createClient();
-  const todayStart = startOfLocalDay().toISOString();
-  const weekStart = startOfLocalWeek().toISOString();
-  const historyStart = new Date();
-  historyStart.setDate(historyStart.getDate() - 27);
-  historyStart.setHours(0, 0, 0, 0);
+  const gamification = await getGamificationPreferences();
+  const timeZone = gamification.timezone || "UTC";
+  const todayKey = localDateKey(new Date(), timeZone);
+  const historyStartKey = addLocalDays(todayKey, -27);
+  const weekStartKey = startOfLocalWeekKey(todayKey, timeZone);
+  const historyStartIso = localMidnightIso(historyStartKey, timeZone);
+  const todayStartIso = localMidnightIso(todayKey, timeZone);
+  const weekStartIso = localMidnightIso(weekStartKey, timeZone);
 
   const [sessionsRes, prefsRes] = await Promise.all([
     supabase
@@ -101,7 +98,7 @@ export const getFocusStats = cache(async (): Promise<FocusStats> => {
       .eq("user_id", user.id)
       .in("source", ["focus", "study_together"])
       .eq("status", "completed")
-      .gte("starts_at", historyStart.toISOString())
+      .gte("starts_at", historyStartIso)
       .order("starts_at", { ascending: true }),
     supabase
       .from("study_preferences")
@@ -117,10 +114,10 @@ export const getFocusStats = cache(async (): Promise<FocusStats> => {
 
   const sessions = sessionsRes.data ?? [];
   const todaySec = sessions
-    .filter((s) => s.starts_at >= todayStart)
+    .filter((s) => s.starts_at >= todayStartIso)
     .reduce((sum, s) => sum + (s.focus_seconds ?? 0), 0);
   const weekSec = sessions
-    .filter((s) => s.starts_at >= weekStart)
+    .filter((s) => s.starts_at >= weekStartIso)
     .reduce((sum, s) => sum + (s.focus_seconds ?? 0), 0);
   const totalSec = sessions.reduce((sum, s) => sum + (s.focus_seconds ?? 0), 0);
   const count = sessions.length;
@@ -131,19 +128,11 @@ export const getFocusStats = cache(async (): Promise<FocusStats> => {
     bySubjectMap.set(key, (bySubjectMap.get(key) ?? 0) + (s.focus_seconds ?? 0));
   }
 
-  const dailyMap = new Map<string, number>();
-  for (let i = 0; i < 28; i++) {
-    const d = new Date(historyStart);
-    d.setDate(historyStart.getDate() + i);
-    const key = d.toISOString().slice(0, 10);
-    dailyMap.set(key, 0);
-  }
-  for (const s of sessions) {
-    const key = new Date(s.starts_at).toISOString().slice(0, 10);
-    if (dailyMap.has(key)) {
-      dailyMap.set(key, (dailyMap.get(key) ?? 0) + (s.focus_seconds ?? 0));
-    }
-  }
+  const daily = buildDailyFocusSeries(sessions, {
+    startKey: historyStartKey,
+    dayCount: 28,
+    timeZone,
+  });
 
   const weeklyGoalHours = prefsRes.data?.weekly_goal_hours ?? null;
   const weekGoalProgress =
@@ -160,7 +149,7 @@ export const getFocusStats = cache(async (): Promise<FocusStats> => {
     bySubject: [...bySubjectMap.entries()]
       .map(([subjectId, seconds]) => ({ subjectId, seconds }))
       .sort((a, b) => b.seconds - a.seconds),
-    daily: [...dailyMap.entries()].map(([date, seconds]) => ({ date, seconds })),
+    daily,
     weeklyGoalHours,
     weekGoalProgress,
   };

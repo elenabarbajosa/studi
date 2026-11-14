@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useSyncExternalStore } from "react";
 import { GraduationCap } from "lucide-react";
 
 import { Tile, TileHeader, tileLinkClass } from "@/components/dashboard/tile";
+import { daysUntil } from "@/lib/dashboard";
 import { subjectToneVars, type SubjectColor } from "@/lib/subjects";
 import { cn } from "@/lib/utils";
 
@@ -11,10 +15,23 @@ export type CountdownItem = {
   typeLabel: string;
   subjectName: string | null;
   subjectColor: SubjectColor | null;
+  /** ISO start — days are derived on the client in the viewer's local calendar. */
+  startsAt: string;
+  /** Server-rendered fallback; replaced after hydration. */
   days: number;
   weekday: string;
   href: string;
 };
+
+const noopSubscribe = () => () => {};
+
+function useViewerNow() {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => Date.now(),
+    () => null,
+  );
+}
 
 function toneProps(color: SubjectColor | null) {
   return color
@@ -28,7 +45,22 @@ function daysText(days: number) {
   return `in ${days} days`;
 }
 
+function withLocalDays(items: CountdownItem[], nowMs: number | null) {
+  if (nowMs == null) return items;
+  const now = new Date(nowMs);
+  return items.map((item) => ({
+    ...item,
+    days: daysUntil(item.startsAt, now),
+    weekday: new Date(item.startsAt).toLocaleDateString("en-GB", {
+      weekday: "short",
+    }),
+  }));
+}
+
 export function CountdownTile({ items }: { items: CountdownItem[] }) {
+  const nowMs = useViewerNow();
+  const localItems = withLocalDays(items, nowMs);
+
   return (
     <Tile
       aria-labelledby="countdown-title"
@@ -43,7 +75,7 @@ export function CountdownTile({ items }: { items: CountdownItem[] }) {
           </Link>
         }
       />
-      {items.length === 0 ? (
+      {localItems.length === 0 ? (
         <div className="flex flex-1 flex-col justify-center gap-1 py-4">
           <p className="text-[15px] font-semibold text-ink">No exams ahead</p>
           <p className="text-[13.5px] leading-snug text-ink-2">
@@ -55,7 +87,7 @@ export function CountdownTile({ items }: { items: CountdownItem[] }) {
         </div>
       ) : (
         <ul className="grid flex-1 auto-rows-fr grid-cols-2 gap-2">
-          {items.slice(0, 4).map((item) => {
+          {localItems.slice(0, 4).map((item) => {
             const tone = toneProps(item.subjectColor);
             return (
               <li key={item.id} className="min-w-0">
@@ -98,7 +130,12 @@ export function CountdownTile({ items }: { items: CountdownItem[] }) {
 }
 
 export function MobileNextExamTile({ item }: { item: CountdownItem | null }) {
-  if (!item) {
+  const nowMs = useViewerNow();
+  const local = item
+    ? withLocalDays([item], nowMs)[0]!
+    : null;
+
+  if (!local) {
     return (
       <Link
         href="/subjects"
@@ -113,31 +150,31 @@ export function MobileNextExamTile({ item }: { item: CountdownItem | null }) {
     );
   }
 
-  const tone = toneProps(item.subjectColor);
+  const tone = toneProps(local.subjectColor);
   return (
     <Link
-      href={item.href}
+      href={local.href}
       className={cn(
         "flex min-w-0 flex-col justify-between gap-1 rounded-[22px] p-4 outline-none focus-visible:ring-2 focus-visible:ring-ring",
         tone.className,
       )}
       style={tone.style}
     >
-      <span className="truncate text-[12.5px]">{item.title}</span>
+      <span className="truncate text-[12.5px]">{local.title}</span>
       <span className="text-[40px] leading-none font-semibold tracking-[-0.04em] tabular-nums">
-        {item.days <= 0 ? (
+        {local.days <= 0 ? (
           <span className="text-[28px]">Today</span>
         ) : (
           <>
-            {item.days}
+            {local.days}
             <span className="text-[15px]">
-              {item.days === 1 ? " day" : " days"}
+              {local.days === 1 ? " day" : " days"}
             </span>
           </>
         )}
       </span>
       <span className="truncate text-[12.5px]">
-        {item.subjectName ?? item.typeLabel} · {item.weekday}
+        {local.subjectName ?? local.typeLabel} · {local.weekday}
       </span>
     </Link>
   );

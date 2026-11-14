@@ -50,7 +50,48 @@ type FocusBoardProps = {
   weeklyGoalHours: number | null;
   todayFocusSeconds: number;
   recentSessions: StudySession[];
+  /** Deep-link preselect from Tasks / Subjects. Ignored once a session is active. */
+  initialSubjectId?: string;
+  initialTaskId?: string;
+  initialTopicId?: string;
 };
+
+function resolveInitialSelection(input: {
+  subjects: Subject[];
+  topics: Topic[];
+  tasks: Task[];
+  initialSubjectId?: string;
+  initialTaskId?: string;
+  initialTopicId?: string;
+}) {
+  const task = input.initialTaskId
+    ? input.tasks.find((t) => t.id === input.initialTaskId)
+    : undefined;
+  const subjectId =
+    (task?.subject_id &&
+    input.subjects.some((s) => s.id === task.subject_id)
+      ? task.subject_id
+      : null) ||
+    (input.initialSubjectId &&
+    input.subjects.some((s) => s.id === input.initialSubjectId)
+      ? input.initialSubjectId
+      : "") ||
+    "";
+  const topicId =
+    input.initialTopicId &&
+    input.topics.some(
+      (t) =>
+        t.id === input.initialTopicId &&
+        (!subjectId || t.subject_id === subjectId),
+    )
+      ? input.initialTopicId
+      : task?.topic_id &&
+          input.topics.some((t) => t.id === task.topic_id)
+        ? task.topic_id
+        : "";
+  const taskId = task ? task.id : "";
+  return { subjectId, topicId, taskId };
+}
 
 const PHONE_QUERY = "(max-width: 767px)";
 
@@ -83,14 +124,25 @@ export function FocusBoard({
   weeklyGoalHours,
   todayFocusSeconds,
   recentSessions,
+  initialSubjectId,
+  initialTaskId,
+  initialTopicId,
 }: FocusBoardProps) {
   const config = defaultFocusConfig(preferences);
   const timer = useFocusTimer(config);
   const isPhone = useIsPhone();
 
-  const [subjectId, setSubjectId] = useState("");
-  const [topicId, setTopicId] = useState("");
-  const [taskId, setTaskId] = useState("");
+  const initial = resolveInitialSelection({
+    subjects,
+    topics,
+    tasks,
+    initialSubjectId,
+    initialTaskId,
+    initialTopicId,
+  });
+  const [subjectId, setSubjectId] = useState(initial.subjectId);
+  const [topicId, setTopicId] = useState(initial.topicId);
+  const [taskId, setTaskId] = useState(initial.taskId);
   const [goal, setGoal] = useState("");
   const [distractionFree, setDistractionFree] = useState(false);
   const [phoneMinimized, setPhoneMinimized] = useState(false);

@@ -14,6 +14,14 @@ import type { SoundscapeId } from "@/lib/calendar";
 
 export const metadata = { title: "Focus" };
 
+type FocusPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function firstString(value: string | string[] | undefined) {
+  return typeof value === "string" ? value : undefined;
+}
+
 function toFocusPrefs(
   prefs: Awaited<ReturnType<typeof getStudyPreferences>>,
 ): FocusPreferences {
@@ -33,8 +41,9 @@ function toFocusPrefs(
   };
 }
 
-async function FocusContent() {
+async function FocusContent({ searchParams }: FocusPageProps) {
   await requireProfile();
+  const params = await searchParams;
   const [subjects, topics, tasks, preferences, todayFocusSeconds, recent] =
     await Promise.all([
       listSubjects(),
@@ -45,6 +54,10 @@ async function FocusContent() {
       listCompletedFocusSessions(12),
     ]);
 
+  const initialSubjectId = firstString(params.subject);
+  const initialTaskId = firstString(params.task);
+  const initialTopicId = firstString(params.topic);
+
   return (
     <FocusBoard
       subjects={subjects}
@@ -54,6 +67,9 @@ async function FocusContent() {
       weeklyGoalHours={preferences?.weekly_goal_hours ?? null}
       todayFocusSeconds={todayFocusSeconds}
       recentSessions={recent}
+      initialSubjectId={initialSubjectId}
+      initialTaskId={initialTaskId}
+      initialTopicId={initialTopicId}
     />
   );
 }
@@ -74,10 +90,10 @@ function FocusFallback() {
   );
 }
 
-export default function FocusPage() {
+export default function FocusPage(props: FocusPageProps) {
   return (
     <Suspense fallback={<FocusFallback />}>
-      <FocusContent />
+      <FocusContent {...props} />
     </Suspense>
   );
 }

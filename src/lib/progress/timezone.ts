@@ -153,3 +153,8 @@ function findLocalMidnightUtc(dateKey: string, timeZone: string): number {
   }
   return hi;
 }
+
+/** Instant of local midnight for `dateKey` in `timeZone`, as an ISO string. */
+export function localMidnightIso(dateKey: string, timeZone: string): string {
+  return new Date(findLocalMidnightUtc(dateKey, timeZone)).toISOString();
+}

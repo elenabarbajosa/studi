@@ -12,9 +12,10 @@ import {
 } from "@/actions/auth";
 import { AuthMessage } from "@/components/auth/auth-message";
 import { Brand } from "@/components/shared/brand";
-import { Button } from "@/components/ui/button";
+import { Field } from "@/components/studi/form-controls";
+import { primaryPillClass, softPillClass } from "@/components/studi/page-title";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 type AuthFormProps = {
   mode: "login" | "signup";
@@ -28,23 +29,46 @@ const initialState: AuthActionState = {};
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" className="w-full" disabled={pending}>
+    <button type="submit" className={cn(primaryPillClass, "h-11 w-full justify-center md:h-11")} disabled={pending}>
       {pending ? "Please wait…" : label}
-    </Button>
+    </button>
   );
 }
 
 function GoogleButton() {
   const { pending } = useFormStatus();
   return (
-    <Button
+    <button
       type="submit"
-      variant="outline"
-      className="w-full"
+      className={cn(softPillClass, "h-11 w-full justify-center gap-2 md:h-11")}
       disabled={pending}
     >
+      <GoogleMark />
       {pending ? "Redirecting…" : "Continue with Google"}
-    </Button>
+    </button>
+  );
+}
+
+function GoogleMark() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 18 18" aria-hidden>
+      <path
+        fill="#4285F4"
+        d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z"
+      />
+      <path
+        fill="#34A853"
+        d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.163 6.656 3.58 9 3.58Z"
+      />
+    </svg>
   );
 }
 
@@ -62,44 +86,43 @@ export function AuthForm({
   );
 
   return (
-    <div className="mx-auto w-full max-w-md">
-      <div className="mb-8 space-y-3 text-center sm:text-left">
+    <div className="mx-auto w-full max-w-[420px]">
+      <div className="mb-8 flex flex-col items-center gap-3 text-center sm:items-start sm:text-left">
         <Brand href="/" size="md" />
         <div>
-          <h1 className="font-display text-3xl tracking-tight">
+          <h1 className="text-[30px] leading-[1.1] font-semibold tracking-[-0.035em] text-ink md:text-[32px]">
             {mode === "login" ? "Welcome back" : "Create your space"}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1.5 text-[14.5px] text-ink-2">
             {mode === "login"
               ? "Sign in to continue studying with Studi."
-              : "Set up a private academic workspace in a minute."}
+              : "A private academic workspace in a minute."}
           </p>
         </div>
       </div>
 
       <AuthMessage error={bannerError} notice={bannerNotice} />
 
-      <div className="studi-panel space-y-6 p-6 sm:p-8">
+      <div className="flex flex-col gap-5 rounded-[26px] bg-raised p-6 shadow-[0_0_0_1px_var(--hairline)] md:p-8">
         <form action={googleAction}>
           <GoogleButton />
         </form>
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-border" />
+            <span className="w-full border-t border-[color:var(--hairline)]" />
           </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">or email</span>
+          <div className="relative flex justify-center text-[12px] font-medium tracking-[0.04em] text-ink-3 uppercase">
+            <span className="bg-raised px-3">or email</span>
           </div>
         </div>
 
-        <form action={formAction} className="space-y-4">
+        <form action={formAction} className="flex flex-col gap-4">
           <input type="hidden" name="next" value={nextPath} />
 
           {mode === "signup" ? (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Display name</Label>
+              <Field label="Display name" htmlFor="displayName">
                 <Input
                   id="displayName"
                   name="displayName"
@@ -107,9 +130,8 @@ export function AuthForm({
                   required
                   autoComplete="name"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+              </Field>
+              <Field label="Username" htmlFor="username">
                 <Input
                   id="username"
                   name="username"
@@ -119,12 +141,11 @@ export function AuthForm({
                   pattern="[a-z0-9_]+"
                   title="Lowercase letters, numbers, and underscores only"
                 />
-              </div>
+              </Field>
             </>
           ) : null}
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+          <Field label="Email" htmlFor="email">
             <Input
               id="email"
               name="email"
@@ -133,15 +154,17 @@ export function AuthForm({
               required
               autoComplete="email"
             />
-          </div>
+          </Field>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-3">
-              <Label htmlFor="password">Password</Label>
+          <div className="min-w-0">
+            <div className="mb-1.5 flex items-baseline justify-between gap-3">
+              <label htmlFor="password" className="text-[13px] font-medium text-ink-2">
+                Password
+              </label>
               {mode === "login" ? (
                 <Link
                   href="/forgot-password"
-                  className="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                  className="text-[12.5px] font-medium text-ink-3 underline-offset-4 hover:text-ink hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -160,8 +183,7 @@ export function AuthForm({
           </div>
 
           {mode === "signup" ? (
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm password</Label>
+            <Field label="Confirm password" htmlFor="confirmPassword">
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
@@ -170,12 +192,12 @@ export function AuthForm({
                 minLength={8}
                 autoComplete="new-password"
               />
-            </div>
+            </Field>
           ) : null}
 
           {state.error || googleState.error ? (
             <p
-              className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              className="rounded-[14px] bg-danger-soft px-3.5 py-2.5 text-[13.5px] font-medium text-danger"
               role="alert"
             >
               {state.error || googleState.error}
@@ -184,7 +206,7 @@ export function AuthForm({
 
           {state.success ? (
             <p
-              className="rounded-lg bg-brand-soft px-3 py-2 text-sm text-foreground"
+              className="rounded-[14px] bg-accent-soft px-3.5 py-2.5 text-[13.5px] font-medium text-ink"
               role="status"
             >
               {state.success}
@@ -197,13 +219,13 @@ export function AuthForm({
         </form>
       </div>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-6 text-center text-[14px] text-ink-2">
         {mode === "login" ? (
           <>
             New here?{" "}
             <Link
               href="/signup"
-              className="font-medium text-foreground underline-offset-4 hover:underline"
+              className="font-semibold text-accent-text underline-offset-4 hover:underline"
             >
               Create an account
             </Link>
@@ -213,7 +235,7 @@ export function AuthForm({
             Already have an account?{" "}
             <Link
               href="/login"
-              className="font-medium text-foreground underline-offset-4 hover:underline"
+              className="font-semibold text-accent-text underline-offset-4 hover:underline"
             >
               Sign in
             </Link>

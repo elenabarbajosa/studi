@@ -30,24 +30,13 @@ export function AuthMessage({ error, notice }: AuthMessageProps) {
   const mappedError = error ? MESSAGES[error] : undefined;
   const mappedNotice = notice ? MESSAGES[notice] : undefined;
 
-  if (mappedError) {
+  if (mappedError || error) {
     return (
       <p
-        className="mb-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        className="mb-4 rounded-[14px] bg-danger-soft px-3.5 py-2.5 text-[13.5px] font-medium text-danger"
         role="alert"
       >
-        {mappedError.text}
-      </p>
-    );
-  }
-
-  if (error) {
-    return (
-      <p
-        className="mb-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        role="alert"
-      >
-        {decodeURIComponent(error)}
+        {mappedError?.text ?? decodeURIComponent(error!)}
       </p>
     );
   }
@@ -55,7 +44,7 @@ export function AuthMessage({ error, notice }: AuthMessageProps) {
   if (mappedNotice) {
     return (
       <p
-        className="mb-4 rounded-lg bg-brand-soft px-3 py-2 text-sm text-foreground"
+        className="mb-4 rounded-[14px] bg-accent-soft px-3.5 py-2.5 text-[13.5px] font-medium text-ink"
         role="status"
       >
         {mappedNotice.text}

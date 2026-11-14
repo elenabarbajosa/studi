@@ -155,7 +155,7 @@ export function SubjectDetail({
             <p className="mt-1.5 max-w-[60ch] text-[14px] leading-relaxed text-ink-2">{subject.description}</p>
           ) : null}
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <Link href="/focus" className={primaryPillClass}>
+            <Link href={`/focus?subject=${subject.id}`} className={primaryPillClass}>
               <Play className="size-[15px] fill-current" aria-hidden />
               Focus on this
             </Link>

@@ -71,10 +71,21 @@ function startOfDay(d: Date) {
   return x;
 }
 
-/** Whole calendar days from `now` until `iso` (0 = today, 1 = tomorrow). */
+/**
+ * Whole calendar days from `now` until `iso` (0 = today, 1 = tomorrow).
+ * Uses the local calendar date of each instant in the runtime timezone, so
+ * date-only assessments stored as local midnight stay on the intended day
+ * when this runs in the viewer's browser (not a UTC server clock).
+ */
 export function daysUntil(iso: string, now = new Date()) {
-  const diff = startOfDay(new Date(iso)).getTime() - startOfDay(now).getTime();
-  return Math.round(diff / DAY_MS);
+  const target = new Date(iso);
+  const a = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const b = Date.UTC(
+    target.getFullYear(),
+    target.getMonth(),
+    target.getDate(),
+  );
+  return Math.round((b - a) / DAY_MS);
 }
 
 export function relativeDayLabel(iso: string, now = new Date()) {

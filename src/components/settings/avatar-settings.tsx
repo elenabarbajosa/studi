@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { ImagePlus, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -10,7 +11,7 @@ import {
 } from "@/actions/avatar";
 import { AvatarCropDialog } from "@/components/settings/avatar-crop-dialog";
 import { StudiAvatar } from "@/components/shared/studi-avatar";
-import { Button } from "@/components/ui/button";
+import { primaryPillClass, softPillClass } from "@/components/studi/page-title";
 import { AVATAR_MAX_BYTES, AVATAR_MIME_TYPES } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/types/database";
@@ -70,8 +71,12 @@ export function AvatarSettings({ profile, initialSrc }: AvatarSettingsProps) {
       setProgress("Uploading…");
       setMessage(null);
       const formData = new FormData();
-      const extension = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
-      formData.append("avatar", new File([blob], `avatar.${extension}`, { type: mime }));
+      const extension =
+        mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
+      formData.append(
+        "avatar",
+        new File([blob], `avatar.${extension}`, { type: mime }),
+      );
 
       const result = await uploadAvatar(formData);
       setProgress(null);
@@ -112,9 +117,7 @@ export function AvatarSettings({ profile, initialSrc }: AvatarSettingsProps) {
         avatar_preference: preference,
         avatar_path: null,
       }));
-      setSrc(
-        preference === "google" ? localProfile.google_avatar_url : null,
-      );
+      setSrc(preference === "google" ? localProfile.google_avatar_url : null);
       setMessage({
         type: "success",
         text: result.success ?? "Avatar updated.",
@@ -150,64 +153,66 @@ export function AvatarSettings({ profile, initialSrc }: AvatarSettingsProps) {
     });
   }
 
+  const preferenceLabel =
+    localProfile.avatar_preference === "custom"
+      ? "Custom upload"
+      : localProfile.avatar_preference === "google"
+        ? "Google photo"
+        : "Initials";
+
   return (
-    <section className="studi-panel p-6 sm:p-8">
-      <div className="mb-6">
-        <h2 className="font-display text-2xl tracking-tight">
-          Profile picture
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Upload a photo, use your Google picture, or keep a soft initials
-          avatar. JPEG, PNG, and WebP up to 5 MB.
-        </p>
-      </div>
+    <section className="flex flex-col gap-5 rounded-[22px] bg-sunken p-5 md:rounded-[26px] md:p-6">
+      <div className="flex flex-col gap-5 min-[640px]:flex-row min-[640px]:items-center">
+        <StudiAvatar profile={localProfile} src={src} size={96} className="shadow-[0_0_0_4px_var(--raised)]" />
 
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-        <StudiAvatar profile={localProfile} src={src} size="xl" />
+        <div className="min-w-0 flex-1 space-y-3">
+          <div>
+            <p className="text-[15px] font-semibold text-ink">Profile picture</p>
+            <p className="text-[13px] text-ink-2">
+              JPEG, PNG or WebP up to 5 MB. Visibility is controlled under Privacy.
+            </p>
+          </div>
 
-        <div className="min-w-0 flex-1 space-y-4">
           <div className="flex flex-wrap gap-2">
-            <Button
+            <button
               type="button"
+              className={primaryPillClass}
               disabled={isPending}
               onClick={() => inputRef.current?.click()}
             >
-              {localProfile.avatar_preference === "custom"
-                ? "Replace picture"
-                : "Upload picture"}
-            </Button>
+              <ImagePlus className="size-3.5" aria-hidden />
+              {localProfile.avatar_preference === "custom" ? "Replace" : "Upload"}
+            </button>
             {localProfile.avatar_preference === "custom" ? (
-              <Button
+              <button
                 type="button"
-                variant="outline"
+                className={softPillClass}
                 disabled={isPending}
                 onClick={runRemove}
               >
-                Remove picture
-              </Button>
+                <Trash2 className="size-3.5" aria-hidden />
+                Remove
+              </button>
             ) : null}
             {localProfile.google_avatar_url ? (
-              <Button
+              <button
                 type="button"
-                variant="outline"
-                disabled={
-                  isPending || localProfile.avatar_preference === "google"
-                }
+                className={softPillClass}
+                disabled={isPending || localProfile.avatar_preference === "google"}
                 onClick={() => runPreference("google")}
               >
-                Use Google photo
-              </Button>
+                Use Google
+              </button>
             ) : null}
-            <Button
+            <button
               type="button"
-              variant="outline"
-              disabled={
-                isPending || localProfile.avatar_preference === "initials"
-              }
+              className={softPillClass}
+              disabled={isPending || localProfile.avatar_preference === "initials"}
               onClick={() => runPreference("initials")}
             >
-              Use initials
-            </Button>
+              <UserRound className="size-3.5" aria-hidden />
+              Initials
+            </button>
           </div>
 
           <input
@@ -218,20 +223,15 @@ export function AvatarSettings({ profile, initialSrc }: AvatarSettingsProps) {
             onChange={(e) => onPickFile(e.target.files?.[0])}
           />
 
-          <p className="text-xs text-muted-foreground">
-            Current:{" "}
-            {localProfile.avatar_preference === "custom"
-              ? "Custom upload"
-              : localProfile.avatar_preference === "google"
-                ? "Google profile picture"
-                : "Initials avatar"}
+          <p className="text-[12.5px] text-ink-3">
+            Current: {preferenceLabel}
             {localProfile.avatar_visibility === "private"
               ? " · Private by default"
               : null}
           </p>
 
           {progress ? (
-            <p className="text-sm text-muted-foreground" role="status">
+            <p className="text-[13px] text-ink-2" role="status">
               {progress}
             </p>
           ) : null}
@@ -239,10 +239,8 @@ export function AvatarSettings({ profile, initialSrc }: AvatarSettingsProps) {
           {message ? (
             <p
               className={cn(
-                "text-sm",
-                message.type === "error"
-                  ? "text-destructive"
-                  : "text-primary",
+                "text-[13px] font-medium",
+                message.type === "error" ? "text-danger" : "text-success",
               )}
               role={message.type === "error" ? "alert" : "status"}
             >

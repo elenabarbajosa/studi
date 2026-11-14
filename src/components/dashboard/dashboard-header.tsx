@@ -48,9 +48,18 @@ export function DashboardHeader({
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="flex min-w-0 flex-col gap-1">
         <p className="min-h-5 text-sm font-medium text-ink-2">{date}</p>
-        <h1 className="text-[32px] leading-[1.1] font-semibold tracking-[-0.035em] text-ink">
-          {part ? `Good ${part}, ${firstName}` : `Welcome back, ${firstName}`}
+        <h1
+          className={cn(
+            "text-[32px] leading-[1.1] font-semibold tracking-[-0.035em] text-ink",
+            !part && "text-transparent",
+          )}
+          aria-hidden={!part}
+        >
+          Good {part ?? "evening"}, {firstName}
         </h1>
+        {!part ? (
+          <span className="sr-only">Good day, {firstName}</span>
+        ) : null}
       </div>
       <div className="flex flex-wrap gap-2">
         {streakDays != null && streakDays > 0 ? (

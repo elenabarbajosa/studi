@@ -102,6 +102,7 @@ export async function updateTask(
   const auth = await authClient();
   if ("error" in auth) return { error: auth.error };
 
+  const statusRaw = formData.get("status");
   const parsed = taskSchema.safeParse({
     title: formData.get("title"),
     description: formData.get("description") || "",
@@ -114,7 +115,8 @@ export async function updateTask(
     scheduled_end_time: formData.get("scheduled_end_time") || "",
     priority: formData.get("priority") || "medium",
     estimated_minutes: formData.get("estimated_minutes"),
-    status: formData.get("status") || "todo",
+    // Omit status unless the form sent one — never reset completed → todo.
+    status: statusRaw ? statusRaw : undefined,
   });
 
   if (!parsed.success) {
@@ -139,7 +141,7 @@ export async function updateTask(
       scheduled_end: schedule.scheduled_end,
       priority: parsed.data.priority,
       estimated_minutes: parsed.data.estimated_minutes,
-      status: parsed.data.status ?? "todo",
+      ...(parsed.data.status ? { status: parsed.data.status } : {}),
     })
     .eq("id", id)
     .eq("user_id", auth.user.id);

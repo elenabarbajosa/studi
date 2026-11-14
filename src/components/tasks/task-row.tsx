@@ -151,7 +151,7 @@ export function TaskRow({
 
         {!done ? (
           <Link
-            href="/focus"
+            href={`/focus?task=${task.id}${task.subject_id ? `&subject=${task.subject_id}` : ""}`}
             title="Focus on this"
             aria-label={`Focus on “${task.title}”`}
             className="hidden size-[34px] shrink-0 items-center justify-center rounded-full text-ink-3 outline-none transition-colors hover:bg-sunken hover:text-ink focus-visible:shadow-[0_0_0_2px_var(--canvas),0_0_0_4px_var(--accent)] md:flex"
@@ -177,7 +177,13 @@ export function TaskRow({
               Add subtask
             </DropdownMenuItem>
             {!done ? (
-              <DropdownMenuItem render={<Link href="/focus" />}>
+              <DropdownMenuItem
+                render={
+                  <Link
+                    href={`/focus?task=${task.id}${task.subject_id ? `&subject=${task.subject_id}` : ""}`}
+                  />
+                }
+              >
                 <Play aria-hidden />
                 Focus on this
               </DropdownMenuItem>

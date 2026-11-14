@@ -78,7 +78,9 @@ export function SubjectCard({
                 Exams & deadlines
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem render={<Link href="/focus" />}>
+              <DropdownMenuItem
+                render={<Link href={`/focus?subject=${subject.id}`} />}
+              >
                 <Play aria-hidden />
                 Start focus
               </DropdownMenuItem>

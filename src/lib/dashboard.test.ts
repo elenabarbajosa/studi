@@ -98,6 +98,12 @@ describe("daysUntil", () => {
     assert.equal(daysUntil(new Date(2026, 10, 15, 8, 0).toISOString(), now), 1);
     assert.equal(daysUntil(new Date(2026, 10, 19, 9, 0).toISOString(), now), 5);
   });
+
+  it("keeps date-only local-midnight assessments on the intended day", () => {
+    // All-day Nov 20 stored from a UTC+1 browser → 2026-11-19T23:00:00.000Z
+    const stored = new Date(2026, 10, 20, 0, 0, 0).toISOString();
+    assert.equal(daysUntil(stored, now), 6);
+  });
 });
 
 describe("formatting", () => {

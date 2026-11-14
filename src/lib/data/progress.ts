@@ -17,6 +17,7 @@ import {
 } from "@/lib/progress/streaks";
 import {
   endOfLocalWeekKey,
+  localMidnightIso,
   startOfLocalWeekKey,
 } from "@/lib/progress/timezone";
 import {
@@ -326,20 +327,3 @@ function addDaysKey(dateKey: string, delta: number) {
   return utc.toISOString().slice(0, 10);
 }
 
-function localMidnightIso(dateKey: string, timeZone: string): string {
-  const [y, m, d] = dateKey.split("-").map(Number);
-  let lo = Date.UTC(y, m - 1, d) - 14 * 3600_000;
-  let hi = Date.UTC(y, m - 1, d) + 14 * 3600_000;
-  while (hi - lo > 1000) {
-    const mid = Math.floor((lo + hi) / 2);
-    const key = new Intl.DateTimeFormat("en-CA", {
-      timeZone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date(mid));
-    if (key < dateKey) lo = mid;
-    else hi = mid;
-  }
-  return new Date(hi).toISOString();
-}

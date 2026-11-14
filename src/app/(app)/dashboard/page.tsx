@@ -108,6 +108,7 @@ function buildUpNext(input: {
             : "Due today",
         topicsMastered(task.subject_id, topics),
       ),
+      focusHref: `/focus?task=${task.id}${task.subject_id ? `&subject=${task.subject_id}` : ""}`,
     };
   }
 
@@ -120,6 +121,9 @@ function buildUpNext(input: {
         `${ASSESSMENT_TYPE_META[nextAssessment.assessment_type].label} ${inDays(nextAssessment.starts_at, now)}`,
         topicsMastered(nextAssessment.subject_id, topics),
       ),
+      focusHref: nextAssessment.subject_id
+        ? `/focus?subject=${nextAssessment.subject_id}`
+        : "/focus",
     };
   }
 
@@ -127,6 +131,7 @@ function buildUpNext(input: {
     label: "Ready when you are",
     title: "Start a focus session",
     meta: "Add tasks and exams, and Studi will suggest what to study next.",
+    focusHref: "/focus",
   };
 }
 
@@ -186,6 +191,7 @@ async function DashboardContent({
     id: task.id,
     title: task.title,
     priority: task.priority,
+    subjectId: task.subject_id,
     subjectName: task.subject_id ? (subjectById.get(task.subject_id)?.name ?? null) : null,
     subjectDot: subjectDot(task.subject_id),
     overdueLabel: overdue ? "Overdue" : null,
@@ -203,6 +209,7 @@ async function DashboardContent({
       typeLabel: ASSESSMENT_TYPE_META[a.assessment_type].label,
       subjectName: subject?.name ?? null,
       subjectColor: subject?.color ?? null,
+      startsAt: a.starts_at,
       days: daysUntil(a.starts_at, now),
       weekday: new Date(a.starts_at).toLocaleDateString("en-GB", { weekday: "short" }),
       href: subject ? `/subjects/${subject.id}` : "/calendar",

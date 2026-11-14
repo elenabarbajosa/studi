@@ -1,29 +1,31 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
+import { useCallback, useEffect, useState } from "react";
 
 import { updateSocialPrivacy } from "@/actions/friends";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { useSettingsSaveStatus } from "@/components/settings/settings-save-context";
+import { useAutosave } from "@/components/settings/use-autosave";
+import { SwitchRow } from "@/components/studi/form-controls";
 import {
   SOCIAL_VISIBILITIES,
   type SocialVisibility,
 } from "@/lib/social";
+import { cn } from "@/lib/utils";
 import type { AvatarVisibility, Profile } from "@/types/database";
-
-type PrivacySettingsFormProps = {
-  profile: Profile;
-};
 
 const VISIBILITY_LABELS: Record<SocialVisibility, string> = {
   private: "Private",
-  friends: "Friends only",
+  friends: "Friends",
   public: "Public",
 };
 
-export function PrivacySettingsForm({ profile }: PrivacySettingsFormProps) {
+const VISIBILITY_HINTS: Record<SocialVisibility, string> = {
+  private: "Only you",
+  friends: "Friends only",
+  public: "Anyone on Studi",
+};
+
+export function PrivacySettingsForm({ profile }: { profile: Profile }) {
   const [discoverable, setDiscoverable] = useState(profile.discoverable);
   const [avatarVisibility, setAvatarVisibility] = useState<AvatarVisibility>(
     profile.avatar_visibility,
@@ -37,82 +39,75 @@ export function PrivacySettingsForm({ profile }: PrivacySettingsFormProps) {
   const [statsVisibility, setStatsVisibility] = useState<SocialVisibility>(
     profile.stats_visibility,
   );
-  const [isPending, startTransition] = useTransition();
+  const { setStatus } = useSettingsSaveStatus();
 
-  function save() {
-    startTransition(async () => {
-      const result = await updateSocialPrivacy({
-        discoverable,
-        avatar_visibility: avatarVisibility,
-        online_status_visibility: onlineVisibility,
-        study_status_visibility: studyVisibility,
-        stats_visibility: statsVisibility,
-      });
-      if (result.error) toast.error(result.error);
-      else toast.success(result.success ?? "Privacy settings saved");
-    });
-  }
+  const payload = {
+    discoverable,
+    avatar_visibility: avatarVisibility,
+    online_status_visibility: onlineVisibility,
+    study_status_visibility: studyVisibility,
+    stats_visibility: statsVisibility,
+  };
+
+  const save = useCallback(async (next: typeof payload) => {
+    return updateSocialPrivacy(next);
+  }, []);
+
+  const { status, error } = useAutosave(payload, save);
+  useEffect(() => {
+    setStatus(status);
+  }, [status, setStatus]);
 
   return (
-    <section className="studi-panel p-6 sm:p-8">
-      <div className="mb-6">
-        <h2 className="font-display text-2xl tracking-tight">
-          Privacy & discovery
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Control who can find you and what study activity friends can see.
-          Academic details stay private.
+    <div className="flex flex-col gap-6">
+      <p className="text-[14px] text-ink-2">
+        Academic details — calendars, exams, tasks and notes — are never shared.
+        These controls only cover social surfaces.
+      </p>
+
+      <div className="rounded-[18px] bg-sunken px-1 py-1">
+        <SwitchRow
+          label="Show me in username search"
+          checked={discoverable}
+          onChange={setDiscoverable}
+        />
+      </div>
+      <p className="-mt-3 text-[12.5px] text-ink-3">
+        When off, people can still open your profile from a direct link or friend request,
+        but you won’t appear in Discover search.
+      </p>
+
+      <VisibilityField
+        label="Avatar"
+        description="Who can see your photo or initials avatar."
+        value={avatarVisibility}
+        onChange={(v) => setAvatarVisibility(v as AvatarVisibility)}
+      />
+      <VisibilityField
+        label="Online status"
+        description="Whether friends can see that you’re online."
+        value={onlineVisibility}
+        onChange={setOnlineVisibility}
+      />
+      <VisibilityField
+        label="Study status"
+        description="Focusing / on break indicator. Defaults to private."
+        value={studyVisibility}
+        onChange={setStudyVisibility}
+      />
+      <VisibilityField
+        label="Study statistics"
+        description="Aggregate weekly focus hours only. Defaults to private."
+        value={statsVisibility}
+        onChange={setStatsVisibility}
+      />
+
+      {error ? (
+        <p className="text-[13px] font-medium text-danger" role="alert">
+          {error}
         </p>
-      </div>
-
-      <div className="space-y-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <Label htmlFor="discoverable">Profile discoverability</Label>
-            <p className="text-xs text-muted-foreground">
-              Allow others to find you by username search.
-            </p>
-          </div>
-          <Switch
-            id="discoverable"
-            checked={discoverable}
-            onCheckedChange={setDiscoverable}
-            disabled={isPending}
-          />
-        </div>
-
-        <VisibilityField
-          label="Avatar visibility"
-          value={avatarVisibility}
-          onChange={(v) => setAvatarVisibility(v as AvatarVisibility)}
-          disabled={isPending}
-        />
-        <VisibilityField
-          label="Online status"
-          value={onlineVisibility}
-          onChange={setOnlineVisibility}
-          disabled={isPending}
-        />
-        <VisibilityField
-          label="Current study status"
-          description="Focusing / on break indicator. Defaults to private."
-          value={studyVisibility}
-          onChange={setStudyVisibility}
-          disabled={isPending}
-        />
-        <VisibilityField
-          label="Study statistics"
-          description="Aggregate weekly focus hours only. Defaults to private."
-          value={statsVisibility}
-          onChange={setStatsVisibility}
-          disabled={isPending}
-        />
-
-        <Button type="button" onClick={save} disabled={isPending}>
-          {isPending ? "Saving…" : "Save privacy"}
-        </Button>
-      </div>
-    </section>
+      ) : null}
+    </div>
   );
 }
 
@@ -121,35 +116,33 @@ function VisibilityField({
   description,
   value,
   onChange,
-  disabled,
 }: {
   label: string;
-  description?: string;
+  description: string;
   value: SocialVisibility;
   onChange: (v: SocialVisibility) => void;
-  disabled?: boolean;
 }) {
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2.5">
       <div>
-        <p className="text-sm font-medium">{label}</p>
-        {description ? (
-          <p className="text-xs text-muted-foreground">{description}</p>
-        ) : null}
+        <p className="text-[14px] font-medium text-ink">{label}</p>
+        <p className="text-[12.5px] text-ink-3">{description}</p>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-3 gap-1.5 rounded-full bg-sunken p-[3px]" role="radiogroup" aria-label={label}>
         {SOCIAL_VISIBILITIES.map((option) => (
           <button
             key={option}
             type="button"
-            disabled={disabled}
+            role="radio"
+            aria-checked={value === option}
+            title={VISIBILITY_HINTS[option]}
             onClick={() => onChange(option)}
-            className={
+            className={cn(
+              "h-9 rounded-full text-[13px] font-semibold outline-none transition-colors focus-visible:shadow-[0_0_0_2px_var(--raised),0_0_0_4px_var(--accent)]",
               value === option
-                ? "rounded-xl border border-primary bg-brand-soft px-3 py-1.5 text-sm"
-                : "rounded-xl border border-border px-3 py-1.5 text-sm hover:bg-muted/60"
-            }
-            aria-pressed={value === option}
+                ? "bg-raised text-ink shadow-sm"
+                : "text-ink-2 hover:text-ink",
+            )}
           >
             {VISIBILITY_LABELS[option]}
           </button>
