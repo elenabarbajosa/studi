@@ -38,6 +38,8 @@ type ImportSyllabusDialogProps = {
   onOpenChange: (open: boolean) => void;
   subjectId: string;
   subjectName: string;
+  /** Server-resolved daily AI allowance for this user. */
+  dailyAiLimit: number;
 };
 
 function formatBytes(n: number) {
@@ -72,6 +74,7 @@ export function ImportSyllabusDialog({
   onOpenChange,
   subjectId,
   subjectName,
+  dailyAiLimit,
 }: ImportSyllabusDialogProps) {
   const [step, setStep] = useState<Step>("upload");
   const [reviewTab, setReviewTab] = useState<ReviewTab>("topics");
@@ -83,6 +86,7 @@ export function ImportSyllabusDialog({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [draft, setDraft] = useState<SyllabusReviewDraft | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
+  const [limit, setLimit] = useState(dailyAiLimit);
   const [isPending, startTransition] = useTransition();
   const [importing, setImporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -99,6 +103,7 @@ export function ImportSyllabusDialog({
     setSessionId(null);
     setDraft(null);
     setRemaining(null);
+    setLimit(dailyAiLimit);
     setImporting(false);
     submittingRef.current = false;
     if (fileRef.current) fileRef.current.value = "";
@@ -160,6 +165,7 @@ export function ImportSyllabusDialog({
       setSessionId(result.sessionId);
       setDraft(result.draft);
       setRemaining(result.remaining);
+      setLimit(result.limit);
       setStep("review");
     });
   };
@@ -289,7 +295,7 @@ export function ImportSyllabusDialog({
         <p className="text-[12.5px] text-ink-3">
           {selectedCounts.topics} topics · {selectedCounts.subtopics} subtopics ·{" "}
           {selectedCounts.assessments} assessments
-          {remaining != null ? ` · ${remaining} AI imports left today` : null}
+          {remaining != null ? ` · ${remaining}/${limit} AI imports left today` : null}
         </p>
         <div className="flex gap-2 sm:justify-end">
           <Button type="button" variant="ghost" onClick={() => setStep("upload")}>
@@ -347,6 +353,7 @@ export function ImportSyllabusDialog({
           privacyAccepted={privacyAccepted}
           setPrivacyAccepted={setPrivacyAccepted}
           clientError={clientError}
+          dailyAiLimit={limit}
         />
       ) : null}
 
@@ -402,6 +409,7 @@ function UploadStep({
   privacyAccepted,
   setPrivacyAccepted,
   clientError,
+  dailyAiLimit,
 }: {
   text: string;
   setText: (v: string) => void;
@@ -413,6 +421,7 @@ function UploadStep({
   privacyAccepted: boolean;
   setPrivacyAccepted: (v: boolean) => void;
   clientError: string | null;
+  dailyAiLimit: number;
 }) {
   return (
     <div className="flex flex-col gap-5">
@@ -497,7 +506,7 @@ function UploadStep({
 
       {clientError ? <FormError message={clientError} /> : null}
       <p className="text-[12.5px] text-ink-3">
-        Limit: {AI_LIMITS.dailyImportsPerUser} AI imports per day.
+        Limit: {dailyAiLimit} AI imports per day.
       </p>
     </div>
   );

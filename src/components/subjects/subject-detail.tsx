@@ -41,6 +41,7 @@ type SubjectDetailProps = {
   tasks: Task[];
   subtasks: Subtask[];
   initialTab: SubjectTab;
+  dailyAiLimit: number;
 };
 
 const tonePillClass =
@@ -55,6 +56,7 @@ export function SubjectDetail({
   tasks,
   subtasks,
   initialTab,
+  dailyAiLimit,
 }: SubjectDetailProps) {
   const [tab, setTab] = useState<SubjectTab>(initialTab);
   const [editOpen, setEditOpen] = useState(false);
@@ -264,7 +266,12 @@ export function SubjectDetail({
             className="p-4 md:p-5"
           >
             {tab === "topics" ? (
-              <TopicsPanel subjectId={subject.id} subjectName={subject.name} topics={topics} />
+              <TopicsPanel
+                subjectId={subject.id}
+                subjectName={subject.name}
+                topics={topics}
+                dailyAiLimit={dailyAiLimit}
+              />
             ) : null}
             {tab === "materials" ? (
               <MaterialsPanel subjectId={subject.id} materials={materials} topics={topics} />

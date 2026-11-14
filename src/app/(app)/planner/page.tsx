@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { PlannerBoard } from "@/components/planner/planner-board";
 import { Skeleton } from "@/components/ui/skeleton";
+import { resolveAiDailyLimit } from "@/lib/ai/limits";
 import { requireProfile } from "@/lib/auth";
 import { loadPlannerDashboard } from "@/lib/planner/context";
 
@@ -32,6 +33,7 @@ async function PlannerContent() {
       plannedMinutesThisWeek={data.plannedMinutesThisWeek}
       completedFocusMinutesThisWeek={data.completedFocusMinutesThisWeek}
       recommendations={recommendations}
+      dailyAiLimit={resolveAiDailyLimit(profile.id)}
     />
   );
 }

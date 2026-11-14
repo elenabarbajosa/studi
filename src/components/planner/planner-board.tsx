@@ -50,6 +50,7 @@ type PlannerBoardProps = {
   plannedMinutesThisWeek: number;
   completedFocusMinutesThisWeek: number;
   recommendations: string[];
+  dailyAiLimit: number;
 };
 
 export function PlannerBoard({
@@ -64,6 +65,7 @@ export function PlannerBoard({
   plannedMinutesThisWeek,
   completedFocusMinutesThisWeek,
   recommendations,
+  dailyAiLimit,
 }: PlannerBoardProps) {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [adjustOpen, setAdjustOpen] = useState(false);
@@ -455,6 +457,7 @@ export function PlannerBoard({
         topics={topics}
         assessments={assessments}
         timeZone={timeZone}
+        dailyAiLimit={dailyAiLimit}
       />
 
       {adjustOpen && adjustSessions && adjustMeta ? (

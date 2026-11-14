@@ -76,9 +76,10 @@ type TopicsPanelProps = {
   subjectId: string;
   subjectName: string;
   topics: Topic[];
+  dailyAiLimit: number;
 };
 
-export function TopicsPanel({ subjectId, subjectName, topics }: TopicsPanelProps) {
+export function TopicsPanel({ subjectId, subjectName, topics, dailyAiLimit }: TopicsPanelProps) {
   const roots = useMemo(() => topics.filter((t) => t.parent_id === null), [topics]);
   const childrenByParent = useMemo(() => {
     const map = new Map<string, Topic[]>();
@@ -162,6 +163,7 @@ export function TopicsPanel({ subjectId, subjectName, topics }: TopicsPanelProps
         onOpenChange={setImportOpen}
         subjectId={subjectId}
         subjectName={subjectName}
+        dailyAiLimit={dailyAiLimit}
       />
     </section>
   );

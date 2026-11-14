@@ -46,6 +46,7 @@ export type GeneratePlanResult =
       sessions: ProposedSession[];
       plannedMinutes: number;
       remaining: number;
+      limit: number;
       usedAi: boolean;
       periodStart: string;
       periodEnd: string;
@@ -167,7 +168,7 @@ export async function generateStudyPlan(
     };
 
     // Claim usage then create generation session before Gemini
-    const claim = await claimStudyPlanUsage(auth.supabase);
+    const claim = await claimStudyPlanUsage(auth.supabase, auth.user.id);
     const sessionId = await createGenerationSession(auth.supabase, AI_STUDY_PLAN_FEATURE);
 
     const { recommendation, usedAi } = await generateAiRecommendations(context);
@@ -221,6 +222,7 @@ export async function generateStudyPlan(
       sessions: schedule.sessions,
       plannedMinutes: schedule.plannedMinutes,
       remaining: claim.remaining,
+      limit: claim.limit,
       usedAi,
       periodStart: bounds.periodStart,
       periodEnd: bounds.periodEnd,
@@ -419,7 +421,7 @@ export async function adjustStudyPlan(payload: unknown): Promise<GeneratePlanRes
       dashboard.assessments,
     );
 
-    const claim = await claimStudyPlanUsage(auth.supabase);
+    const claim = await claimStudyPlanUsage(auth.supabase, auth.user.id);
     const sessionId = await createGenerationSession(auth.supabase, AI_STUDY_PLAN_FEATURE);
 
     const context = {
@@ -501,6 +503,7 @@ export async function adjustStudyPlan(payload: unknown): Promise<GeneratePlanRes
       sessions: [...lockedSessions, ...schedule.sessions],
       plannedMinutes: schedule.plannedMinutes,
       remaining: claim.remaining,
+      limit: claim.limit,
       usedAi,
       periodStart: bounds.periodStart,
       periodEnd: bounds.periodEnd,

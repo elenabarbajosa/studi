@@ -164,7 +164,7 @@ export async function extractSyllabus(
     }
 
     // Claim usage before calling Gemini so concurrent requests share the limit.
-    const claim = await claimSyllabusImportUsage(auth.supabase);
+    const claim = await claimSyllabusImportUsage(auth.supabase, auth.user.id);
     const sessionId = await createImportSession(auth.supabase, subjectId);
 
     const extracted = pdfInput

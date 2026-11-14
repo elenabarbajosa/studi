@@ -22,7 +22,6 @@ import { ResponsiveDialog } from "@/components/studi/responsive-dialog";
 import { Segmented } from "@/components/studi/segmented";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AI_LIMITS } from "@/lib/ai/limits";
 import type { PlannerPreferencesInput } from "@/lib/planner/schemas";
 import type { ProposedSession } from "@/lib/planner/types";
 import { PLAN_INTENSITIES, PLANNING_PERIODS } from "@/lib/planner/types";
@@ -46,6 +45,7 @@ type GeneratePlanWizardProps = {
   topics: Topic[];
   assessments: Assessment[];
   timeZone: string;
+  dailyAiLimit: number;
 };
 
 export function GeneratePlanWizard({
@@ -56,6 +56,7 @@ export function GeneratePlanWizard({
   topics,
   assessments,
   timeZone,
+  dailyAiLimit,
 }: GeneratePlanWizardProps) {
   const [step, setStep] = useState<Step>("goals");
   const [prefs, setPrefs] = useState<PlannerPreferencesInput>(initialPreferences);
@@ -69,6 +70,7 @@ export function GeneratePlanWizard({
   const [periodEnd, setPeriodEnd] = useState("");
   const [intensity, setIntensity] = useState(initialPreferences.intensity);
   const [remaining, setRemaining] = useState<number | null>(null);
+  const [limit, setLimit] = useState(dailyAiLimit);
   const [conflicts, setConflicts] = useState<{ localId: string; message: string }[]>([]);
   const [isPending, startTransition] = useTransition();
 
@@ -90,6 +92,7 @@ export function GeneratePlanWizard({
     setPeriodEnd("");
     setIntensity(initialPreferences.intensity);
     setRemaining(null);
+    setLimit(dailyAiLimit);
     setConflicts([]);
   };
 
@@ -129,6 +132,7 @@ export function GeneratePlanWizard({
       setPeriodEnd(result.periodEnd);
       setIntensity(prefs.intensity);
       setRemaining(result.remaining);
+      setLimit(result.limit);
       setConflicts(result.conflicts);
       setStep("review");
     });
@@ -202,7 +206,7 @@ export function GeneratePlanWizard({
         <p className="text-[12.5px] text-ink-3">
           {selectedCounts.count} sessions · {Math.round(selectedCounts.minutes / 60)}h{" "}
           {selectedCounts.minutes % 60}m
-          {remaining != null ? ` · ${remaining}/${AI_LIMITS.dailyPlanGenerationsPerUser} AI left today` : null}
+          {remaining != null ? ` · ${remaining}/${limit} AI left today` : null}
         </p>
         <div className="flex gap-2">
           <Button type="button" variant="ghost" onClick={() => setStep("availability")}>
@@ -457,8 +461,8 @@ export function GeneratePlanWizard({
           </Field>
           {error ? <FormError message={error} /> : null}
           <p className="text-[12.5px] text-ink-3">
-            Free-tier limit: {AI_LIMITS.dailyPlanGenerationsPerUser} AI plan generations per day.
-            Documents are not uploaded for this feature.
+            Limit: {limit} AI plan generations per day. Documents are not uploaded for this
+            feature.
           </p>
         </div>
       ) : null}

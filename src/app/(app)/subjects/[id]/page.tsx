@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { SubjectDetail, type SubjectTab } from "@/components/subjects/subject-detail";
 import { Skeleton } from "@/components/ui/skeleton";
+import { resolveAiDailyLimit } from "@/lib/ai/limits";
 import { requireProfile } from "@/lib/auth";
 import {
   listAssessmentsForSubject,
@@ -31,7 +32,7 @@ function parseTab(value: string | string[] | undefined): SubjectTab {
 }
 
 async function SubjectPageContent({ params, searchParams }: SubjectPageProps) {
-  await requireProfile();
+  const { profile } = await requireProfile();
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const subject = await getSubject(id);
   if (!subject) {
@@ -58,6 +59,7 @@ async function SubjectPageContent({ params, searchParams }: SubjectPageProps) {
       tasks={tasks}
       subtasks={subtasks}
       initialTab={parseTab(query.tab)}
+      dailyAiLimit={resolveAiDailyLimit(profile.id)}
     />
   );
 }

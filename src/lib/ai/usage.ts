@@ -1,7 +1,7 @@
 import {
-  AI_LIMITS,
   AI_STUDY_PLAN_FEATURE,
   AI_SYLLABUS_FEATURE,
+  resolveAiDailyLimit,
 } from "@/lib/ai/limits";
 import { AiFeatureError, mapUsageClaimError } from "@/lib/ai/errors";
 
@@ -20,6 +20,7 @@ export function normalizeClaimResult(raw: unknown, fallbackLimit: number): Claim
   const data = row as Record<string, unknown>;
   const allowed = Boolean(data.allowed);
   const used = Number(data.used ?? 0);
+  // Prefer RPC-reported limit (authoritative after migration 013).
   const limit = Number(data.limit ?? fallbackLimit);
   return {
     allowed,
@@ -54,7 +55,11 @@ type RpcResult = {
 export type AiUsageRpc = {
   rpc(
     fn: "claim_ai_usage",
-    args: { p_feature: string; p_daily_limit: number },
+    args: { p_feature: string; p_daily_limit?: number | null },
+  ): PromiseLike<RpcResult>;
+  rpc(
+    fn: "get_ai_daily_limit",
+    args?: Record<string, never>,
   ): PromiseLike<RpcResult>;
   rpc(
     fn: "create_ai_import_session",
@@ -74,28 +79,63 @@ export type AiUsageRpc = {
   ): PromiseLike<RpcResult>;
 };
 
-export async function claimSyllabusImportUsage(client: AiUsageRpc): Promise<ClaimAiUsageResult> {
-  const { data, error } = await client.rpc("claim_ai_usage", {
-    p_feature: AI_SYLLABUS_FEATURE,
-    p_daily_limit: AI_LIMITS.dailyImportsPerUser,
-  });
-  const mapped = mapUsageClaimError(error);
-  if (mapped) throw mapped;
-  return assertClaimAllowed(
-    normalizeClaimResult(data, AI_LIMITS.dailyImportsPerUser),
-    "AI syllabus import",
-  );
+/**
+ * Fetch the authenticated user's daily AI allowance.
+ * Prefers DB RPC (authoritative); falls back to server env owner check.
+ */
+export async function fetchAiDailyLimit(
+  client: AiUsageRpc,
+  userId: string,
+): Promise<number> {
+  const fallback = resolveAiDailyLimit(userId);
+  try {
+    const { data, error } = await client.rpc("get_ai_daily_limit");
+    if (error) return fallback;
+    if (typeof data === "number" && Number.isFinite(data) && data >= 0) {
+      return data;
+    }
+    // PostgREST sometimes returns scalar in array
+    if (Array.isArray(data) && typeof data[0] === "number") {
+      return data[0];
+    }
+  } catch {
+    // fall through
+  }
+  return fallback;
 }
 
-export async function claimStudyPlanUsage(client: AiUsageRpc): Promise<ClaimAiUsageResult> {
+async function claimFeatureUsage(
+  client: AiUsageRpc,
+  userId: string,
+  feature: typeof AI_SYLLABUS_FEATURE | typeof AI_STUDY_PLAN_FEATURE,
+  featureLabel: string,
+): Promise<ClaimAiUsageResult> {
+  const expected = resolveAiDailyLimit(userId);
+  // p_daily_limit kept for pre-013 compatibility; migration 013 ignores it.
   const { data, error } = await client.rpc("claim_ai_usage", {
-    p_feature: AI_STUDY_PLAN_FEATURE,
-    p_daily_limit: AI_LIMITS.dailyPlanGenerationsPerUser,
+    p_feature: feature,
+    p_daily_limit: expected,
   });
   const mapped = mapUsageClaimError(error);
   if (mapped) throw mapped;
-  return assertClaimAllowed(
-    normalizeClaimResult(data, AI_LIMITS.dailyPlanGenerationsPerUser),
+  return assertClaimAllowed(normalizeClaimResult(data, expected), featureLabel);
+}
+
+export async function claimSyllabusImportUsage(
+  client: AiUsageRpc,
+  userId: string,
+): Promise<ClaimAiUsageResult> {
+  return claimFeatureUsage(client, userId, AI_SYLLABUS_FEATURE, "AI syllabus import");
+}
+
+export async function claimStudyPlanUsage(
+  client: AiUsageRpc,
+  userId: string,
+): Promise<ClaimAiUsageResult> {
+  return claimFeatureUsage(
+    client,
+    userId,
+    AI_STUDY_PLAN_FEATURE,
     "AI study plan generation",
   );
 }

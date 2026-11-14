@@ -151,6 +151,15 @@ export type AiUsageEvent = {
   created_at: string;
 };
 
+/** Singleton config row for owner AI limits. Not readable via client RLS. */
+export type StudiAiOwner = {
+  id: true;
+  owner_user_id: string | null;
+  owner_daily_limit: number;
+  standard_daily_limit: number;
+  updated_at: string;
+};
+
 export type AiImportSession = {
   id: string;
   user_id: string;
@@ -784,6 +793,12 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      studi_ai_owner: {
+        Row: StudiAiOwner;
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       ai_import_sessions: {
         Row: AiImportSession;
         Insert: {
@@ -862,8 +877,12 @@ export type Database = {
         Returns: boolean;
       };
       claim_ai_usage: {
-        Args: { p_feature: string; p_daily_limit?: number };
+        Args: { p_feature: string; p_daily_limit?: number | null };
         Returns: { allowed: boolean; used: number; limit: number }[];
+      };
+      get_ai_daily_limit: {
+        Args: Record<string, never>;
+        Returns: number;
       };
       create_ai_import_session: {
         Args: { p_subject_id: string; p_feature?: string };
