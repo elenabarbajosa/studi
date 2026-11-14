@@ -4,13 +4,13 @@ import { Plus } from "lucide-react";
 
 import { Tile, TileHeader, tileLinkClass } from "@/components/dashboard/tile";
 import { SegmentBar } from "@/components/studi/progress-bits";
-import { subjectTone, type SubjectColor } from "@/lib/subjects";
+import { subjectTone, type SubjectColorValue } from "@/lib/subjects";
 import { cn } from "@/lib/utils";
 
 export type SubjectRow = {
   id: string;
   name: string;
-  color: SubjectColor;
+  color: SubjectColorValue;
   topicCount: number;
   masteredCount: number;
 };

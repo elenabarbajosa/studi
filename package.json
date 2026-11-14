@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/study-together/timer-sync.test.ts src/lib/progress/streaks.test.ts src/lib/focus/stats-days.test.ts src/lib/dashboard.test.ts src/lib/planning.test.ts src/lib/ai/*.test.ts src/lib/planner/*.test.ts"
+    "test": "tsx --test src/lib/study-together/timer-sync.test.ts src/lib/progress/streaks.test.ts src/lib/focus/stats-days.test.ts src/lib/dashboard.test.ts src/lib/planning.test.ts src/lib/topic-progress.test.ts src/lib/subjects-color.test.ts src/lib/task-due.test.ts src/lib/calendar-month.test.ts src/lib/countdown.test.ts src/lib/ai/*.test.ts src/lib/planner/*.test.ts src/lib/canvas/*.test.ts src/lib/grades/*.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -25,6 +25,8 @@
     "clsx": "^2.1.1",
     "cn": "^0.5.2",
     "date-fns": "^4.4.0",
+    "fast-xml-parser": "^5.12.1",
+    "jszip": "^3.10.2",
     "lucide-react": "^1.72.0",
     "next": "16.4.6",
     "next-themes": "^0.4.6",
@@ -42,6 +44,7 @@
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",
+    "@types/jszip": "^3.4.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

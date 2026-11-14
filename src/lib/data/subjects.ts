@@ -107,7 +107,18 @@ export const listMaterialsForSubject = cache(
       return [];
     }
 
-    return data ?? [];
+    return (data ?? []).map((row) => ({
+      ...row,
+      url: row.url ?? null,
+      storage_path: row.storage_path ?? null,
+      storage_bucket: row.storage_bucket ?? null,
+      original_filename: row.original_filename ?? null,
+      mime_type: row.mime_type ?? null,
+      byte_size: row.byte_size ?? null,
+      source: row.source ?? "manual",
+      source_fingerprint: row.source_fingerprint ?? null,
+      canvas_module_path: row.canvas_module_path ?? null,
+    }));
   },
 );
 

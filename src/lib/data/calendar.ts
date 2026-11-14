@@ -3,7 +3,10 @@ import "server-only";
 import { cache } from "react";
 
 import { getSessionUser } from "@/lib/auth";
+import { getGamificationPreferences } from "@/lib/data/progress";
 import { createClient } from "@/lib/supabase/server";
+import { dayBoundsIso } from "@/lib/task-due";
+import { addLocalDays, localDateKey } from "@/lib/progress/timezone";
 import type {
   Assessment,
   CalendarEvent,
@@ -11,18 +14,6 @@ import type {
   Subtask,
   Task,
 } from "@/types/database";
-
-function startOfLocalDay(d = new Date()) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
-
-function endOfLocalDay(d = new Date()) {
-  const x = new Date(d);
-  x.setHours(23, 59, 59, 999);
-  return x;
-}
 
 export const listAssessments = cache(async (): Promise<Assessment[]> => {
   const user = await getSessionUser();
@@ -182,12 +173,16 @@ export async function getDashboardAgenda() {
     };
   }
 
+  const prefs = await getGamificationPreferences();
+  const timeZone = prefs.timezone || "UTC";
   const now = new Date();
-  const todayStart = startOfLocalDay(now).toISOString();
-  const todayEnd = endOfLocalDay(now).toISOString();
-  const weekEnd = endOfLocalDay(
-    new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
-  ).toISOString();
+  const todayKey = localDateKey(now, timeZone);
+  const { start: todayStart, endExclusive: tomorrowStart } = dayBoundsIso(
+    todayKey,
+    timeZone,
+  );
+  const weekEndKey = addLocalDays(todayKey, 7);
+  const { endExclusive: weekEnd } = dayBoundsIso(weekEndKey, timeZone);
 
   const supabase = await createClient();
 
@@ -206,7 +201,7 @@ export async function getDashboardAgenda() {
       .eq("user_id", user.id)
       .eq("status", "todo")
       .gte("due_at", todayStart)
-      .lte("due_at", todayEnd)
+      .lt("due_at", tomorrowStart)
       .order("priority", { ascending: false }),
     supabase
       .from("tasks")
@@ -222,21 +217,21 @@ export async function getDashboardAgenda() {
       .select("*")
       .eq("user_id", user.id)
       .gte("starts_at", todayStart)
-      .lte("starts_at", weekEnd)
+      .lt("starts_at", weekEnd)
       .order("starts_at", { ascending: true }),
     supabase
       .from("study_sessions")
       .select("*")
       .eq("user_id", user.id)
       .gte("starts_at", todayStart)
-      .lte("starts_at", weekEnd)
+      .lt("starts_at", weekEnd)
       .order("starts_at", { ascending: true }),
     supabase
       .from("calendar_events")
       .select("*")
       .eq("user_id", user.id)
       .gte("starts_at", todayStart)
-      .lte("starts_at", weekEnd)
+      .lt("starts_at", weekEnd)
       .order("starts_at", { ascending: true }),
   ]);
 

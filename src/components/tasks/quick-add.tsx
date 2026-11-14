@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowUp, CalendarDays, CornerDownLeft, Flag, Maximize2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -50,6 +51,7 @@ export function QuickAddInput({
   defaultDue: QuickAddDue | null;
   onExpand: (draft: TaskDraft) => void;
 }) {
+  const router = useRouter();
   const [text, setText] = useState("");
   const [isPending, startTransition] = useTransition();
   const parsed = parseQuickAdd(text, subjects);
@@ -82,6 +84,7 @@ export function QuickAddInput({
         return;
       }
       setText("");
+      router.refresh();
       toast.success("Task added", { description: parsed.title });
     });
   };
@@ -193,6 +196,7 @@ function QuickAddSheetBody({
   onExpand: (draft: TaskDraft) => void;
   onDone: () => void;
 }) {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [subjectId, setSubjectId] = useState(defaultSubjectId ?? "");
   const [due, setDue] = useState<QuickAddDue | null>(defaultDue);
@@ -209,6 +213,7 @@ function QuickAddSheetBody({
         toast.error(result.error);
         return;
       }
+      router.refresh();
       toast.success("Task added", { description: trimmed });
       onDone();
     });

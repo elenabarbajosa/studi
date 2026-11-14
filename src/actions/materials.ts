@@ -54,6 +54,7 @@ export async function createMaterial(
     resource_type: parsed.data.resource_type,
     url: parsed.data.url.trim(),
     description: parsed.data.description?.trim() || null,
+    source: "manual",
   });
 
   if (error) {
@@ -71,6 +72,18 @@ export async function deleteMaterial(
   const auth = await requireAuthedClient();
   if ("error" in auth) return { error: auth.error };
 
+  const { data: existing } = await auth.supabase
+    .from("materials")
+    .select("id, storage_path, storage_bucket")
+    .eq("id", materialId)
+    .eq("user_id", auth.user.id)
+    .eq("subject_id", subjectId)
+    .maybeSingle();
+
+  if (!existing) {
+    return { error: "Material not found." };
+  }
+
   const { error } = await auth.supabase
     .from("materials")
     .delete()
@@ -80,6 +93,16 @@ export async function deleteMaterial(
 
   if (error) {
     return { error: error.message };
+  }
+
+  if (
+    existing.storage_path &&
+    existing.storage_bucket &&
+    existing.storage_path.startsWith(`${auth.user.id}/`)
+  ) {
+    await auth.supabase.storage
+      .from(existing.storage_bucket)
+      .remove([existing.storage_path]);
   }
 
   revalidatePath(`/subjects/${subjectId}`);

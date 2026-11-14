@@ -11,10 +11,12 @@ import {
 } from "@/lib/ai/usage";
 import {
   defaultPrefsFromStudy,
+  ensureDayAvailability,
   getActiveStudyPlan,
   loadPlannerDashboard,
   resolvePeriodBounds,
 } from "@/lib/planner/context";
+import { isOneDayPeriod } from "@/lib/planner/types";
 import {
   allocationsFromRecommendation,
   generateAiRecommendations,
@@ -84,6 +86,13 @@ function revalidatePlanner() {
   revalidatePath("/focus");
 }
 
+/** Persistable prefs — drops ephemeral NL instruction. */
+function prefsForStorage(prefs: PlannerPreferencesInput) {
+  const { user_instruction, ...rest } = prefs;
+  void user_instruction;
+  return rest;
+}
+
 export async function savePlannerPreferences(
   input: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
@@ -99,7 +108,7 @@ export async function savePlannerPreferences(
     const { error } = await auth.supabase.from("planner_preferences").upsert(
       {
         user_id: auth.user.id,
-        ...parsed.data,
+        ...prefsForStorage(parsed.data),
         updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id" },
@@ -142,11 +151,11 @@ export async function generateStudyPlan(
         };
       }
       preferences = parsed.data;
-      // Persist for next time (best effort)
+      // Persist for next time (best effort) — skip ephemeral instruction
       await auth.supabase.from("planner_preferences").upsert(
         {
           user_id: auth.user.id,
-          ...parsed.data,
+          ...prefsForStorage(parsed.data),
           updated_at: new Date().toISOString(),
         },
         { onConflict: "user_id" },
@@ -159,12 +168,17 @@ export async function generateStudyPlan(
       dashboard.assessments,
     );
 
+    const schedulingPrefs = isOneDayPeriod(preferences.planning_period)
+      ? ensureDayAvailability(preferences, bounds.periodStart, dashboard.timeZone)
+      : preferences;
+
     const context = {
       ...dashboard.context,
       periodStart: bounds.periodStart,
       periodEnd: bounds.periodEnd,
       intensity: preferences.intensity,
       includeRevision: preferences.include_revision,
+      userInstruction: preferences.user_instruction?.trim() || undefined,
     };
 
     // Claim usage then create generation session before Gemini
@@ -180,13 +194,13 @@ export async function generateStudyPlan(
         timeZone: dashboard.timeZone,
         periodStart: bounds.periodStart,
         periodEnd: bounds.periodEnd,
-        weekdayAvailability: preferences.weekday_availability,
-        timeWindows: preferences.time_windows,
-        restDays: preferences.rest_days,
-        maxHoursPerDay: preferences.max_hours_per_day,
-        sessionMinutes: preferences.preferred_session_minutes,
-        breakMinutes: preferences.break_minutes,
-        includeRevision: preferences.include_revision,
+        weekdayAvailability: schedulingPrefs.weekday_availability,
+        timeWindows: schedulingPrefs.time_windows,
+        restDays: schedulingPrefs.rest_days,
+        maxHoursPerDay: schedulingPrefs.max_hours_per_day,
+        sessionMinutes: schedulingPrefs.preferred_session_minutes,
+        breakMinutes: schedulingPrefs.break_minutes,
+        includeRevision: schedulingPrefs.include_revision,
         nowIso: new Date().toISOString(),
         busy: dashboard.busy,
       },
@@ -264,19 +278,27 @@ export async function saveStudyPlan(payload: unknown): Promise<SavePlanResult> {
       return { ok: false, error: "Select at least one session to save.", code: "invalid_input" };
     }
 
-    // Archive previous active plans (keep sessions; just mark plan archived)
-    await auth.supabase
-      .from("study_plans")
-      .update({ status: "archived", updated_at: new Date().toISOString() })
-      .eq("user_id", auth.user.id)
-      .eq("status", "active");
+    const isOneDay =
+      parsed.data.periodStart === parsed.data.periodEnd;
+
+    // Longer-term saves replace the active plan marker. One-day saves keep
+    // existing active longer-term plans and only append new sessions.
+    if (!isOneDay) {
+      await auth.supabase
+        .from("study_plans")
+        .update({ status: "archived", updated_at: new Date().toISOString() })
+        .eq("user_id", auth.user.id)
+        .eq("status", "active");
+    }
 
     const { data: plan, error: planError } = await auth.supabase
       .from("study_plans")
       .insert({
         user_id: auth.user.id,
         title: parsed.data.title,
-        status: "active",
+        // One-day plans are recorded as completed so they don't steal the
+        // "active" longer-term plan slot.
+        status: isOneDay ? "completed" : "active",
         period_start: parsed.data.periodStart,
         period_end: parsed.data.periodEnd,
         intensity: parsed.data.intensity,

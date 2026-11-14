@@ -36,9 +36,19 @@ export function formatTime(iso: string) {
   return TIME.format(new Date(iso));
 }
 
-/** Tasks saved without a time are stored at 23:59:59 local. */
+/**
+ * Tasks saved without a time use noon UTC (stable calendar day).
+ * Legacy rows may still use 23:59 local.
+ */
 export function hasDueTime(iso: string) {
   const d = new Date(iso);
+  if (
+    d.getUTCHours() === 12 &&
+    d.getUTCMinutes() === 0 &&
+    d.getUTCSeconds() === 0
+  ) {
+    return false;
+  }
   return !(d.getHours() === 23 && d.getMinutes() === 59);
 }
 

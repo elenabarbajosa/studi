@@ -41,6 +41,7 @@ import {
   SUBJECT_COLORS,
   WEEKDAY_LABELS,
   WEEKDAYS,
+  subjectTone,
   type SubjectColor,
   type WeekdayAvailability,
 } from "@/lib/subjects";
@@ -324,7 +325,7 @@ export function OnboardingWizard({
                     <span
                       className="size-3 rounded-full"
                       style={{
-                        background: SUBJECT_COLOR_META[subject.color].swatch,
+                        background: subjectTone(subject.color).dot,
                       }}
                     />
                     <span className="flex-1 text-[14px] font-semibold text-ink">

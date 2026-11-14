@@ -1,4 +1,5 @@
 import {
+  AI_CANVAS_FEATURE,
   AI_STUDY_PLAN_FEATURE,
   AI_SYLLABUS_FEATURE,
   resolveAiDailyLimit,
@@ -104,10 +105,15 @@ export async function fetchAiDailyLimit(
   return fallback;
 }
 
+type AiFeatureId =
+  | typeof AI_SYLLABUS_FEATURE
+  | typeof AI_STUDY_PLAN_FEATURE
+  | typeof AI_CANVAS_FEATURE;
+
 async function claimFeatureUsage(
   client: AiUsageRpc,
   userId: string,
-  feature: typeof AI_SYLLABUS_FEATURE | typeof AI_STUDY_PLAN_FEATURE,
+  feature: AiFeatureId,
   featureLabel: string,
 ): Promise<ClaimAiUsageResult> {
   const expected = resolveAiDailyLimit(userId);
@@ -137,6 +143,18 @@ export async function claimStudyPlanUsage(
     userId,
     AI_STUDY_PLAN_FEATURE,
     "AI study plan generation",
+  );
+}
+
+export async function claimCanvasClassifyUsage(
+  client: AiUsageRpc,
+  userId: string,
+): Promise<ClaimAiUsageResult> {
+  return claimFeatureUsage(
+    client,
+    userId,
+    AI_CANVAS_FEATURE,
+    "Canvas AI organization",
   );
 }
 

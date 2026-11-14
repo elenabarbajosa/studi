@@ -7,7 +7,7 @@ import { requireProfile } from "@/lib/auth";
 import { listAssessments } from "@/lib/data/calendar";
 import { listSubjects, listTopicsForSubject } from "@/lib/data/subjects";
 import { daysUntil } from "@/lib/dashboard";
-import { topicProgressSummary } from "@/lib/subjects";
+import { topicProgressSummary } from "@/lib/topic-progress";
 
 export const metadata = { title: "Subjects" };
 

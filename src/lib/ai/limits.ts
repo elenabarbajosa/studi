@@ -1,5 +1,6 @@
 export const AI_SYLLABUS_FEATURE = "syllabus_import" as const;
 export const AI_STUDY_PLAN_FEATURE = "study_plan" as const;
+export const AI_CANVAS_FEATURE = "canvas_classify" as const;
 
 /** Conservative free-tier defaults for regular users. */
 export const AI_LIMITS = {

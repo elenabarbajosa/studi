@@ -137,6 +137,8 @@ export async function updateTopicStatus(
   }
 
   revalidatePath(`/subjects/${subjectId}`);
+  revalidatePath("/subjects");
+  revalidatePath("/dashboard");
   return { success: "Status updated" };
 }
 

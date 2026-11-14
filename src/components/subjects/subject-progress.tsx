@@ -5,11 +5,14 @@ import { DateBadge, SegmentBar } from "@/components/studi/progress-bits";
 import { ASSESSMENT_TYPE_META } from "@/lib/calendar";
 import {
   subjectTone,
-  topicProgressSummary,
   TOPIC_STATUS_META,
   TOPIC_STATUSES,
-  type SubjectColor,
+  type SubjectColorValue,
 } from "@/lib/subjects";
+import {
+  effectiveStatusByTopicId,
+  topicProgressSummary,
+} from "@/lib/topic-progress";
 import { cn } from "@/lib/utils";
 import type { Assessment, Topic } from "@/types/database";
 
@@ -21,7 +24,7 @@ function percentOf(ratio: number | null) {
 }
 
 /** Aside card: weighted completion ring plus the three status counts. */
-export function SubjectProgressCard({ topics, color }: { topics: Topic[]; color: SubjectColor }) {
+export function SubjectProgressCard({ topics, color }: { topics: Topic[]; color: SubjectColorValue }) {
   const summary = topicProgressSummary(topics);
   const percent = percentOf(summary.completionRatio);
   const tone = subjectTone(color);
@@ -64,7 +67,7 @@ export function SubjectProgressCard({ topics, color }: { topics: Topic[]; color:
       <p className="mt-3 text-[12px] leading-relaxed text-ink-3">
         {summary.total === 0
           ? "Add topics to start tracking progress."
-          : "Weighted from top-level topic statuses."}
+          : "Weighted from top-level topics; parent status rolls up from children."}
       </p>
     </section>
   );
@@ -121,10 +124,13 @@ export function NextExamCard({
 export function SubjectProgress({ topics }: { topics: Topic[] }) {
   const summary = topicProgressSummary(topics);
   const percent = percentOf(summary.completionRatio);
+  const effective = effectiveStatusByTopicId(topics);
   const counts = TOPIC_STATUSES.map((status) => ({
     status,
-    roots: topics.filter((t) => t.parent_id === null && t.status === status).length,
-    all: topics.filter((t) => t.status === status).length,
+    roots: topics.filter(
+      (t) => t.parent_id === null && (effective.get(t.id) ?? t.status) === status,
+    ).length,
+    all: topics.filter((t) => (effective.get(t.id) ?? t.status) === status).length,
   }));
   return (
     <section aria-labelledby="progress-title" className="flex flex-col gap-4">
@@ -133,8 +139,9 @@ export function SubjectProgress({ topics }: { topics: Topic[] }) {
           Progress
         </h2>
         <p className="text-[12.5px] text-ink-2">
-          Based only on your topic statuses: {TOPIC_STATUS_META.not_started.label} counts 0,{" "}
-          {TOPIC_STATUS_META.mastered.label} counts fully.
+          Top-level topics are weighted equally; parents inherit status from children.{" "}
+          {TOPIC_STATUS_META.not_started.label} counts 0, {TOPIC_STATUS_META.mastered.label}{" "}
+          counts fully.
         </p>
       </div>
 

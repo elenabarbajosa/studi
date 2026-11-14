@@ -10,6 +10,7 @@ import { EventFormDialog, type CalendarDraft } from "@/components/calendar/event
 import { primaryPillClass } from "@/components/studi/page-title";
 import { DifficultyBars } from "@/components/studi/progress-bits";
 import { ResponsiveDialog } from "@/components/studi/responsive-dialog";
+import { GradesPanel } from "@/components/grades/grades-panel";
 import { AssessmentsPanel } from "@/components/subjects/assessments-panel";
 import { MaterialsPanel } from "@/components/subjects/materials-panel";
 import { SubjectForm } from "@/components/subjects/subject-form";
@@ -17,6 +18,7 @@ import { NextExamCard, SubjectProgress, SubjectProgressCard } from "@/components
 import { SubjectTasksPanel } from "@/components/subjects/subject-tasks-panel";
 import { TopicsPanel } from "@/components/subjects/topics-panel";
 import { TaskFormDialog, type TaskDraft } from "@/components/tasks/task-form-dialog";
+import type { SubjectGradeBundle } from "@/lib/grades/convert";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,11 +27,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toLocalDateInput } from "@/lib/calendar";
 import { daysUntil } from "@/lib/dashboard";
-import { subjectTone, subjectToneVars, topicProgressSummary } from "@/lib/subjects";
+import { subjectTone, subjectToneVars } from "@/lib/subjects";
+import { topicProgressSummary } from "@/lib/topic-progress";
 import { cn } from "@/lib/utils";
 import type { Assessment, Material, Subject, Subtask, Task, Topic } from "@/types/database";
 
-export const SUBJECT_TABS = ["topics", "materials", "exams", "tasks", "progress"] as const;
+export const SUBJECT_TABS = [
+  "topics",
+  "materials",
+  "exams",
+  "tasks",
+  "grades",
+  "progress",
+] as const;
 export type SubjectTab = (typeof SUBJECT_TABS)[number];
 
 type SubjectDetailProps = {
@@ -40,6 +50,7 @@ type SubjectDetailProps = {
   assessments: Assessment[];
   tasks: Task[];
   subtasks: Subtask[];
+  gradeBundle: SubjectGradeBundle | null;
   initialTab: SubjectTab;
   dailyAiLimit: number;
 };
@@ -55,6 +66,7 @@ export function SubjectDetail({
   assessments,
   tasks,
   subtasks,
+  gradeBundle,
   initialTab,
   dailyAiLimit,
 }: SubjectDetailProps) {
@@ -113,6 +125,13 @@ export function SubjectDetail({
     { id: "materials", label: "Materials", count: materials.length ? String(materials.length) : undefined },
     { id: "exams", label: "Exams", count: assessments.length ? String(assessments.length) : undefined },
     { id: "tasks", label: "Tasks", count: openTasks ? String(openTasks) : undefined },
+    {
+      id: "grades",
+      label: "Grades",
+      count: gradeBundle?.components.length
+        ? String(gradeBundle.components.length)
+        : undefined,
+    },
     { id: "progress", label: "Progress" },
   ];
 
@@ -274,7 +293,12 @@ export function SubjectDetail({
               />
             ) : null}
             {tab === "materials" ? (
-              <MaterialsPanel subjectId={subject.id} materials={materials} topics={topics} />
+              <MaterialsPanel
+                subjectId={subject.id}
+                subjectName={subject.name}
+                materials={materials}
+                topics={topics}
+              />
             ) : null}
             {tab === "exams" ? (
               <AssessmentsPanel subjectId={subject.id} assessments={assessments} onOpenDraft={openEvent} />
@@ -286,6 +310,16 @@ export function SubjectDetail({
                 subtasks={subtasks}
                 onNewTask={() => openTask(null)}
                 onEditTask={openTask}
+              />
+            ) : null}
+            {tab === "grades" ? (
+              <GradesPanel
+                key={gradeBundle?.scheme.updated_at ?? "grades-new"}
+                subject={subject}
+                assessments={assessments}
+                scheme={gradeBundle?.scheme ?? null}
+                groups={gradeBundle?.groups ?? []}
+                components={gradeBundle?.components ?? []}
               />
             ) : null}
             {tab === "progress" ? <SubjectProgress topics={topics} /> : null}

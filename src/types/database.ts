@@ -9,9 +9,13 @@ import type {
 } from "@/lib/calendar";
 import type { AccentColor, AppearanceMode } from "@/lib/theme";
 import type {
+  GradeComponentType,
+  GradeSchemeStatus,
+} from "@/lib/grades/types";
+import type {
   OnboardingStatus,
   ResourceType,
-  SubjectColor,
+  SubjectColorValue,
   TopicStatus,
   WeekdayAvailability,
 } from "@/lib/subjects";
@@ -183,7 +187,15 @@ export type StudyPlanStatus = "draft" | "active" | "completed" | "archived";
 
 export type PlannerPreferences = {
   user_id: string;
-  planning_period: "7" | "14" | "30" | "until_exam";
+  planning_period:
+    | "today"
+    | "tomorrow"
+    | "custom"
+    | "7"
+    | "14"
+    | "30"
+    | "until_exam";
+  target_date: string | null;
   intensity: "light" | "balanced" | "intensive";
   max_hours_per_day: number;
   preferred_session_minutes: number;
@@ -235,7 +247,7 @@ export type Subject = {
   id: string;
   user_id: string;
   name: string;
-  color: SubjectColor;
+  color: SubjectColorValue;
   difficulty: number | null;
   description: string | null;
   sort_order: number;
@@ -256,6 +268,52 @@ export type Topic = {
   updated_at: string;
 };
 
+export type SubjectGradeScheme = {
+  id: string;
+  user_id: string;
+  subject_id: string;
+  display_scale_max: number;
+  passing_overall: number | null;
+  passing_final_min: number | null;
+  status: GradeSchemeStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type GradeGroup = {
+  id: string;
+  user_id: string;
+  subject_id: string;
+  scheme_id: string;
+  title: string;
+  weight_percent: number;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type GradeComponent = {
+  id: string;
+  user_id: string;
+  subject_id: string;
+  scheme_id: string;
+  group_id: string | null;
+  title: string;
+  component_type: GradeComponentType;
+  weight_percent: number;
+  weight_within_group: number | null;
+  max_score: number;
+  score: number | null;
+  min_score: number | null;
+  sort_order: number;
+  assessment_id: string | null;
+  due_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MaterialSource = "manual" | "canvas" | "link";
+
 export type Material = {
   id: string;
   user_id: string;
@@ -263,8 +321,17 @@ export type Material = {
   topic_id: string | null;
   title: string;
   resource_type: ResourceType;
-  url: string;
+  /** External URL when the material is a link; null when file is in private storage. */
+  url: string | null;
   description: string | null;
+  storage_path: string | null;
+  storage_bucket: string | null;
+  original_filename: string | null;
+  mime_type: string | null;
+  byte_size: number | null;
+  source: MaterialSource;
+  source_fingerprint: string | null;
+  canvas_module_path: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -432,7 +499,7 @@ export type Database = {
           id?: string;
           user_id: string;
           name: string;
-          color?: SubjectColor;
+          color?: SubjectColorValue;
           difficulty?: number | null;
           description?: string | null;
           sort_order?: number;
@@ -466,6 +533,87 @@ export type Database = {
         >;
         Relationships: [];
       };
+      subject_grade_schemes: {
+        Row: SubjectGradeScheme;
+        Insert: {
+          id?: string;
+          user_id: string;
+          subject_id: string;
+          display_scale_max?: number;
+          passing_overall?: number | null;
+          passing_final_min?: number | null;
+          status?: GradeSchemeStatus;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Pick<
+            SubjectGradeScheme,
+            | "display_scale_max"
+            | "passing_overall"
+            | "passing_final_min"
+            | "status"
+          >
+        >;
+        Relationships: [];
+      };
+      grade_groups: {
+        Row: GradeGroup;
+        Insert: {
+          id?: string;
+          user_id: string;
+          subject_id: string;
+          scheme_id: string;
+          title: string;
+          weight_percent?: number;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Pick<GradeGroup, "title" | "weight_percent" | "sort_order">
+        >;
+        Relationships: [];
+      };
+      grade_components: {
+        Row: GradeComponent;
+        Insert: {
+          id?: string;
+          user_id: string;
+          subject_id: string;
+          scheme_id: string;
+          group_id?: string | null;
+          title: string;
+          component_type?: GradeComponentType;
+          weight_percent?: number;
+          weight_within_group?: number | null;
+          max_score?: number;
+          score?: number | null;
+          min_score?: number | null;
+          sort_order?: number;
+          assessment_id?: string | null;
+          due_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Pick<
+            GradeComponent,
+            | "group_id"
+            | "title"
+            | "component_type"
+            | "weight_percent"
+            | "weight_within_group"
+            | "max_score"
+            | "score"
+            | "min_score"
+            | "sort_order"
+            | "assessment_id"
+            | "due_at"
+          >
+        >;
+        Relationships: [];
+      };
       materials: {
         Row: Material;
         Insert: {
@@ -475,15 +623,35 @@ export type Database = {
           topic_id?: string | null;
           title: string;
           resource_type?: ResourceType;
-          url: string;
+          url?: string | null;
           description?: string | null;
+          storage_path?: string | null;
+          storage_bucket?: string | null;
+          original_filename?: string | null;
+          mime_type?: string | null;
+          byte_size?: number | null;
+          source?: MaterialSource;
+          source_fingerprint?: string | null;
+          canvas_module_path?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: Partial<
           Pick<
             Material,
-            "title" | "resource_type" | "url" | "description" | "topic_id"
+            | "title"
+            | "resource_type"
+            | "url"
+            | "description"
+            | "topic_id"
+            | "storage_path"
+            | "storage_bucket"
+            | "original_filename"
+            | "mime_type"
+            | "byte_size"
+            | "source"
+            | "source_fingerprint"
+            | "canvas_module_path"
           >
         >;
         Relationships: [];
@@ -1124,6 +1292,8 @@ export type Database = {
       topic_status: TopicStatus;
       resource_type: ResourceType;
       assessment_type: AssessmentType;
+      grade_component_type: GradeComponentType;
+      grade_scheme_status: GradeSchemeStatus;
       priority_level: PriorityLevel;
       task_status: TaskStatus;
       study_session_status: StudySessionStatus;

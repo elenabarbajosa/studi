@@ -1,21 +1,19 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { Check } from "lucide-react";
 
 import {
   createSubject,
   updateSubject,
   type ActionState,
 } from "@/actions/subjects";
+import { SubjectColorPicker } from "@/components/subjects/color-picker";
 import { Field, FormError, PrimaryActions } from "@/components/studi/form-controls";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  SUBJECT_COLOR_META,
-  SUBJECT_COLORS,
   subjectToneVars,
-  type SubjectColor,
+  type SubjectColorValue,
 } from "@/lib/subjects";
 import { cn } from "@/lib/utils";
 import type { Subject } from "@/types/database";
@@ -34,7 +32,7 @@ type SubjectFormProps = {
 export function SubjectForm({ subject, onCancel, onDone }: SubjectFormProps) {
   const action = subject ? updateSubject.bind(null, subject.id) : createSubject;
   const [state, formAction, pending] = useActionState(action, initial);
-  const [color, setColor] = useState<SubjectColor>(subject?.color ?? "teal");
+  const [color, setColor] = useState<SubjectColorValue>(subject?.color ?? "teal");
   const [difficulty, setDifficulty] = useState<string>(
     subject?.difficulty ? String(subject.difficulty) : "3",
   );
@@ -44,16 +42,18 @@ export function SubjectForm({ subject, onCancel, onDone }: SubjectFormProps) {
     if (state.success) onDone?.();
   }, [state.success, onDone]);
 
+  const tone = subjectToneVars(color);
+
   return (
     <form action={formAction} className="flex flex-col gap-5">
       <div
         className="subject-tone flex flex-col gap-1.5 rounded-[20px] p-4 transition-colors duration-200"
-        style={subjectToneVars(color) as React.CSSProperties}
+        style={tone as React.CSSProperties}
       >
         <span
           aria-hidden
           className="size-3 rounded-full"
-          style={{ background: SUBJECT_COLOR_META[color].swatch }}
+          style={{ background: "var(--subject-dot)" }}
         />
         <label htmlFor="subject-name" className="sr-only">
           Subject name
@@ -72,39 +72,8 @@ export function SubjectForm({ subject, onCancel, onDone }: SubjectFormProps) {
         <span className="text-[12.5px]">Preview of the subject tile</span>
       </div>
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 text-[13px] font-medium text-ink-2">Colour</legend>
-        <input type="hidden" name="color" value={color} />
-        <div role="radiogroup" aria-label="Colour" className="flex flex-wrap gap-2.5">
-          {SUBJECT_COLORS.map((c) => {
-            const selected = color === c;
-            return (
-              <button
-                key={c}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                aria-label={SUBJECT_COLOR_META[c].label}
-                title={SUBJECT_COLOR_META[c].label}
-                onClick={() => setColor(c)}
-                className="flex size-10 items-center justify-center rounded-full outline-none focus-visible:shadow-[0_0_0_2px_var(--raised),0_0_0_4px_var(--accent)]"
-              >
-                <span
-                  className="flex size-[30px] items-center justify-center rounded-full text-white transition-shadow"
-                  style={{
-                    background: SUBJECT_COLOR_META[c].swatch,
-                    boxShadow: selected
-                      ? `0 0 0 3px var(--raised), 0 0 0 5px ${SUBJECT_COLOR_META[c].swatch}`
-                      : undefined,
-                  }}
-                >
-                  {selected ? <Check className="size-3.5" strokeWidth={3} aria-hidden /> : null}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </fieldset>
+      <input type="hidden" name="color" value={color} />
+      <SubjectColorPicker value={color} onChange={setColor} />
 
       <fieldset className="flex flex-col">
         <legend className="mb-2 text-[13px] font-medium text-ink-2">Difficulty</legend>

@@ -6,7 +6,9 @@ import { ChevronRight, Search } from "lucide-react";
 import { useShell } from "@/components/layout/shell-provider";
 import { StudiAvatar } from "@/components/shared/studi-avatar";
 import {
+  countdownsNav,
   friendsNav,
+  gradesNav,
   moreNav,
   plannerNav,
   progressNav,
@@ -21,7 +23,9 @@ const tileTone: Record<string, string> = {
   [studyTogetherNav.href]: "bg-[#E6F3EC] text-[#2F6E50]",
   [subjectsNav.href]: "bg-[#EFEBFA] text-[#5B4A99]",
   [plannerNav.href]: "bg-[#FBE9EC] text-[#A23A55]",
-  [progressNav.href]: "bg-[#FAF0DF] text-[#8A5A12]",
+  [countdownsNav.href]: "bg-[#FAF0DF] text-[#8A5A12]",
+  [gradesNav.href]: "bg-[#FBE9EC] text-[#A23A55]",
+  [progressNav.href]: "bg-[#E1F2F0] text-[#226B66]",
   [statisticsNav.href]: "bg-[#E5F0F9] text-[#2B6896]",
   [friendsNav.href]: "bg-sunken text-ink-2",
 };

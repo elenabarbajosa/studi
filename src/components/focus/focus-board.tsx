@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -18,22 +18,27 @@ import {
   heartbeatFocusSession,
   startFocusSession,
 } from "@/actions/focus";
-import { Tile, TileHeader, tileLinkClass } from "@/components/dashboard/tile";
+import { Tile, tileLinkClass } from "@/components/dashboard/tile";
 import { FinishSessionDialog } from "@/components/focus/finish-session-dialog";
+import { FocusPresetChips } from "@/components/focus/focus-preset-chips";
+import { RhythmSummary } from "@/components/focus/rhythm-summary";
 import {
   SoundscapeControls,
   useSoundscapePlayer,
 } from "@/components/focus/soundscape-controls";
-import { TimerDial } from "@/components/focus/timer-dial";
-import { Field, NativeSelect } from "@/components/studi/form-controls";
+import { StudySelection } from "@/components/focus/study-selection";
+import {
+  FOCUS_DURATION_MAX,
+  snapFocusMinutes,
+  TimerDial,
+} from "@/components/focus/timer-dial";
 import { PageTitle } from "@/components/studi/page-title";
 import { Segmented } from "@/components/studi/segmented";
-import { SubjectChip, SubjectDot, SubjectPicker } from "@/components/studi/subject-chip";
-import { Input } from "@/components/ui/input";
+import { SubjectDot } from "@/components/studi/subject-chip";
 import { useFocusTimer } from "@/hooks/use-focus-timer";
 import { useStudyPresence } from "@/hooks/use-study-presence";
 import type { SoundscapeId } from "@/lib/calendar";
-import { formatDurationMinutes } from "@/lib/focus/timer-engine";
+import { formatDurationMinutes, formatTimer } from "@/lib/focus/timer-engine";
 import {
   defaultFocusConfig,
   type FocusPreferences,
@@ -128,8 +133,8 @@ export function FocusBoard({
   initialTaskId,
   initialTopicId,
 }: FocusBoardProps) {
-  const config = defaultFocusConfig(preferences);
-  const timer = useFocusTimer(config);
+  const configDefaults = defaultFocusConfig(preferences);
+  const timer = useFocusTimer(configDefaults);
   const isPhone = useIsPhone();
 
   const initial = resolveInitialSelection({
@@ -167,24 +172,13 @@ export function FocusBoard({
     secondaryVolume,
   });
 
-  const filteredTopics = useMemo(
-    () => topics.filter((t) => (subjectId ? t.subject_id === subjectId : true)),
-    [topics, subjectId],
-  );
-  const filteredTasks = useMemo(
-    () =>
-      tasks.filter(
-        (t) =>
-          t.status === "todo" &&
-          (subjectId ? t.subject_id === subjectId || !t.subject_id : true),
-      ),
-    [tasks, subjectId],
-  );
-
   const { engine } = timer;
   const active = engine.runState === "running" || engine.runState === "paused";
   const finished = engine.runState === "finished";
+  const idle = engine.runState === "idle";
   const isBreak = engine.phase === "short_break" || engine.phase === "long_break";
+  const canCustomize =
+    idle && engine.mode === "pomodoro" && !finished;
 
   const sessionSubjectId = timer.meta?.subjectId ?? subjectId;
   const sessionSubject = subjects.find((s) => s.id === sessionSubjectId);
@@ -200,24 +194,36 @@ export function FocusBoard({
           ? "Long break"
           : "Stopwatch";
 
-  const perCycle = engine.intervalsBeforeLong || config.intervalsBeforeLong;
+  const perCycle = engine.intervalsBeforeLong || timer.config.intervalsBeforeLong;
   const inCycle = engine.completedFocusIntervals % perCycle;
-  const cycleDone = isBreak && inCycle === 0 && engine.completedFocusIntervals > 0 ? perCycle : inCycle;
-  const cycleNumber = engine.phase === "focus" ? inCycle + 1 : Math.max(1, cycleDone);
+  const cycleDone =
+    isBreak && inCycle === 0 && engine.completedFocusIntervals > 0
+      ? perCycle
+      : inCycle;
+  const cycleNumber =
+    engine.phase === "focus" ? inCycle + 1 : Math.max(1, cycleDone);
   const dialLabel =
     engine.mode === "pomodoro"
-      ? `${phaseLabel} · cycle ${cycleNumber} of ${perCycle}`
+      ? canCustomize
+        ? "Ready"
+        : `${phaseLabel} · cycle ${cycleNumber} of ${perCycle}`
       : finished
         ? "Stopped"
         : engine.runState === "paused"
           ? "Paused"
           : "Stopwatch";
   const dialProgress =
-    engine.mode === "pomodoro" ? timer.progress : (timer.displayMs % 3_600_000) / 3_600_000;
-  const cycle =
     engine.mode === "pomodoro"
+      ? timer.progress
+      : (timer.displayMs % 3_600_000) / 3_600_000;
+  const cycle =
+    engine.mode === "pomodoro" && !canCustomize
       ? { total: perCycle, done: cycleDone, current: engine.phase === "focus" }
       : undefined;
+
+  const displayTime = canCustomize
+    ? formatTimer(timer.config.focusMinutes * 60_000)
+    : timer.display;
 
   const presenceStatus: PresenceStatus =
     !active
@@ -261,7 +267,6 @@ export function FocusBoard({
     });
   }, [preferences.focus_sound_enabled, timer]);
 
-  // Heartbeat every 20s while a session is active
   useEffect(() => {
     if (!timer.clientSessionId || !active) return;
     const id = window.setInterval(() => {
@@ -275,9 +280,28 @@ export function FocusBoard({
     return () => window.clearInterval(id);
   }, [timer.clientSessionId, active, timer.engine]);
 
+  function setFocusMinutes(minutes: number) {
+    if (!canCustomize) return;
+    timer.applyConfig({ focusMinutes: snapFocusMinutes(minutes) });
+  }
+
+  function handlePresetSelect(value: number | "custom") {
+    if (!canCustomize) return;
+    if (value === "custom") {
+      // Custom is selected automatically when the ring is scrubbed.
+      // If already on a named preset, nudge once so the Custom chip activates.
+      const current = timer.config.focusMinutes;
+      if ([25, 45, 60].includes(current)) {
+        setFocusMinutes(Math.min(FOCUS_DURATION_MAX, current === 60 ? 55 : current + 5));
+      }
+      return;
+    }
+    setFocusMinutes(value);
+  }
+
   function handleStart() {
     const clientSessionId = crypto.randomUUID();
-    const { engine, meta } = timer.begin({
+    const { engine: started, meta } = timer.begin({
       subjectId: subjectId || null,
       topicId: topicId || null,
       taskId: taskId || null,
@@ -288,12 +312,12 @@ export function FocusBoard({
     startTransition(async () => {
       const result = await startFocusSession({
         client_session_id: clientSessionId,
-        timer_mode: engine.mode,
+        timer_mode: started.mode,
         subject_id: meta.subjectId,
         topic_id: meta.topicId,
         task_id: meta.taskId,
         goal: meta.goal,
-        engine_state: engine as unknown as Record<string, unknown>,
+        engine_state: started as unknown as Record<string, unknown>,
       });
       if (result.error) {
         toast.error(result.error);
@@ -303,7 +327,7 @@ export function FocusBoard({
   }
 
   function handleFinish() {
-    const finished = timer.finish();
+    const finishedEngine = timer.finish();
     if (!timer.clientSessionId || !timer.meta) {
       toast.error("No active session to save.");
       return;
@@ -314,10 +338,10 @@ export function FocusBoard({
       topicId: timer.meta.topicId,
       taskId: timer.meta.taskId,
       goal: timer.meta.goal,
-      focusMs: finished.totalFocusMs,
-      breakMs: finished.totalBreakMs,
-      timerMode: finished.mode,
-      pomodoroCycles: finished.completedFocusIntervals,
+      focusMs: finishedEngine.totalFocusMs,
+      breakMs: finishedEngine.totalBreakMs,
+      timerMode: finishedEngine.mode,
+      pomodoroCycles: finishedEngine.completedFocusIntervals,
       startedAtIso: timer.meta.startedAtIso,
       subjectName: subjects.find((s) => s.id === timer.meta?.subjectId)?.name,
       topicTitle: topics.find((t) => t.id === timer.meta?.topicId)?.title,
@@ -365,7 +389,12 @@ export function FocusBoard({
           e.preventDefault();
           handleFinish();
         }
-      } else if ((e.key === "r" || e.key === "R") && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      } else if (
+        (e.key === "r" || e.key === "R") &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey
+      ) {
         e.preventDefault();
         confirmReset();
       } else if (e.key === "Escape" && distractionFree) {
@@ -376,7 +405,8 @@ export function FocusBoard({
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  const immersive = distractionFree || (isPhone && (active || finished) && !phoneMinimized);
+  const immersive =
+    distractionFree || (isPhone && (active || finished) && !phoneMinimized);
 
   useEffect(() => {
     if (!immersive) return;
@@ -398,7 +428,9 @@ export function FocusBoard({
 
   const todayLabel = formatDurationMinutes(todayFocusSeconds * 1000);
   const dailyPaceSeconds =
-    weeklyGoalHours && weeklyGoalHours > 0 ? (weeklyGoalHours * 3600) / 7 : null;
+    weeklyGoalHours && weeklyGoalHours > 0
+      ? (weeklyGoalHours * 3600) / 7
+      : null;
 
   const soundProps = {
     player,
@@ -432,10 +464,18 @@ export function FocusBoard({
         subtitle={`Only active focus time is saved · ${todayLabel} today`}
       />
 
-      <div className="grid gap-4 md:gap-5 min-[1100px]:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+      <div className="grid gap-3 md:gap-5 min-[1100px]:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.9fr)]">
         {/* Hero timer */}
-        <Tile variant="hero" className="flex flex-col p-4 sm:p-6 md:rounded-[28px] md:p-7">
-          <div className="flex items-center justify-between gap-3">
+        <Tile
+          variant="hero"
+          className="relative flex flex-col overflow-hidden p-4 sm:p-5 md:rounded-[28px] md:p-7"
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_70%_at_50%_-10%,color-mix(in_srgb,var(--accent)_28%,transparent),transparent_65%)]"
+          />
+
+          <div className="relative flex items-center justify-between gap-3">
             <Segmented
               label="Timer mode"
               value={engine.mode}
@@ -445,12 +485,12 @@ export function FocusBoard({
                 { value: "pomodoro", label: "Pomodoro" },
                 { value: "stopwatch", label: "Stopwatch" },
               ]}
-              className="bg-raised/60 dark:bg-sunken"
+              className="bg-raised/70 dark:bg-sunken"
             />
             <button
               type="button"
               onClick={() => setDistractionFree(true)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-ink-2 outline-none transition-colors hover:bg-raised/60 hover:text-ink focus-visible:shadow-[0_0_0_2px_var(--raised),0_0_0_4px_var(--accent)]"
+              className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-ink-2 outline-none transition-colors hover:bg-raised/70 hover:text-ink focus-visible:shadow-[0_0_0_2px_var(--raised),0_0_0_4px_var(--accent)]"
             >
               <Maximize2 className="size-4" aria-hidden />
               <span className="hidden sm:inline">Distraction-free</span>
@@ -460,27 +500,45 @@ export function FocusBoard({
 
           <TimerDial
             progress={dialProgress}
-            time={timer.display}
+            time={displayTime}
             label={dialLabel}
             cycle={cycle}
-            className="mt-4 max-w-[300px] md:mt-6 md:max-w-[360px]"
+            interactive={canCustomize}
+            durationMinutes={
+              canCustomize ? timer.config.focusMinutes : undefined
+            }
+            onDurationChange={canCustomize ? setFocusMinutes : undefined}
+            className="relative mt-3 max-w-[260px] sm:max-w-[280px] md:mt-5 md:max-w-[340px]"
           />
 
-          <div className="mt-4 flex min-h-[44px] flex-col items-center gap-1 text-center md:mt-5">
+          {engine.mode === "pomodoro" ? (
+            <FocusPresetChips
+              className="relative mt-3 md:mt-4"
+              focusMinutes={timer.config.focusMinutes}
+              disabled={!canCustomize}
+              onSelect={handlePresetSelect}
+            />
+          ) : null}
+
+          <div className="relative mt-3 flex min-h-[40px] flex-col items-center gap-1 text-center md:mt-4">
             {contextLine ? (
-              <p className="flex max-w-full justify-center text-[14px] font-semibold text-accent-text">
+              <p className="flex max-w-full justify-center text-[13.5px] font-semibold text-accent-text md:text-[14px]">
                 {contextLine}
               </p>
             ) : (
-              <p className="text-[14px] text-ink-2">Pick a subject to tag this session, or just start.</p>
+              <p className="text-[13.5px] text-ink-2">
+                Start untagged, or pick a subject beside the timer.
+              </p>
             )}
             {sessionGoal ? (
-              <p className="max-w-md truncate text-[13.5px] text-ink-2">Goal: {sessionGoal}</p>
+              <p className="max-w-md truncate text-[13px] text-ink-2">
+                Goal: {sessionGoal}
+              </p>
             ) : null}
           </div>
 
           <TimerControls
-            className="mt-5 md:mt-6"
+            className="relative mt-4 md:mt-5"
             runState={engine.runState}
             primaryLabel={primaryLabel}
             pending={isPending}
@@ -489,124 +547,46 @@ export function FocusBoard({
             onFinish={handleFinish}
           />
 
-          <p className="mt-5 hidden text-center text-[12px] text-ink-3 md:block">
-            <Kbd>Space</Kbd> pause · <Kbd>R</Kbd> reset · <Kbd>⌘↵</Kbd> finish & save ·{" "}
-            <Kbd>Esc</Kbd> leave full screen
+          <p className="relative mt-4 hidden text-center text-[12px] text-ink-3 md:block">
+            <Kbd>Space</Kbd> pause · <Kbd>R</Kbd> reset · <Kbd>⌘↵</Kbd> finish &
+            save · <Kbd>Esc</Kbd> leave full screen
           </p>
         </Tile>
 
-        <div className="flex min-w-0 flex-col gap-4 md:gap-5">
-          {/* Session setup */}
-          <Tile className="p-5">
-            <TileHeader title="What are you studying?" />
-            {active || finished ? (
-              <div className="mt-3 flex flex-col gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  {sessionSubject ? (
-                    <SubjectChip name={sessionSubject.name} color={sessionSubject.color} />
-                  ) : (
-                    <SubjectChip name="No subject" color={null} />
-                  )}
-                  {sessionTopic ? (
-                    <span className="text-[13.5px] text-ink-2">{sessionTopic.title}</span>
-                  ) : null}
-                </div>
-                <p className="text-[13px] text-ink-3">
-                  Locked while this session runs. Finish or reset to change it.
-                </p>
-              </div>
-            ) : (
-              <div className="mt-3 flex flex-col gap-4">
-                <SubjectPicker
-                  subjects={subjects}
-                  value={subjectId}
-                  onChange={(id) => {
-                    setSubjectId(id);
-                    setTopicId("");
-                  }}
-                />
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label="Topic" htmlFor="focus-topic" optional>
-                    <NativeSelect
-                      id="focus-topic"
-                      value={topicId}
-                      onChange={(e) => setTopicId(e.target.value)}
-                    >
-                      <option value="">None</option>
-                      {filteredTopics.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.title}
-                        </option>
-                      ))}
-                    </NativeSelect>
-                  </Field>
-                  <Field label="Linked task" htmlFor="focus-task" optional>
-                    <NativeSelect
-                      id="focus-task"
-                      value={taskId}
-                      onChange={(e) => setTaskId(e.target.value)}
-                    >
-                      <option value="">None</option>
-                      {filteredTasks.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.title}
-                        </option>
-                      ))}
-                    </NativeSelect>
-                  </Field>
-                </div>
-                <Field label="Study goal" htmlFor="focus-goal" optional>
-                  <Input
-                    id="focus-goal"
-                    value={goal}
-                    onChange={(e) => setGoal(e.target.value)}
-                    placeholder="e.g. Finish chapter 3 notes"
-                    maxLength={200}
-                  />
-                </Field>
-              </div>
-            )}
-          </Tile>
+        <div className="flex min-w-0 flex-col gap-3 md:gap-4">
+          <StudySelection
+            subjects={subjects}
+            topics={topics}
+            tasks={tasks}
+            subjectId={subjectId}
+            topicId={topicId}
+            taskId={taskId}
+            goal={goal}
+            locked={active || finished}
+            onSubjectChange={(id) => {
+              setSubjectId(id);
+              setTopicId("");
+            }}
+            onTopicChange={setTopicId}
+            onTaskChange={setTaskId}
+            onGoalChange={setGoal}
+          />
 
-          {/* Rhythm */}
-          <Tile variant="data" className="p-5">
-            <TileHeader
-              title="Rhythm"
-              action={
-                <Link href="/settings" className={tileLinkClass}>
-                  Change in Settings
-                </Link>
-              }
-            />
-            {engine.mode === "pomodoro" ? (
-              <dl className="mt-3 grid grid-cols-4 gap-2">
-                <RhythmStat label="Focus" value={`${config.focusMinutes}m`} />
-                <RhythmStat label="Break" value={`${config.shortBreakMinutes}m`} />
-                <RhythmStat label="Long" value={`${config.longBreakMinutes}m`} />
-                <RhythmStat label="Long every" value={`${config.intervalsBeforeLong}`} />
-              </dl>
-            ) : (
-              <p className="mt-2 text-[13.5px] text-ink-2">
-                The stopwatch counts up until you finish. Pauses aren’t counted.
-              </p>
-            )}
-            {config.autoStartBreaks && engine.mode === "pomodoro" ? (
-              <p className="mt-2.5 text-[12.5px] text-ink-3">Breaks start automatically.</p>
-            ) : null}
-          </Tile>
+          <RhythmSummary
+            mode={engine.mode}
+            focusMinutes={timer.config.focusMinutes}
+            shortBreakMinutes={timer.config.shortBreakMinutes}
+            longBreakMinutes={timer.config.longBreakMinutes}
+            intervalsBeforeLong={timer.config.intervalsBeforeLong}
+            autoStartBreaks={timer.config.autoStartBreaks}
+          />
 
-          {/* Ambience */}
-          <Tile className="p-5">
-            <TileHeader title="Ambience" />
-            <div className="mt-3">
-              <SoundscapeControls {...soundProps} />
-            </div>
-          </Tile>
+          <SoundscapeControls {...soundProps} variant="card" />
         </div>
       </div>
 
       {/* Today + history */}
-      <Tile className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:gap-6">
+      <Tile className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:gap-6 md:p-5">
         <div className="min-w-0 md:w-[min(320px,34%)] md:shrink-0">
           <div className="flex items-baseline justify-between gap-3">
             <p className="text-[13px] font-medium text-ink-2">Today</p>
@@ -624,7 +604,9 @@ export function FocusBoard({
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-sunken">
                 <div
                   className="h-full rounded-full bg-accent-ink transition-[width] duration-500 ease-studi dark:bg-accent"
-                  style={{ width: `${Math.min(100, (todayFocusSeconds / dailyPaceSeconds) * 100)}%` }}
+                  style={{
+                    width: `${Math.min(100, (todayFocusSeconds / dailyPaceSeconds) * 100)}%`,
+                  }}
                 />
               </div>
               <p className="mt-1.5 text-[12px] text-ink-3">
@@ -669,7 +651,13 @@ export function FocusBoard({
           )}
         </div>
 
-        <Link href="/statistics" className={cn(tileLinkClass, "inline-flex shrink-0 items-center gap-1 self-start md:self-center")}>
+        <Link
+          href="/statistics"
+          className={cn(
+            tileLinkClass,
+            "inline-flex shrink-0 items-center gap-1 self-start md:self-center",
+          )}
+        >
           Statistics
           <ArrowRight className="size-3.5" aria-hidden />
         </Link>
@@ -685,8 +673,14 @@ export function FocusBoard({
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
-              onClick={() => (distractionFree ? setDistractionFree(false) : setPhoneMinimized(true))}
-              aria-label={distractionFree ? "Leave full screen" : "Minimise timer"}
+              onClick={() =>
+                distractionFree
+                  ? setDistractionFree(false)
+                  : setPhoneMinimized(true)
+              }
+              aria-label={
+                distractionFree ? "Leave full screen" : "Minimise timer"
+              }
               className="flex size-11 items-center justify-center rounded-full bg-white/[0.08] text-white/80 outline-none hover:bg-white/[0.14] focus-visible:shadow-[0_0_0_2px_#171315,0_0_0_4px_var(--accent)]"
             >
               <ChevronDown className="size-5" aria-hidden />
@@ -702,10 +696,24 @@ export function FocusBoard({
               tone="dark"
               progress={dialProgress}
               time={timer.display}
-              label={dialLabel}
-              cycle={cycle}
+              label={
+                engine.mode === "pomodoro"
+                  ? `${phaseLabel} · cycle ${cycleNumber} of ${perCycle}`
+                  : dialLabel
+              }
+              cycle={
+                engine.mode === "pomodoro"
+                  ? {
+                      total: perCycle,
+                      done: cycleDone,
+                      current: engine.phase === "focus",
+                    }
+                  : undefined
+              }
               onToggle={active ? togglePrimary : undefined}
-              toggleLabel={engine.runState === "running" ? "Pause timer" : "Resume timer"}
+              toggleLabel={
+                engine.runState === "running" ? "Pause timer" : "Resume timer"
+              }
               className="max-w-[min(300px,72vw)] md:max-w-[min(420px,52vh)]"
             />
 
@@ -716,7 +724,9 @@ export function FocusBoard({
                 </p>
               ) : null}
               {sessionGoal ? (
-                <p className="max-w-sm truncate text-[14px] text-white/60">{sessionGoal}</p>
+                <p className="max-w-sm truncate text-[14px] text-white/60">
+                  {sessionGoal}
+                </p>
               ) : null}
             </div>
 
@@ -738,7 +748,9 @@ export function FocusBoard({
 
           <p className="text-center text-[13px] text-white/50">
             Today {todayLabel}
-            {dailyPaceSeconds ? ` of ${formatDurationMinutes(dailyPaceSeconds * 1000)}` : ""}
+            {dailyPaceSeconds
+              ? ` of ${formatDurationMinutes(dailyPaceSeconds * 1000)}`
+              : ""}
             {isBreak ? " · on a break" : ""}
             <span className="hidden md:inline"> · Esc leaves full screen</span>
           </p>
@@ -783,18 +795,25 @@ function TimerControls({
   className?: string;
 }) {
   const dark = tone === "dark";
-  const canFinish = runState === "running" || runState === "paused" || runState === "finished";
+  const canFinish =
+    runState === "running" || runState === "paused" || runState === "finished";
   const side = cn(
     "flex size-[52px] items-center justify-center rounded-full outline-none transition-[background-color,opacity] duration-200 ease-studi disabled:opacity-40",
     dark
       ? "bg-white/[0.08] text-white hover:bg-white/[0.14] focus-visible:shadow-[0_0_0_2px_#171315,0_0_0_4px_var(--accent)]"
-      : "bg-raised text-ink shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:bg-hover focus-visible:shadow-[0_0_0_2px_var(--accent-soft),0_0_0_4px_var(--accent)]",
+      : "bg-raised/80 text-ink-2 shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:bg-hover hover:text-ink focus-visible:shadow-[0_0_0_2px_var(--accent-soft),0_0_0_4px_var(--accent)]",
   );
-  const PrimaryIcon = runState === "running" ? Pause : runState === "finished" ? Check : Play;
+  const PrimaryIcon =
+    runState === "running" ? Pause : runState === "finished" ? Check : Play;
 
   return (
     <div className={cn("flex items-center justify-center gap-5", className)}>
-      <button type="button" onClick={onReset} aria-label="Reset timer" className={side}>
+      <button
+        type="button"
+        onClick={onReset}
+        aria-label="Reset timer"
+        className={cn(side, runState === "idle" && "opacity-55 hover:opacity-100")}
+      >
         <RotateCcw className="size-5" aria-hidden />
       </button>
       <button
@@ -803,37 +822,32 @@ function TimerControls({
         disabled={pending && runState === "idle"}
         aria-label={primaryLabel}
         className={cn(
-          "flex items-center justify-center rounded-full outline-none transition-[background-color,transform] duration-200 ease-studi active:scale-95 disabled:opacity-60 motion-reduce:active:scale-100",
+          "flex items-center justify-center rounded-full outline-none transition-[background-color,transform,box-shadow] duration-200 ease-studi active:scale-95 disabled:opacity-60 motion-reduce:active:scale-100",
           dark
-            ? "size-[88px] bg-accent text-[#241c1f] focus-visible:shadow-[0_0_0_3px_#171315,0_0_0_5px_var(--accent)]"
-            : "size-[76px] bg-primary text-primary-foreground hover:bg-accent-ink-hover focus-visible:shadow-[0_0_0_3px_var(--accent-soft),0_0_0_5px_var(--accent-ink)] md:size-[84px] dark:bg-accent dark:text-ink-on-accent",
+            ? "size-[88px] bg-accent text-[#241c1f] shadow-[0_16px_36px_-14px_rgba(0,0,0,0.55)] focus-visible:shadow-[0_0_0_3px_#171315,0_0_0_5px_var(--accent)]"
+            : "size-[76px] bg-primary text-primary-foreground shadow-[0_14px_30px_-12px_color-mix(in_srgb,var(--accent)_75%,transparent)] hover:bg-accent-ink-hover focus-visible:shadow-[0_0_0_3px_var(--accent-soft),0_0_0_5px_var(--accent-ink)] md:size-[84px] dark:bg-accent dark:text-ink-on-accent",
         )}
       >
         <PrimaryIcon
-          className={cn("size-8", PrimaryIcon === Play && "translate-x-[2px] fill-current")}
+          className={cn(
+            "size-8",
+            PrimaryIcon === Play && "translate-x-[2px] fill-current",
+          )}
           aria-hidden
         />
       </button>
-      <button
-        type="button"
-        onClick={onFinish}
-        disabled={!canFinish}
-        aria-label="Finish and save"
-        className={side}
-      >
-        <Check className="size-5" aria-hidden />
-      </button>
-    </div>
-  );
-}
-
-function RhythmStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0 rounded-[14px] bg-raised px-2.5 py-2 text-center">
-      <dt className="truncate text-[11.5px] text-ink-3">{label}</dt>
-      <dd className="mt-0.5 text-[17px] font-semibold tracking-[-0.02em] text-ink tabular-nums">
-        {value}
-      </dd>
+      {canFinish ? (
+        <button
+          type="button"
+          onClick={onFinish}
+          aria-label="Finish and save"
+          className={side}
+        >
+          <Check className="size-5" aria-hidden />
+        </button>
+      ) : (
+        <span className="size-[52px]" aria-hidden />
+      )}
     </div>
   );
 }

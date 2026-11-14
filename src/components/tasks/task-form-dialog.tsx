@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -69,7 +70,10 @@ export function TaskFormDialog({
     >
       {open ? (
         <TaskFormFields
-          key={task?.id ?? `new-${defaultSubjectId ?? "blank"}-${draft?.title ?? ""}`}
+          key={
+            task?.id ??
+            `new-${defaultSubjectId ?? "blank"}-${draft?.dueDate ?? ""}-${draft?.title ?? ""}`
+          }
           task={task}
           subjects={subjects}
           topics={topics}
@@ -102,6 +106,7 @@ function TaskFormFields({
   draft?: TaskDraft | null;
   onDone: () => void;
 }) {
+  const router = useRouter();
   const action = task ? updateTask.bind(null, task.id) : createTask;
   const [state, formAction, pending] = useActionState(action, empty);
   const [deleting, startDelete] = useTransition();
@@ -114,8 +119,10 @@ function TaskFormFields({
   );
 
   useEffect(() => {
-    if (state.success) onDone();
-  }, [state.success, onDone]);
+    if (!state.success) return;
+    router.refresh();
+    onDone();
+  }, [state.success, onDone, router]);
 
   const subjectTopics = topics.filter((t) => t.subject_id === subjectId);
   const hasExtras = Boolean(
@@ -130,7 +137,10 @@ function TaskFormFields({
     startDelete(async () => {
       const result = await deleteTask(task.id);
       if (result.error) toast.error(result.error);
-      else onDone();
+      else {
+        router.refresh();
+        onDone();
+      }
     });
   };
 

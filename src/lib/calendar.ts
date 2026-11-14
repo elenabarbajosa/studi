@@ -1,4 +1,4 @@
-import { SUBJECT_COLOR_META, type SubjectColor } from "@/lib/subjects";
+import { subjectTone, type SubjectColorValue } from "@/lib/subjects";
 
 export const ASSESSMENT_TYPES = [
   "final",
@@ -102,9 +102,9 @@ export function isStudySessionStatus(v: unknown): v is StudySessionStatus {
   );
 }
 
-export function subjectEventColor(color?: SubjectColor | null) {
+export function subjectEventColor(color?: SubjectColorValue | null) {
   if (!color) return "oklch(0.62 0.08 260)";
-  return SUBJECT_COLOR_META[color].swatch;
+  return subjectTone(color).dot;
 }
 
 /** Countdown label from now → target (local). */

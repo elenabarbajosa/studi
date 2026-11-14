@@ -3,6 +3,7 @@
 import { createContext, useContext, useState } from "react";
 
 import { TaskFormDialog } from "@/components/tasks/task-form-dialog";
+import { toDateKey } from "@/lib/planning";
 import type { Subject, Topic } from "@/types/database";
 
 const NewTaskContext = createContext<(() => void) | null>(null);
@@ -26,6 +27,9 @@ export function NewTaskProvider({
         onOpenChange={setOpen}
         subjects={subjects}
         topics={topics}
+        // Dashboard → Today: default due date to today so new tasks appear in this tile.
+        // Clearing the date keeps the task undated (not falsely labeled due today).
+        draft={{ dueDate: toDateKey(new Date()) }}
       />
     </NewTaskContext.Provider>
   );

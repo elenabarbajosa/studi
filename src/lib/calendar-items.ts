@@ -1,6 +1,6 @@
 import { ASSESSMENT_TYPE_META, type AssessmentType } from "@/lib/calendar";
 import { hasDueTime } from "@/lib/planning";
-import type { SubjectColor } from "@/lib/subjects";
+import type { SubjectColorValue } from "@/lib/subjects";
 import type {
   Assessment,
   CalendarEvent,
@@ -60,7 +60,7 @@ export type CalItem = {
   end: string | null;
   allDay: boolean;
   subjectId: string | null;
-  color: SubjectColor | null;
+  color: SubjectColorValue | null;
   editable: boolean;
   assessment?: Assessment;
   personal?: CalendarEvent;

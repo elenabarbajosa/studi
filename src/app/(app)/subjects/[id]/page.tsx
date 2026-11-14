@@ -10,6 +10,7 @@ import {
   listSubtasksForTasks,
   listTasks,
 } from "@/lib/data/calendar";
+import { getGradeBundleForSubject } from "@/lib/data/grades";
 import {
   getSubject,
   listMaterialsForSubject,
@@ -27,7 +28,15 @@ type SubjectPageProps = {
 function parseTab(value: string | string[] | undefined): SubjectTab {
   const v = Array.isArray(value) ? value[0] : value;
   if (v === "assessments") return "exams";
-  if (v === "materials" || v === "exams" || v === "tasks" || v === "progress") return v;
+  if (
+    v === "materials" ||
+    v === "exams" ||
+    v === "tasks" ||
+    v === "grades" ||
+    v === "progress"
+  ) {
+    return v;
+  }
   return "topics";
 }
 
@@ -39,13 +48,15 @@ async function SubjectPageContent({ params, searchParams }: SubjectPageProps) {
     notFound();
   }
 
-  const [topics, materials, assessments, allTasks, subjects] = await Promise.all([
-    listTopicsForSubject(subject.id),
-    listMaterialsForSubject(subject.id),
-    listAssessmentsForSubject(subject.id),
-    listTasks(),
-    listSubjects(),
-  ]);
+  const [topics, materials, assessments, allTasks, subjects, gradeBundle] =
+    await Promise.all([
+      listTopicsForSubject(subject.id),
+      listMaterialsForSubject(subject.id),
+      listAssessmentsForSubject(subject.id),
+      listTasks(),
+      listSubjects(),
+      getGradeBundleForSubject(subject.id),
+    ]);
   const tasks = allTasks.filter((t) => t.subject_id === subject.id);
   const subtasks = await listSubtasksForTasks(tasks.map((t) => t.id));
 
@@ -58,6 +69,7 @@ async function SubjectPageContent({ params, searchParams }: SubjectPageProps) {
       assessments={assessments}
       tasks={tasks}
       subtasks={subtasks}
+      gradeBundle={gradeBundle}
       initialTab={parseTab(query.tab)}
       dailyAiLimit={resolveAiDailyLimit(profile.id)}
     />

@@ -32,6 +32,11 @@ Keep reasoning under 160 characters. suggestedMinutes are totals for the whole p
 Planning window: ${context.periodStart} → ${context.periodEnd} (${context.timeZone})
 Intensity: ${context.intensity}
 Include revision: ${context.includeRevision}
+${
+  context.userInstruction
+    ? `Student instruction (prioritize within constraints; do not invent availability or ignore calendar busy times):\n${context.userInstruction}\n`
+    : ""
+}
 
 Subjects:
 ${context.subjects

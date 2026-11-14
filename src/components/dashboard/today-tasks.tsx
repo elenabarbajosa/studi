@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Play, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ const PRIORITY_TEXT: Record<PriorityLevel, string> = {
 };
 
 function useTaskCompletion() {
+  const router = useRouter();
   const [done, setDone] = useState<ReadonlySet<string>>(new Set());
   const [, startTransition] = useTransition();
 
@@ -52,6 +54,7 @@ function useTaskCompletion() {
         toast.error(result.error);
         return;
       }
+      router.refresh();
       if (completing) {
         toast.success("Task completed", {
           description: row.title,
@@ -62,6 +65,7 @@ function useTaskCompletion() {
               startTransition(async () => {
                 const undo = await setTaskStatus(row.id, "todo");
                 if (undo.error) toast.error(undo.error);
+                else router.refresh();
               });
             },
           },

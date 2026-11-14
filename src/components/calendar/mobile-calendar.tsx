@@ -9,6 +9,7 @@ import { FilterSwatch } from "@/components/calendar/desktop-calendar";
 import { MiniMonth } from "@/components/calendar/mini-month";
 import type { QuickDraft } from "@/components/calendar/quick-create";
 import { ResponsiveDialog } from "@/components/studi/responsive-dialog";
+import { Segmented } from "@/components/studi/segmented";
 import {
   CAL_FILTERS,
   filterOfKind,
@@ -16,6 +17,12 @@ import {
   type CalFilter,
   type CalItem,
 } from "@/lib/calendar-items";
+import {
+  addMonths,
+  buildMonthGrid,
+  isSameMonth,
+  startOfMonth,
+} from "@/lib/calendar-month";
 import { relativeDayLabel } from "@/lib/dashboard";
 import { addDays, layoutLanes, startOfDay, startOfWeek, toDateKey } from "@/lib/planning";
 import { subjectTone } from "@/lib/subjects";
@@ -24,8 +31,20 @@ import { cn } from "@/lib/utils";
 const HOUR_PX = 48;
 const MONTH = new Intl.DateTimeFormat("en-GB", { month: "long" });
 const WEEKDAY_LONG = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric" });
-const DAY_LABEL = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long" });
+const DAY_LABEL = new Intl.DateTimeFormat("en-GB", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
 const INITIALS = ["M", "T", "W", "T", "F", "S", "S"];
+
+export type MobileCalView = "month" | "week" | "day";
+
+const VIEW_OPTIONS: { value: MobileCalView; label: string }[] = [
+  { value: "month", label: "Month" },
+  { value: "week", label: "Week" },
+  { value: "day", label: "Day" },
+];
 
 function minutesOf(iso: string) {
   const d = new Date(iso);
@@ -64,6 +83,8 @@ export function MobileCalendar({
   className?: string;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [view, setView] = useState<MobileCalView>("week");
+  const [viewMonth, setViewMonth] = useState(() => startOfMonth(day));
   const visible = useMemo(
     () => items.filter((i) => !hidden.has(filterOfKind(i.kind))),
     [items, hidden],
@@ -72,12 +93,34 @@ export function MobileCalendar({
   const week = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const todayKey = toDateKey(new Date());
   const dayKey = toDateKey(day);
-  const dayItems = useMemo(() => sortDayItems(itemsOnDay(visible, startOfDay(day))), [visible, day]);
+  const dayItems = useMemo(
+    () => sortDayItems(itemsOnDay(visible, startOfDay(day))),
+    [visible, day],
+  );
   const allDay = dayItems.filter((i) => i.allDay);
   const timed = dayItems.filter((i) => !i.allDay);
+  const monthCells = useMemo(() => buildMonthGrid(viewMonth), [viewMonth]);
 
-  const touch = useRef<number | null>(null);
+  const touch = useRef<{ x: number; y: number } | null>(null);
   const shiftWeek = (weeks: number) => onDayChange(addDays(day, weeks * 7));
+  const shiftMonth = (months: number) => {
+    const next = addMonths(viewMonth, months);
+    setViewMonth(next);
+    // Keep selection inside the new month when possible
+    if (!isSameMonth(day, next)) {
+      const clamped = new Date(next);
+      const last = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
+      clamped.setDate(Math.min(day.getDate(), last));
+      onDayChange(startOfDay(clamped));
+    }
+  };
+
+  // Keep month header aligned when day jumps from outside (Today / picker).
+  const [syncedDay, setSyncedDay] = useState(day.getTime());
+  if (day.getTime() !== syncedDay) {
+    setSyncedDay(day.getTime());
+    if (!isSameMonth(day, viewMonth)) setViewMonth(startOfMonth(day));
+  }
 
   const relative = relativeDayLabel(day.toISOString());
   const dayTitle =
@@ -95,8 +138,12 @@ export function MobileCalendar({
     <div className={cn("flex-col", className)}>
       <div className="flex items-center justify-between gap-3 pb-1">
         <h1 className="flex min-w-0 items-baseline gap-1.5 text-[28px] leading-tight tracking-[-0.035em]">
-          <span className="truncate font-semibold text-ink">{MONTH.format(day)}</span>
-          <span className="font-normal text-ink-3">{day.getFullYear()}</span>
+          <span className="truncate font-semibold text-ink">
+            {MONTH.format(view === "month" ? viewMonth : day)}
+          </span>
+          <span className="font-normal text-ink-3">
+            {(view === "month" ? viewMonth : day).getFullYear()}
+          </span>
         </h1>
         <div className="flex items-center gap-2">
           {dayKey !== todayKey ? (
@@ -124,77 +171,112 @@ export function MobileCalendar({
         </div>
       </div>
 
-      <div
-        className="-mx-1 flex items-center"
-        onTouchStart={(e) => {
-          touch.current = e.touches[0]?.clientX ?? null;
-        }}
-        onTouchEnd={(e) => {
-          const startX = touch.current;
-          const endX = e.changedTouches[0]?.clientX;
-          touch.current = null;
-          if (startX == null || endX == null) return;
-          const dx = endX - startX;
-          if (Math.abs(dx) > 50) shiftWeek(dx < 0 ? 1 : -1);
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => shiftWeek(-1)}
-          className="flex h-[72px] w-5 shrink-0 items-center justify-center text-ink-3 outline-none"
-        >
-          <ChevronLeft className="size-4" aria-hidden />
-          <span className="sr-only">Previous week</span>
-        </button>
-        <div className="grid min-w-0 flex-1 grid-cols-7 gap-0.5 py-2.5" role="group" aria-label="Week">
-          {week.map((d, i) => {
-            const key = toDateKey(d);
-            const selected = key === dayKey;
-            const isToday = key === todayKey;
-            const dots = dotsFor(itemsOnDay(visible, d));
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => onDayChange(d)}
-                aria-pressed={selected}
-                aria-label={`${DAY_LABEL.format(d)}${dots.count ? `, ${dots.count} items` : ""}`}
-                className={cn(
-                  "flex h-[72px] min-w-0 flex-col items-center justify-center gap-1 rounded-[18px] outline-none transition-colors focus-visible:shadow-[0_0_0_2px_var(--canvas),0_0_0_4px_var(--accent)]",
-                  selected ? "bg-ink text-canvas" : "active:bg-sunken",
-                )}
-              >
-                <span
-                  className={cn(
-                    "text-[12px] font-semibold",
-                    selected ? "text-canvas/80" : isToday ? "text-accent-text" : "text-ink-3",
-                  )}
-                >
-                  {INITIALS[i]}
-                </span>
-                <span className={cn("text-[19px] leading-none font-semibold tabular-nums", !selected && isToday && "text-accent-text")}>
-                  {d.getDate()}
-                </span>
-                <span className="flex h-[5px] gap-0.5" aria-hidden>
-                  {dots.colors.map((c, j) => (
-                    <span key={j} className="size-[5px] rounded-full" style={{ background: c }} />
-                  ))}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        <button
-          type="button"
-          onClick={() => shiftWeek(1)}
-          className="flex h-[72px] w-5 shrink-0 items-center justify-center text-ink-3 outline-none"
-        >
-          <ChevronRight className="size-4" aria-hidden />
-          <span className="sr-only">Next week</span>
-        </button>
+      <div className="pb-2">
+        <Segmented
+          label="Calendar view"
+          value={view}
+          onChange={setView}
+          options={VIEW_OPTIONS}
+          stretch
+        />
       </div>
 
-      {agenda ? (
+      {view === "month" ? (
+        <MonthGrid
+          cells={monthCells}
+          viewMonth={viewMonth}
+          dayKey={dayKey}
+          todayKey={todayKey}
+          visible={visible}
+          onPick={onDayChange}
+          onPrev={() => shiftMonth(-1)}
+          onNext={() => shiftMonth(1)}
+        />
+      ) : view === "week" ? (
+        <div
+          className="-mx-1 flex items-center"
+          onTouchStart={(e) => {
+            touch.current = {
+              x: e.touches[0]?.clientX ?? 0,
+              y: e.touches[0]?.clientY ?? 0,
+            };
+          }}
+          onTouchEnd={(e) => {
+            const start = touch.current;
+            const endX = e.changedTouches[0]?.clientX;
+            const endY = e.changedTouches[0]?.clientY;
+            touch.current = null;
+            if (start == null || endX == null || endY == null) return;
+            const dx = endX - start.x;
+            const dy = endY - start.y;
+            if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+              shiftWeek(dx < 0 ? 1 : -1);
+            }
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => shiftWeek(-1)}
+            className="flex h-[72px] w-5 shrink-0 items-center justify-center text-ink-3 outline-none"
+          >
+            <ChevronLeft className="size-4" aria-hidden />
+            <span className="sr-only">Previous week</span>
+          </button>
+          <div className="grid min-w-0 flex-1 grid-cols-7 gap-0.5 py-2.5" role="group" aria-label="Week">
+            {week.map((d, i) => {
+              const key = toDateKey(d);
+              const selected = key === dayKey;
+              const isToday = key === todayKey;
+              const dots = dotsFor(itemsOnDay(visible, d));
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => onDayChange(d)}
+                  aria-pressed={selected}
+                  aria-label={`${DAY_LABEL.format(d)}${dots.count ? `, ${dots.count} items` : ""}`}
+                  className={cn(
+                    "flex h-[72px] min-w-0 flex-col items-center justify-center gap-1 rounded-[18px] outline-none transition-colors focus-visible:shadow-[0_0_0_2px_var(--canvas),0_0_0_4px_var(--accent)]",
+                    selected ? "bg-ink text-canvas" : "active:bg-sunken",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "text-[12px] font-semibold",
+                      selected ? "text-canvas/80" : isToday ? "text-accent-text" : "text-ink-3",
+                    )}
+                  >
+                    {INITIALS[i]}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-[19px] leading-none font-semibold tabular-nums",
+                      !selected && isToday && "text-accent-text",
+                    )}
+                  >
+                    {d.getDate()}
+                  </span>
+                  <span className="flex h-[5px] gap-0.5" aria-hidden>
+                    {dots.colors.map((c, j) => (
+                      <span key={j} className="size-[5px] rounded-full" style={{ background: c }} />
+                    ))}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={() => shiftWeek(1)}
+            className="flex h-[72px] w-5 shrink-0 items-center justify-center text-ink-3 outline-none"
+          >
+            <ChevronRight className="size-4" aria-hidden />
+            <span className="sr-only">Next week</span>
+          </button>
+        </div>
+      ) : null}
+
+      {agenda && view !== "month" ? (
         <div className="pt-2">
           <AgendaList
             items={visible}
@@ -215,29 +297,49 @@ export function MobileCalendar({
                 : `${dayItems.length} ${dayItems.length === 1 ? "item" : "items"}`}
             </span>
           </div>
-          {allDay.length > 0 ? (
-            <ul className="mb-2 flex flex-col gap-1.5" aria-label="All day">
-              {allDay.map((item) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    onClick={() => onOpenItem(item)}
-                    className="block w-full rounded-[14px] text-left outline-none focus-visible:shadow-[0_0_0_2px_var(--canvas),0_0_0_4px_var(--accent)]"
-                  >
-                    <EventChip item={item} density="card" timeText="All day" className="min-h-11 items-center" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          <DayTimeline
-            items={timed}
-            isToday={dayKey === todayKey}
-            onOpenItem={onOpenItem}
-            onCreateAt={(minutes) =>
-              onCreate({ date: dayKey, allDay: false, startTime: hhmm(minutes), endTime: hhmm(minutes + 60) })
-            }
-          />
+          {view === "month" ? (
+            <SelectedDayAgenda
+              items={dayItems}
+              onOpenItem={onOpenItem}
+              onCreate={() => onCreate({ date: dayKey, allDay: false, ...nextHour() })}
+            />
+          ) : (
+            <>
+              {allDay.length > 0 ? (
+                <ul className="mb-2 flex flex-col gap-1.5" aria-label="All day">
+                  {allDay.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        onClick={() => onOpenItem(item)}
+                        className="block w-full rounded-[14px] text-left outline-none focus-visible:shadow-[0_0_0_2px_var(--canvas),0_0_0_4px_var(--accent)]"
+                      >
+                        <EventChip
+                          item={item}
+                          density="card"
+                          timeText="All day"
+                          className="min-h-11 items-center"
+                        />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <DayTimeline
+                items={timed}
+                isToday={dayKey === todayKey}
+                onOpenItem={onOpenItem}
+                onCreateAt={(minutes) =>
+                  onCreate({
+                    date: dayKey,
+                    allDay: false,
+                    startTime: hhmm(minutes),
+                    endTime: hhmm(minutes + 60),
+                  })
+                }
+              />
+            </>
+          )}
         </>
       )}
 
@@ -259,13 +361,17 @@ export function MobileCalendar({
             rangeEnd={day}
             onPick={(d) => {
               onDayChange(d);
+              setViewMonth(startOfMonth(d));
               setPickerOpen(false);
             }}
           />
           <fieldset className="flex flex-col">
             <legend className="mb-1 text-[13px] font-semibold text-ink-2">Show</legend>
             {CAL_FILTERS.map((f) => (
-              <label key={f.value} className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px] text-ink">
+              <label
+                key={f.value}
+                className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px] text-ink"
+              >
                 <input
                   type="checkbox"
                   checked={!hidden.has(f.value)}
@@ -280,6 +386,181 @@ export function MobileCalendar({
         </div>
       </ResponsiveDialog>
     </div>
+  );
+}
+
+function MonthGrid({
+  cells,
+  viewMonth,
+  dayKey,
+  todayKey,
+  visible,
+  onPick,
+  onPrev,
+  onNext,
+}: {
+  cells: Date[];
+  viewMonth: Date;
+  dayKey: string;
+  todayKey: string;
+  visible: CalItem[];
+  onPick: (d: Date) => void;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  const touch = useRef<{ x: number; y: number } | null>(null);
+
+  return (
+    <div
+      className="rounded-[20px] bg-raised px-1.5 py-2 shadow-[0_0_0_1px_var(--hairline)]"
+      onTouchStart={(e) => {
+        touch.current = {
+          x: e.touches[0]?.clientX ?? 0,
+          y: e.touches[0]?.clientY ?? 0,
+        };
+      }}
+      onTouchEnd={(e) => {
+        const start = touch.current;
+        const endX = e.changedTouches[0]?.clientX;
+        const endY = e.changedTouches[0]?.clientY;
+        touch.current = null;
+        if (start == null || endX == null || endY == null) return;
+        const dx = endX - start.x;
+        const dy = endY - start.y;
+        // Prefer horizontal month swipes; ignore mostly-vertical scrolls.
+        if (Math.abs(dx) > 56 && Math.abs(dx) > Math.abs(dy) * 1.6) {
+          if (dx < 0) onNext();
+          else onPrev();
+        }
+      }}
+    >
+      <div className="mb-1 flex items-center justify-between px-1">
+        <button
+          type="button"
+          onClick={onPrev}
+          className="flex size-9 items-center justify-center rounded-full text-ink-2 outline-none active:bg-sunken"
+        >
+          <ChevronLeft className="size-4" aria-hidden />
+          <span className="sr-only">Previous month</span>
+        </button>
+        <span className="text-[13.5px] font-semibold text-ink-2">
+          {MONTH.format(viewMonth)} {viewMonth.getFullYear()}
+        </span>
+        <button
+          type="button"
+          onClick={onNext}
+          className="flex size-9 items-center justify-center rounded-full text-ink-2 outline-none active:bg-sunken"
+        >
+          <ChevronRight className="size-4" aria-hidden />
+          <span className="sr-only">Next month</span>
+        </button>
+      </div>
+      <div
+        className="grid grid-cols-7 text-center text-[11px] font-semibold text-ink-3"
+        aria-hidden
+      >
+        {INITIALS.map((d, i) => (
+          <span key={i}>{d}</span>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-y-0.5" role="grid" aria-label="Month">
+        {cells.map((d) => {
+          const key = toDateKey(d);
+          const selected = key === dayKey;
+          const isToday = key === todayKey;
+          const outside = !isSameMonth(d, viewMonth);
+          const dots = dotsFor(itemsOnDay(visible, d));
+          return (
+            <button
+              key={key}
+              type="button"
+              role="gridcell"
+              aria-selected={selected}
+              aria-current={isToday ? "date" : undefined}
+              aria-label={`${DAY_LABEL.format(d)}${dots.count ? `, ${dots.count} items` : ""}`}
+              onClick={() => onPick(d)}
+              className={cn(
+                "flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-[14px] outline-none focus-visible:shadow-[0_0_0_2px_var(--raised),0_0_0_4px_var(--accent)]",
+                selected ? "bg-ink text-canvas" : "active:bg-sunken",
+              )}
+            >
+              <span
+                className={cn(
+                  "text-[14px] font-semibold tabular-nums",
+                  selected
+                    ? "text-canvas"
+                    : isToday
+                      ? "text-accent-text"
+                      : outside
+                        ? "text-ink-3"
+                        : "text-ink",
+                )}
+              >
+                {d.getDate()}
+              </span>
+              <span className="flex h-[5px] gap-0.5" aria-hidden>
+                {dots.colors.map((c, j) => (
+                  <span
+                    key={j}
+                    className="size-[4px] rounded-full"
+                    style={{
+                      background: selected ? "color-mix(in srgb, white 85%, transparent)" : c,
+                    }}
+                  />
+                ))}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SelectedDayAgenda({
+  items,
+  onOpenItem,
+  onCreate,
+}: {
+  items: CalItem[];
+  onOpenItem: (item: CalItem) => void;
+  onCreate: () => void;
+}) {
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col gap-2 rounded-[18px] bg-sunken px-4 py-5">
+        <p className="text-[14.5px] font-semibold text-ink">Nothing on this day</p>
+        <p className="text-[13px] text-ink-2">Tap a date above, or add something for the selected day.</p>
+        <button
+          type="button"
+          onClick={onCreate}
+          className="mt-1 inline-flex h-9 w-fit items-center rounded-full bg-raised px-3.5 text-[13.5px] font-semibold text-ink outline-none"
+        >
+          Add entry
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <ul className="flex flex-col gap-1.5" aria-label="Selected day">
+      {items.map((item) => (
+        <li key={item.id}>
+          <button
+            type="button"
+            onClick={() => onOpenItem(item)}
+            className="block w-full rounded-[14px] text-left outline-none focus-visible:shadow-[0_0_0_2px_var(--canvas),0_0_0_4px_var(--accent)]"
+          >
+            <EventChip
+              item={item}
+              density="card"
+              timeText={item.allDay ? "All day" : timeRangeLabel(item)}
+              className="min-h-11 items-center"
+            />
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -309,7 +590,9 @@ function DayTimeline({
       layoutLanes(
         items.map((item) => {
           const start = minutesOf(item.start);
-          const end = item.end ? Math.max(start + 20, minutesOf(item.end) || 24 * 60) : start + 30;
+          const end = item.end
+            ? Math.max(start + 20, minutesOf(item.end) || 24 * 60)
+            : start + 30;
           return { id: item.id, start, end, item };
         }),
       ),

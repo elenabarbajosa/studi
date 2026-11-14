@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { dueAtFromForm } from "@/lib/task-due";
 import { subtaskSchema, taskSchema } from "@/lib/validations/phase3";
 
 export type ActionState = { error?: string; success?: string };
@@ -22,12 +23,6 @@ function revalidateTasks() {
   revalidatePath("/tasks");
   revalidatePath("/dashboard");
   revalidatePath("/calendar");
-}
-
-function dueAtFromForm(dueDate?: string | null, dueTime?: string | null) {
-  if (!dueDate) return null;
-  if (dueTime) return new Date(`${dueDate}T${dueTime}:00`).toISOString();
-  return new Date(`${dueDate}T23:59:59`).toISOString();
 }
 
 function scheduleFromForm(

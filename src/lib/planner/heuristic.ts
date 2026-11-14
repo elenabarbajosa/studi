@@ -8,6 +8,8 @@ export type PlannerContextSnapshot = {
   periodEnd: string;
   intensity: PlanIntensity;
   includeRevision: boolean;
+  /** Optional natural-language prioritization hint (does not bypass constraints). */
+  userInstruction?: string;
   subjects: {
     id: string;
     name: string;

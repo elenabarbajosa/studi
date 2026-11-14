@@ -1,13 +1,13 @@
 "use client";
 
-import { subjectTone, subjectToneVars, type SubjectColor } from "@/lib/subjects";
+import { subjectTone, subjectToneVars, type SubjectColorValue } from "@/lib/subjects";
 import { cn } from "@/lib/utils";
 
 export function SubjectDot({
   color,
   className,
 }: {
-  color: SubjectColor | null | undefined;
+  color: SubjectColorValue | null | undefined;
   className?: string;
 }) {
   return (
@@ -29,7 +29,7 @@ export function SubjectChip({
   className,
 }: {
   name: string;
-  color: SubjectColor | null;
+  color: SubjectColorValue | null;
   selected?: boolean;
   onClick?: () => void;
   size?: "sm" | "md";
@@ -95,7 +95,7 @@ export function SubjectPicker({
   className,
 }: {
   name?: string;
-  subjects: { id: string; name: string; color: SubjectColor }[];
+  subjects: { id: string; name: string; color: SubjectColorValue }[];
   value: string;
   onChange: (id: string) => void;
   noneLabel?: string;

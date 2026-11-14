@@ -6,7 +6,7 @@ import { GraduationCap } from "lucide-react";
 
 import { Tile, TileHeader, tileLinkClass } from "@/components/dashboard/tile";
 import { daysUntil } from "@/lib/dashboard";
-import { subjectToneVars, type SubjectColor } from "@/lib/subjects";
+import { subjectToneVars, type SubjectColorValue } from "@/lib/subjects";
 import { cn } from "@/lib/utils";
 
 export type CountdownItem = {
@@ -14,7 +14,7 @@ export type CountdownItem = {
   title: string;
   typeLabel: string;
   subjectName: string | null;
-  subjectColor: SubjectColor | null;
+  subjectColor: SubjectColorValue | null;
   /** ISO start — days are derived on the client in the viewer's local calendar. */
   startsAt: string;
   /** Server-rendered fallback; replaced after hydration. */
@@ -33,7 +33,7 @@ function useViewerNow() {
   );
 }
 
-function toneProps(color: SubjectColor | null) {
+function toneProps(color: SubjectColorValue | null) {
   return color
     ? { className: "subject-tone", style: subjectToneVars(color) as React.CSSProperties }
     : { className: "bg-sunken text-ink-2", style: undefined };
@@ -70,8 +70,8 @@ export function CountdownTile({ items }: { items: CountdownItem[] }) {
         id="countdown-title"
         title="Countdown"
         action={
-          <Link href="/calendar" className={tileLinkClass}>
-            Calendar
+          <Link href="/countdowns" className={tileLinkClass}>
+            View all
           </Link>
         }
       />
@@ -138,14 +138,14 @@ export function MobileNextExamTile({ item }: { item: CountdownItem | null }) {
   if (!local) {
     return (
       <Link
-        href="/subjects"
+        href="/countdowns"
         className="flex min-w-0 flex-col justify-between gap-2 rounded-[22px] bg-sunken p-4 outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <GraduationCap className="size-5 text-ink-3" aria-hidden />
         <span className="text-[15px] leading-snug font-semibold text-ink">
           No exams ahead
         </span>
-        <span className="text-[12.5px] text-ink-2">Add one in Subjects</span>
+        <span className="text-[12.5px] text-ink-2">Open countdowns</span>
       </Link>
     );
   }
@@ -153,7 +153,7 @@ export function MobileNextExamTile({ item }: { item: CountdownItem | null }) {
   const tone = toneProps(local.subjectColor);
   return (
     <Link
-      href={local.href}
+      href="/countdowns"
       className={cn(
         "flex min-w-0 flex-col justify-between gap-1 rounded-[22px] p-4 outline-none focus-visible:ring-2 focus-visible:ring-ring",
         tone.className,
@@ -174,7 +174,7 @@ export function MobileNextExamTile({ item }: { item: CountdownItem | null }) {
         )}
       </span>
       <span className="truncate text-[12.5px]">
-        {local.subjectName ?? local.typeLabel} · {local.weekday}
+        {local.subjectName ?? local.typeLabel} · {local.weekday} · View all
       </span>
     </Link>
   );

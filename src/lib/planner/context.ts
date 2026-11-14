@@ -13,6 +13,10 @@ import { getStudyPreferences, listAllTopics, listSubjects } from "@/lib/data/sub
 import type { PlannerContextSnapshot } from "@/lib/planner/heuristic";
 import type { PlannerPreferencesInput } from "@/lib/planner/schemas";
 import {
+  ensureDayAvailability,
+  resolvePeriodBounds,
+} from "@/lib/planner/period";
+import {
   DEFAULT_PLANNER_TIME_WINDOWS,
   type PlanIntensity,
   type PlanningPeriod,
@@ -29,7 +33,10 @@ import {
   type Weekday,
   type WeekdayAvailability,
 } from "@/lib/subjects";
+import { effectiveStatusByTopicId } from "@/lib/topic-progress";
 import type { PlannerPreferences, StudyPlan, StudySession } from "@/types/database";
+
+export { ensureDayAvailability, resolvePeriodBounds };
 
 export type PlannerDashboardData = {
   timeZone: string;
@@ -75,26 +82,9 @@ export function defaultPrefsFromStudy(
     prioritized_topic_ids: [],
     excluded_topic_ids: [],
     until_assessment_id: null,
+    target_date: null,
+    user_instruction: "",
   };
-}
-
-export function resolvePeriodBounds(
-  prefs: PlannerPreferencesInput,
-  timeZone: string,
-  assessments: { id: string; starts_at: string }[],
-  now = new Date(),
-): { periodStart: string; periodEnd: string } {
-  const periodStart = localDateKey(now, timeZone);
-  if (prefs.planning_period === "until_exam" && prefs.until_assessment_id) {
-    const exam = assessments.find((a) => a.id === prefs.until_assessment_id);
-    if (exam) {
-      const end = localDateKey(exam.starts_at, timeZone);
-      if (end >= periodStart) return { periodStart, periodEnd: end };
-    }
-  }
-  const span =
-    prefs.planning_period === "7" ? 6 : prefs.planning_period === "30" ? 29 : 13;
-  return { periodStart, periodEnd: addLocalDays(periodStart, span) };
 }
 
 export async function getPlannerPreferences(
@@ -165,6 +155,8 @@ export async function loadPlannerDashboard(userId: string): Promise<PlannerDashb
         prioritized_topic_ids: storedPrefs.prioritized_topic_ids,
         excluded_topic_ids: storedPrefs.excluded_topic_ids,
         until_assessment_id: storedPrefs.until_assessment_id,
+        target_date: storedPrefs.target_date ?? null,
+        user_instruction: "",
       }
     : defaults;
 
@@ -250,20 +242,27 @@ export async function loadPlannerDashboard(userId: string): Promise<PlannerDashb
     periodEnd: bounds.periodEnd,
     intensity: preferences.intensity,
     includeRevision: preferences.include_revision,
-    subjects: filteredSubjects.map((s) => ({
-      id: s.id,
-      name: s.name,
-      difficulty: s.difficulty,
-      unmasteredTopics: topics
-        .filter(
-          (t) =>
-            t.subject_id === s.id &&
-            t.status !== "mastered" &&
-            !excludedTopics.has(t.id) &&
-            t.parent_id === null,
-        )
-        .map((t) => ({ id: t.id, title: t.title, status: t.status })),
-    })),
+    subjects: filteredSubjects.map((s) => {
+      const subjectTopics = topics.filter((t) => t.subject_id === s.id);
+      const effective = effectiveStatusByTopicId(subjectTopics);
+      return {
+        id: s.id,
+        name: s.name,
+        difficulty: s.difficulty,
+        unmasteredTopics: subjectTopics
+          .filter(
+            (t) =>
+              t.parent_id === null &&
+              !excludedTopics.has(t.id) &&
+              (effective.get(t.id) ?? t.status) !== "mastered",
+          )
+          .map((t) => ({
+            id: t.id,
+            title: t.title,
+            status: effective.get(t.id) ?? t.status,
+          })),
+      };
+    }),
     assessments: assessments
       .filter((a) => !a.completed && daysUntil(a.starts_at, now) >= 0)
       .map((a) => ({

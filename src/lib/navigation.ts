@@ -6,8 +6,10 @@ import {
   CircleCheck,
   Coffee,
   Ellipsis,
+  GraduationCap,
   House,
   LayoutGrid,
+  Percent,
   Play,
   Settings,
   Timer,
@@ -111,6 +113,22 @@ export const progressNav: NavItem = {
   keywords: ["streak", "badges", "achievements", "challenges", "leaderboard"],
 };
 
+export const gradesNav: NavItem = {
+  title: "Grades",
+  href: "/grades",
+  icon: Percent,
+  description: "Weighted grades and what-if calculator",
+  keywords: ["marks", "gpa", "average", "what-if", "pass"],
+};
+
+export const countdownsNav: NavItem = {
+  title: "Countdowns",
+  href: "/countdowns",
+  icon: GraduationCap,
+  description: "Exams and deadlines",
+  keywords: ["exams", "deadlines", "countdown", "days left"],
+};
+
 export const settingsNav: NavItem = {
   title: "Settings",
   href: "/settings",
@@ -123,7 +141,7 @@ export const navGroups: NavGroup[] = [
   { label: null, items: [dashboardNav, tasksNav, calendarNav, plannerNav] },
   { label: "Study", items: [focusNav, subjectsNav] },
   { label: "Together", items: [studyTogetherNav, friendsNav] },
-  { label: "Insights", items: [statisticsNav, progressNav] },
+  { label: "Insights", items: [countdownsNav, gradesNav, statisticsNav, progressNav] },
 ];
 
 export const allNavItems: NavItem[] = [
@@ -152,6 +170,8 @@ export const moreNav: NavItem[] = [
   studyTogetherNav,
   subjectsNav,
   plannerNav,
+  countdownsNav,
+  gradesNav,
   progressNav,
   statisticsNav,
   friendsNav,

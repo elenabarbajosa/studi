@@ -24,12 +24,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { PlannerPreferencesInput } from "@/lib/planner/schemas";
 import type { ProposedSession } from "@/lib/planner/types";
-import { PLAN_INTENSITIES, PLANNING_PERIODS } from "@/lib/planner/types";
+import {
+  isOneDayPeriod,
+  PLAN_INTENSITIES,
+  PLANNING_PERIOD_LABEL,
+  PLANNING_PERIODS,
+} from "@/lib/planner/types";
 import {
   WEEKDAY_LABELS,
   WEEKDAYS,
   subjectTone,
-  type SubjectColor,
+  type SubjectColorValue,
   type Weekday,
 } from "@/lib/subjects";
 import { cn } from "@/lib/utils";
@@ -109,6 +114,8 @@ export function GeneratePlanWizard({
     };
   }, [sessions]);
 
+  const oneDay = isOneDayPeriod(prefs.planning_period);
+
   const runGenerate = () => {
     setError(null);
     setStep("generating");
@@ -116,7 +123,7 @@ export function GeneratePlanWizard({
       await savePlannerPreferences(prefs);
       const result = await generateStudyPlan(prefs);
       if (!result.ok) {
-        setStep("availability");
+        setStep(oneDay ? "goals" : "availability");
         setError(result.error);
         if (result.code === "quota_exhausted" || result.code === "rate_limited") {
           toast.error(result.error);
@@ -170,7 +177,9 @@ export function GeneratePlanWizard({
 
   const title =
     step === "goals"
-      ? "Plan goals"
+      ? oneDay
+        ? "One-day plan"
+        : "Plan goals"
       : step === "availability"
         ? "Availability"
         : step === "generating"
@@ -185,10 +194,17 @@ export function GeneratePlanWizard({
         <Button type="button" variant="ghost" onClick={() => handleOpenChange(false)}>
           Cancel
         </Button>
-        <Button type="button" onClick={() => setStep("availability")}>
-          Next
-          <ArrowRight className="size-4" />
-        </Button>
+        {oneDay ? (
+          <Button type="button" disabled={isPending} onClick={runGenerate}>
+            <Sparkles className="size-4" />
+            Generate day plan
+          </Button>
+        ) : (
+          <Button type="button" onClick={() => setStep("availability")}>
+            Next
+            <ArrowRight className="size-4" />
+          </Button>
+        )}
       </div>
     ) : step === "availability" ? (
       <div className="flex justify-between gap-2">
@@ -209,7 +225,11 @@ export function GeneratePlanWizard({
           {remaining != null ? ` · ${remaining}/${limit} AI left today` : null}
         </p>
         <div className="flex gap-2">
-          <Button type="button" variant="ghost" onClick={() => setStep("availability")}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setStep(oneDay ? "goals" : "availability")}
+          >
             Back
           </Button>
           <Button
@@ -240,7 +260,9 @@ export function GeneratePlanWizard({
       title={title}
       description={
         step === "goals"
-          ? "Choose the planning horizon and intensity."
+          ? oneDay
+            ? "Pick subjects and availability for a single day. Longer plans still use the full wizard."
+            : "Choose the planning horizon and intensity."
           : step === "availability"
             ? "Set when you can study. Defaults come from your Studi preferences."
             : step === "review"
@@ -253,20 +275,55 @@ export function GeneratePlanWizard({
       {step === "goals" ? (
         <div className="space-y-4">
           <Field label="Planning period">
-            <Segmented
-              label="Planning period"
-              value={prefs.planning_period}
-              onChange={(value) => setPrefs((p) => ({ ...p, planning_period: value }))}
-              stretch
-              options={PLANNING_PERIODS.map((value) => ({
-                value,
-                label:
-                  value === "until_exam"
-                    ? "Until exam"
-                    : `${value} days`,
-              }))}
-            />
+            <div className="flex flex-col gap-2">
+              <Segmented
+                label="One day or longer"
+                value={oneDay ? "one" : "long"}
+                onChange={(value) =>
+                  setPrefs((p) => ({
+                    ...p,
+                    planning_period: value === "one" ? "today" : "14",
+                    target_date: value === "one" ? p.target_date : null,
+                  }))
+                }
+                stretch
+                options={[
+                  { value: "one", label: "One day" },
+                  { value: "long", label: "Longer plan" },
+                ]}
+              />
+              <select
+                className="h-10 w-full rounded-[12px] bg-sunken px-3 text-[14px]"
+                value={prefs.planning_period}
+                onChange={(e) =>
+                  setPrefs((p) => ({
+                    ...p,
+                    planning_period: e.target.value as typeof p.planning_period,
+                  }))
+                }
+              >
+                {PLANNING_PERIODS.map((value) => (
+                  <option key={value} value={value}>
+                    {PLANNING_PERIOD_LABEL[value]}
+                  </option>
+                ))}
+              </select>
+            </div>
           </Field>
+          {prefs.planning_period === "custom" ? (
+            <Field label="Date">
+              <Input
+                type="date"
+                value={prefs.target_date ?? ""}
+                onChange={(e) =>
+                  setPrefs((p) => ({
+                    ...p,
+                    target_date: e.target.value || null,
+                  }))
+                }
+              />
+            </Field>
+          ) : null}
           {prefs.planning_period === "until_exam" ? (
             <Field label="Target exam">
               <select
@@ -303,7 +360,7 @@ export function GeneratePlanWizard({
             />
           </Field>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Max hours / day">
+            <Field label={oneDay ? "Available hours" : "Max hours / day"}>
               <Input
                 type="number"
                 min={0.5}
@@ -333,6 +390,80 @@ export function GeneratePlanWizard({
               />
             </Field>
           </div>
+          {oneDay ? (
+            <>
+              <Field label="Subjects (optional)">
+                <div className="flex max-h-36 flex-col gap-1.5 overflow-y-auto rounded-[14px] bg-sunken p-2">
+                  {subjects.length === 0 ? (
+                    <p className="px-1 text-[13px] text-ink-2">Add subjects first.</p>
+                  ) : (
+                    subjects.map((s) => {
+                      const selected =
+                        prefs.included_subject_ids == null ||
+                        prefs.included_subject_ids.includes(s.id);
+                      return (
+                        <label
+                          key={s.id}
+                          className="flex items-center gap-2 rounded-[10px] px-2 py-1.5 text-[13.5px] text-ink"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={(e) => {
+                              setPrefs((p) => {
+                                const current =
+                                  p.included_subject_ids ?? subjects.map((x) => x.id);
+                                const next = e.target.checked
+                                  ? [...new Set([...current, s.id])]
+                                  : current.filter((id) => id !== s.id);
+                                return {
+                                  ...p,
+                                  included_subject_ids:
+                                    next.length === subjects.length ? null : next,
+                                };
+                              });
+                            }}
+                          />
+                          <SubjectDot color={s.color} />
+                          {s.name}
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              </Field>
+              <Field label="Priority topics (optional)">
+                <select
+                  multiple
+                  className="min-h-24 w-full rounded-[12px] bg-sunken px-3 py-2 text-[13.5px]"
+                  value={prefs.prioritized_topic_ids}
+                  onChange={(e) => {
+                    const values = Array.from(e.target.selectedOptions).map((o) => o.value);
+                    setPrefs((p) => ({ ...p, prioritized_topic_ids: values }));
+                  }}
+                >
+                  {topics
+                    .filter((t) => !t.parent_id)
+                    .map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {subjectMap.get(t.subject_id)?.name ?? "Subject"} · {t.title}
+                      </option>
+                    ))}
+                </select>
+                <p className="mt-1 text-[12px] text-ink-3">Hold ⌘/Ctrl to select multiple.</p>
+              </Field>
+              <Field label="Instruction (optional)">
+                <Input
+                  value={prefs.user_instruction ?? ""}
+                  maxLength={500}
+                  placeholder="I have three hours and want to prioritize Algebra…"
+                  onChange={(e) =>
+                    setPrefs((p) => ({ ...p, user_instruction: e.target.value }))
+                  }
+                />
+              </Field>
+            </>
+          ) : null}
           <label className="flex items-center gap-2 text-[13.5px] text-ink-2">
             <input
               type="checkbox"
@@ -356,41 +487,46 @@ export function GeneratePlanWizard({
             />
             Factor in incomplete tasks
           </label>
-          <Field label="Subjects to include">
-            <div className="flex flex-wrap gap-2">
-              {subjects.map((subject) => {
-                const selected =
-                  !prefs.included_subject_ids ||
-                  prefs.included_subject_ids.length === 0 ||
-                  prefs.included_subject_ids.includes(subject.id);
-                return (
-                  <button
-                    key={subject.id}
-                    type="button"
-                    onClick={() =>
-                      setPrefs((p) => {
-                        const current = p.included_subject_ids ?? subjects.map((s) => s.id);
-                        const next = current.includes(subject.id)
-                          ? current.filter((id) => id !== subject.id)
-                          : [...current, subject.id];
-                        return {
-                          ...p,
-                          included_subject_ids:
-                            next.length === subjects.length ? null : next,
-                        };
-                      })
-                    }
-                    className={cn(
-                      "rounded-full px-3 py-1.5 text-[12.5px] font-semibold",
-                      selected ? "bg-primary text-primary-foreground dark:bg-accent dark:text-ink-on-accent" : "bg-sunken text-ink-2",
-                    )}
-                  >
-                    {subject.name}
-                  </button>
-                );
-              })}
-            </div>
-          </Field>
+          {!oneDay ? (
+            <Field label="Subjects to include">
+              <div className="flex flex-wrap gap-2">
+                {subjects.map((subject) => {
+                  const selected =
+                    !prefs.included_subject_ids ||
+                    prefs.included_subject_ids.length === 0 ||
+                    prefs.included_subject_ids.includes(subject.id);
+                  return (
+                    <button
+                      key={subject.id}
+                      type="button"
+                      onClick={() =>
+                        setPrefs((p) => {
+                          const current = p.included_subject_ids ?? subjects.map((s) => s.id);
+                          const next = current.includes(subject.id)
+                            ? current.filter((id) => id !== subject.id)
+                            : [...current, subject.id];
+                          return {
+                            ...p,
+                            included_subject_ids:
+                              next.length === subjects.length ? null : next,
+                          };
+                        })
+                      }
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-[12.5px] font-semibold",
+                        selected
+                          ? "bg-primary text-primary-foreground dark:bg-accent dark:text-ink-on-accent"
+                          : "bg-sunken text-ink-2",
+                      )}
+                    >
+                      {subject.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+          ) : null}
+          <FormError message={error ?? undefined} />
         </div>
       ) : null}
 
@@ -660,7 +796,7 @@ export function GeneratePlanWizard({
   );
 }
 
-function SubjectDot({ color }: { color?: SubjectColor }) {
+function SubjectDot({ color }: { color?: SubjectColorValue }) {
   const tone = color ? subjectTone(color) : null;
   return (
     <span

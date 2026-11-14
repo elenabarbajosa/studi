@@ -4,6 +4,7 @@ import { afterEach, describe, it } from "node:test";
 import { AiFeatureError } from "@/lib/ai/errors";
 import {
   assertClaimAllowed,
+  claimCanvasClassifyUsage,
   claimStudyPlanUsage,
   claimSyllabusImportUsage,
   consumeImportSession,
@@ -155,9 +156,11 @@ describe("claimSyllabusImportUsage / claimStudyPlanUsage", () => {
 
     const syllabus = await claimSyllabusImportUsage(client, OTHER);
     const plan = await claimStudyPlanUsage(client, OTHER);
-    assert.deepEqual(features, ["syllabus_import", "study_plan"]);
+    const canvas = await claimCanvasClassifyUsage(client, OTHER);
+    assert.deepEqual(features, ["syllabus_import", "study_plan", "canvas_classify"]);
     assert.equal(syllabus.used, 1);
     assert.equal(plan.used, 1);
+    assert.equal(canvas.used, 1);
   });
 
   it("surfaces migration-missing when RPC is absent", async () => {

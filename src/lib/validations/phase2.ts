@@ -2,9 +2,10 @@ import { z } from "zod";
 
 import {
   BREAK_DURATION_OPTIONS,
+  isSubjectColorValue,
+  normalizeHexColor,
   RESOURCE_TYPES,
   SESSION_DURATION_OPTIONS,
-  SUBJECT_COLORS,
   TOPIC_STATUSES,
   WEEKDAYS,
 } from "@/lib/subjects";
@@ -19,12 +20,25 @@ export const onboardingPersonalizeSchema = z.object({
   accent_color: z.enum(ACCENT_COLORS),
 });
 
+export const subjectColorSchema = z
+  .string()
+  .transform((value, ctx) => {
+    const trimmed = value.trim();
+    if (isSubjectColorValue(trimmed)) {
+      return normalizeHexColor(trimmed) ?? trimmed;
+    }
+    const hex = normalizeHexColor(trimmed);
+    if (hex) return hex;
+    ctx.addIssue({ code: "custom", message: "Choose a valid colour" });
+    return z.NEVER;
+  });
+
 export const subjectInputSchema = z.object({
   name: z
     .string()
     .min(1, "Subject name is required")
     .max(80, "Name must be at most 80 characters"),
-  color: z.enum(SUBJECT_COLORS),
+  color: subjectColorSchema,
   difficulty: z.coerce.number().int().min(1).max(5).nullable().optional(),
   description: z
     .string()

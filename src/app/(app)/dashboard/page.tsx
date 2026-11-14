@@ -55,7 +55,8 @@ import {
   listSubjects,
 } from "@/lib/data/subjects";
 import { canResumeOnboarding } from "@/lib/onboarding";
-import { subjectTone, topicProgressSummary } from "@/lib/subjects";
+import { subjectTone } from "@/lib/subjects";
+import { topicProgressSummary } from "@/lib/topic-progress";
 import type { Assessment, Subject, Task, Topic } from "@/types/database";
 
 export const metadata = {

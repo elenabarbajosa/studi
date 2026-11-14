@@ -1,7 +1,32 @@
 import type { Weekday, WeekdayAvailability } from "@/lib/subjects";
 
-export const PLANNING_PERIODS = ["7", "14", "30", "until_exam"] as const;
+export const PLANNING_PERIODS = [
+  "today",
+  "tomorrow",
+  "custom",
+  "7",
+  "14",
+  "30",
+  "until_exam",
+] as const;
 export type PlanningPeriod = (typeof PLANNING_PERIODS)[number];
+
+export const ONE_DAY_PERIODS = ["today", "tomorrow", "custom"] as const;
+export type OneDayPeriod = (typeof ONE_DAY_PERIODS)[number];
+
+export function isOneDayPeriod(period: PlanningPeriod): period is OneDayPeriod {
+  return (ONE_DAY_PERIODS as readonly string[]).includes(period);
+}
+
+export const PLANNING_PERIOD_LABEL: Record<PlanningPeriod, string> = {
+  today: "Today",
+  tomorrow: "Tomorrow",
+  custom: "Choose a date",
+  "7": "7 days",
+  "14": "14 days",
+  "30": "30 days",
+  until_exam: "Until exam",
+};
 
 export const PLAN_INTENSITIES = ["light", "balanced", "intensive"] as const;
 export type PlanIntensity = (typeof PLAN_INTENSITIES)[number];

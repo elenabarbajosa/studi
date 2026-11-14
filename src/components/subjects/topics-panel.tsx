@@ -8,6 +8,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowDown,
   ArrowUp,
@@ -51,9 +52,14 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   TOPIC_STATUS_META,
   TOPIC_STATUSES,
-  topicProgressSummary,
   type TopicStatus,
 } from "@/lib/subjects";
+import {
+  childrenByParentId,
+  effectiveStatusByTopicId,
+  topicHasChildren,
+  topicProgressSummary,
+} from "@/lib/topic-progress";
 import { cn } from "@/lib/utils";
 import type { Topic } from "@/types/database";
 
@@ -80,18 +86,32 @@ type TopicsPanelProps = {
 };
 
 export function TopicsPanel({ subjectId, subjectName, topics, dailyAiLimit }: TopicsPanelProps) {
-  const roots = useMemo(() => topics.filter((t) => t.parent_id === null), [topics]);
-  const childrenByParent = useMemo(() => {
-    const map = new Map<string, Topic[]>();
-    for (const topic of topics) {
-      if (!topic.parent_id) continue;
-      const list = map.get(topic.parent_id) ?? [];
-      list.push(topic);
-      map.set(topic.parent_id, list);
-    }
-    return map;
-  }, [topics]);
-  const summary = topicProgressSummary(topics);
+  const router = useRouter();
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, TopicStatus>>({});
+  // Optimistic leaf edits; once server props match, the override is a no-op.
+  const resolvedTopics = useMemo(
+    () =>
+      topics.map((t) => {
+        const override = statusOverrides[t.id];
+        if (!override || override === t.status) return t;
+        return { ...t, status: override };
+      }),
+    [topics, statusOverrides],
+  );
+
+  const roots = useMemo(
+    () => resolvedTopics.filter((t) => t.parent_id === null),
+    [resolvedTopics],
+  );
+  const childrenByParent = useMemo(
+    () => childrenByParentId(resolvedTopics),
+    [resolvedTopics],
+  );
+  const effective = useMemo(
+    () => effectiveStatusByTopicId(resolvedTopics),
+    [resolvedTopics],
+  );
+  const summary = topicProgressSummary(resolvedTopics);
   const [isPending, startTransition] = useTransition();
   const [importOpen, setImportOpen] = useState(false);
 
@@ -106,6 +126,24 @@ export function TopicsPanel({ subjectId, subjectName, topics, dailyAiLimit }: To
     startTransition(async () => {
       const result = await reorderTopics(subjectId, ordered);
       if (result.error) toast.error(result.error);
+      else router.refresh();
+    });
+  }
+
+  function onStatusChange(topicId: string, next: TopicStatus) {
+    setStatusOverrides((prev) => ({ ...prev, [topicId]: next }));
+    startTransition(async () => {
+      const result = await updateTopicStatus(subjectId, topicId, next);
+      if (result.error) {
+        toast.error(result.error);
+        setStatusOverrides((prev) => {
+          const copy = { ...prev };
+          delete copy[topicId];
+          return copy;
+        });
+        return;
+      }
+      router.refresh();
     });
   }
 
@@ -118,7 +156,8 @@ export function TopicsPanel({ subjectId, subjectName, topics, dailyAiLimit }: To
           </h2>
           {summary.total > 0 ? (
             <p className="text-[12.5px] text-ink-2">
-              {summary.mastered} of {summary.total} mastered · progress counts top-level topics
+              {summary.mastered} of {summary.total} mastered · top-level topics; parents
+              follow their children
             </p>
           ) : (
             <p className="text-[12.5px] text-ink-2">Build the syllabus manually or import with AI.</p>
@@ -148,15 +187,24 @@ export function TopicsPanel({ subjectId, subjectName, topics, dailyAiLimit }: To
               key={topic.id}
               subjectId={subjectId}
               topic={topic}
-              subtopics={childrenByParent.get(topic.id) ?? []}
+              depth={0}
+              childrenByParent={childrenByParent}
+              effectiveById={effective}
+              onStatusChange={onStatusChange}
               onMoveUp={index > 0 ? () => moveRoot(topic.id, -1) : undefined}
               onMoveDown={index < roots.length - 1 ? () => moveRoot(topic.id, 1) : undefined}
+              onTreeChanged={() => router.refresh()}
             />
           ))}
         </ul>
       )}
 
-      <AddTopicInline subjectId={subjectId} parentId={null} label="Add topic" />
+      <AddTopicInline
+        subjectId={subjectId}
+        parentId={null}
+        label="Add topic"
+        onCreated={() => router.refresh()}
+      />
 
       <ImportSyllabusDialog
         open={importOpen}
@@ -174,36 +222,54 @@ function StatusIcon({ status, className }: { status: TopicStatus; className?: st
   return <Icon className={cn("size-4 shrink-0", icon_cls, className)} aria-hidden />;
 }
 
-function StatusMenu({ subjectId, topic }: { subjectId: string; topic: Topic }) {
-  const [isPending, startTransition] = useTransition();
-  const [optimistic, setOptimistic] = useState<TopicStatus | null>(null);
-  const status = optimistic ?? topic.status;
+function StatusMenu({
+  topic,
+  effectiveStatus,
+  derived,
+  onChange,
+}: {
+  topic: Topic;
+  effectiveStatus: TopicStatus;
+  derived: boolean;
+  onChange: (next: TopicStatus) => void;
+}) {
+  if (derived) {
+    return (
+      <span
+        title="Status follows subtopics"
+        className={cn(
+          "inline-flex h-7 shrink-0 items-center gap-1 rounded-full pr-2.5 pl-2.5 text-[11.5px] font-semibold",
+          TOPIC_STATUS_STYLE[effectiveStatus].pill,
+        )}
+      >
+        {TOPIC_STATUS_META[effectiveStatus].label}
+        <span className="text-[10px] font-medium opacity-70">Auto</span>
+      </span>
+    );
+  }
 
   const change = (next: TopicStatus) => {
     if (next === topic.status) return;
-    setOptimistic(next);
-    startTransition(async () => {
-      const result = await updateTopicStatus(subjectId, topic.id, next);
-      if (result.error) toast.error(result.error);
-      setOptimistic(null);
-    });
+    onChange(next);
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        disabled={isPending}
-        aria-label={`Status of “${topic.title}”: ${TOPIC_STATUS_META[status].label}. Change status`}
+        aria-label={`Status of “${topic.title}”: ${TOPIC_STATUS_META[effectiveStatus].label}. Change status`}
         className={cn(
           "inline-flex h-7 shrink-0 items-center gap-1 rounded-full pr-2 pl-2.5 text-[11.5px] font-semibold outline-none transition-[filter] hover:brightness-95 focus-visible:shadow-[0_0_0_2px_var(--raised),0_0_0_4px_var(--accent)] disabled:opacity-60 dark:hover:brightness-110",
-          TOPIC_STATUS_STYLE[status].pill,
+          TOPIC_STATUS_STYLE[effectiveStatus].pill,
         )}
       >
-        {TOPIC_STATUS_META[status].label}
+        {TOPIC_STATUS_META[effectiveStatus].label}
         <ChevronDown className="size-3 opacity-70" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-44">
-        <DropdownMenuRadioGroup value={status} onValueChange={(v) => change(v as TopicStatus)}>
+        <DropdownMenuRadioGroup
+          value={effectiveStatus}
+          onValueChange={(v) => change(v as TopicStatus)}
+        >
           {TOPIC_STATUSES.map((s) => (
             <DropdownMenuRadioItem key={s} value={s} closeOnClick>
               <StatusIcon status={s} />
@@ -219,42 +285,62 @@ function StatusMenu({ subjectId, topic }: { subjectId: string; topic: Topic }) {
 function TopicItem({
   subjectId,
   topic,
-  subtopics,
+  depth,
+  childrenByParent,
+  effectiveById,
+  onStatusChange,
   onMoveUp,
   onMoveDown,
+  onTreeChanged,
 }: {
   subjectId: string;
   topic: Topic;
-  subtopics?: Topic[];
+  depth: number;
+  childrenByParent: Map<string, Topic[]>;
+  effectiveById: Map<string, TopicStatus>;
+  onStatusChange: (topicId: string, next: TopicStatus) => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
+  onTreeChanged: () => void;
 }) {
   const isChild = topic.parent_id !== null;
+  const subtopics = childrenByParent.get(topic.id) ?? [];
+  const derived = topicHasChildren(topic.id, childrenByParent);
+  const effectiveStatus = effectiveById.get(topic.id) ?? topic.status;
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const remove = () => {
-    const extra = !isChild && subtopics?.length ? " and its subtopics" : "";
+    const extra = derived ? " and its subtopics" : "";
     if (!confirm(`Delete “${topic.title}”${extra}?`)) return;
     startTransition(async () => {
       const result = await deleteTopic(subjectId, topic.id);
       if (result.error) toast.error(result.error);
+      else onTreeChanged();
     });
   };
 
   return (
     <li className={cn(isPending && "opacity-60")}>
       {editing ? (
-        <EditTopicForm subjectId={subjectId} topic={topic} onDone={() => setEditing(false)} />
+        <EditTopicForm
+          subjectId={subjectId}
+          topic={topic}
+          onDone={() => {
+            setEditing(false);
+            onTreeChanged();
+          }}
+        />
       ) : (
         <div
           className={cn(
             "flex min-h-[46px] items-center gap-2.5 border-b border-hairline",
-            isChild && "min-h-10 pl-[26px]",
+            isChild && "min-h-10",
           )}
+          style={depth > 0 ? { paddingLeft: 26 + (depth - 1) * 18 } : undefined}
         >
-          <StatusIcon status={topic.status} />
+          <StatusIcon status={effectiveStatus} />
           <div className="min-w-0 flex-1 py-2">
             <p
               className={cn(
@@ -268,7 +354,12 @@ function TopicItem({
               <p className="mt-0.5 line-clamp-2 text-[12.5px] text-ink-2">{topic.notes}</p>
             ) : null}
           </div>
-          <StatusMenu subjectId={subjectId} topic={topic} />
+          <StatusMenu
+            topic={topic}
+            effectiveStatus={effectiveStatus}
+            derived={derived}
+            onChange={(next) => onStatusChange(topic.id, next)}
+          />
           <DropdownMenu>
             <DropdownMenuTrigger className={cn(iconButton, "-mr-1.5")} aria-label={`Actions for “${topic.title}”`}>
               <MoreHorizontal className="size-4" aria-hidden />
@@ -278,12 +369,10 @@ function TopicItem({
                 <Pencil aria-hidden />
                 Edit
               </DropdownMenuItem>
-              {!isChild ? (
-                <DropdownMenuItem onClick={() => setAdding(true)}>
-                  <Plus aria-hidden />
-                  Add subtopic
-                </DropdownMenuItem>
-              ) : null}
+              <DropdownMenuItem onClick={() => setAdding(true)}>
+                <Plus aria-hidden />
+                Add subtopic
+              </DropdownMenuItem>
               {onMoveUp || onMoveDown ? <DropdownMenuSeparator /> : null}
               {onMoveUp ? (
                 <DropdownMenuItem onClick={onMoveUp}>
@@ -307,10 +396,19 @@ function TopicItem({
         </div>
       )}
 
-      {subtopics && subtopics.length > 0 ? (
+      {subtopics.length > 0 ? (
         <ul>
           {subtopics.map((child) => (
-            <TopicItem key={child.id} subjectId={subjectId} topic={child} />
+            <TopicItem
+              key={child.id}
+              subjectId={subjectId}
+              topic={child}
+              depth={depth + 1}
+              childrenByParent={childrenByParent}
+              effectiveById={effectiveById}
+              onStatusChange={onStatusChange}
+              onTreeChanged={onTreeChanged}
+            />
           ))}
         </ul>
       ) : null}
@@ -321,7 +419,12 @@ function TopicItem({
           parentId={topic.id}
           label={`Add subtopic to ${topic.title}`}
           autoFocus
+          depth={depth + 1}
           onClose={() => setAdding(false)}
+          onCreated={() => {
+            setAdding(false);
+            onTreeChanged();
+          }}
         />
       ) : null}
     </li>
@@ -381,30 +484,37 @@ function AddTopicInline({
   parentId,
   label,
   autoFocus,
+  depth = 0,
   onClose,
+  onCreated,
 }: {
   subjectId: string;
   parentId: string | null;
   label: string;
   autoFocus?: boolean;
+  depth?: number;
   onClose?: () => void;
+  onCreated?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(createTopic.bind(null, subjectId), initial);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (state.success) formRef.current?.reset();
+    if (state.success) {
+      formRef.current?.reset();
+      onCreated?.();
+    }
     if (state.error) toast.error(state.error);
+    // Intentionally depend on action state only — onCreated is a refresh callback.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
   }, [state]);
 
   return (
     <form
       ref={formRef}
       action={formAction}
-      className={cn(
-        "flex min-h-11 items-center gap-2.5 border-b border-hairline",
-        parentId && "pl-[26px]",
-      )}
+      className="flex min-h-11 items-center gap-2.5 border-b border-hairline"
+      style={parentId ? { paddingLeft: 26 + Math.max(depth - 1, 0) * 18 } : undefined}
     >
       <input type="hidden" name="parent_id" value={parentId ?? ""} />
       <Plus className="size-4 shrink-0 text-ink-3" aria-hidden />

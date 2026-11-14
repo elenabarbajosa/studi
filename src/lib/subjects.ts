@@ -11,9 +11,16 @@ export const SUBJECT_COLORS = [
   "indigo",
 ] as const;
 
-export type SubjectColor = (typeof SUBJECT_COLORS)[number];
+/** Named presets stored in older rows. Custom colours are `#RRGGBB`. */
+export type SubjectColorPreset = (typeof SUBJECT_COLORS)[number];
+/** @deprecated Prefer SubjectColorPreset for presets; Subject.color is SubjectColorValue. */
+export type SubjectColor = SubjectColorPreset;
+/** Stored subject colour: preset name or validated `#RRGGBB`. */
+export type SubjectColorValue = SubjectColorPreset | string;
 
 export type SubjectTone = { dot: string; tint: string; text: string };
+
+const HEX_COLOR_RE = /^#[0-9A-Fa-f]{6}$/;
 
 /** Approved subject palette, keyed by the stored dot hex. */
 export const SUBJECT_TONES: Record<string, SubjectTone> = {
@@ -34,7 +41,7 @@ export const SUBJECT_TONES: Record<string, SubjectTone> = {
  * Each name maps once onto the approved palette. Pink and rose stay distinct:
  * pink uses rose, rose uses coral.
  */
-const SUBJECT_COLOR_HEX: Record<SubjectColor, keyof typeof SUBJECT_TONES> = {
+export const SUBJECT_COLOR_HEX: Record<SubjectColorPreset, keyof typeof SUBJECT_TONES> = {
   pink: "#D46A80",
   blue: "#4C93C9",
   green: "#4E9E78",
@@ -47,7 +54,7 @@ const SUBJECT_COLOR_HEX: Record<SubjectColor, keyof typeof SUBJECT_TONES> = {
   indigo: "#6A7BCF",
 };
 
-const SUBJECT_COLOR_LABEL: Record<SubjectColor, string> = {
+const SUBJECT_COLOR_LABEL: Record<SubjectColorPreset, string> = {
   pink: "Pink",
   blue: "Blue",
   green: "Green",
@@ -60,11 +67,74 @@ const SUBJECT_COLOR_LABEL: Record<SubjectColor, string> = {
   indigo: "Indigo",
 };
 
-export function subjectTone(color: SubjectColor): SubjectTone {
-  return SUBJECT_TONES[SUBJECT_COLOR_HEX[color]];
+export function isHexColor(value: unknown): value is string {
+  return typeof value === "string" && HEX_COLOR_RE.test(value);
 }
 
-export function subjectToneVars(color: SubjectColor) {
+export function normalizeHexColor(value: string): string | null {
+  const trimmed = value.trim();
+  const withHash = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+  if (!HEX_COLOR_RE.test(withHash)) return null;
+  return withHash.toUpperCase();
+}
+
+function clamp01(n: number) {
+  return Math.min(1, Math.max(0, n));
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const n = Number.parseInt(hex.slice(1), 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
+function rgbToHex(r: number, g: number, b: number) {
+  const to = (v: number) =>
+    Math.round(clamp01(v) * 255)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${to(r / 255)}${to(g / 255)}${to(b / 255)}`.toUpperCase();
+}
+
+/** Mix `hex` toward white (amount 0–1) for accessible light tints. */
+function mixTowardWhite(hex: string, amount: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  const a = clamp01(amount);
+  return rgbToHex(
+    r + (255 - r) * a,
+    g + (255 - g) * a,
+    b + (255 - b) * a,
+  );
+}
+
+/** Darken for readable text on tinted backgrounds. */
+function mixTowardBlack(hex: string, amount: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  const a = clamp01(amount);
+  return rgbToHex(r * (1 - a), g * (1 - a), b * (1 - a));
+}
+
+export function toneFromHex(hex: string): SubjectTone {
+  const normalized = normalizeHexColor(hex) ?? "#6B7280";
+  const known = SUBJECT_TONES[normalized];
+  if (known) return known;
+  return {
+    dot: normalized,
+    tint: mixTowardWhite(normalized, 0.88),
+    text: mixTowardBlack(normalized, 0.42),
+  };
+}
+
+export function resolveSubjectHex(color: SubjectColorValue): string {
+  if (isSubjectColor(color)) return SUBJECT_COLOR_HEX[color];
+  return normalizeHexColor(color) ?? SUBJECT_COLOR_HEX.neutral;
+}
+
+export function subjectTone(color: SubjectColorValue): SubjectTone {
+  if (isSubjectColor(color)) return SUBJECT_TONES[SUBJECT_COLOR_HEX[color]];
+  return toneFromHex(color);
+}
+
+export function subjectToneVars(color: SubjectColorValue) {
   const tone = subjectTone(color);
   return {
     "--subject-dot": tone.dot,
@@ -73,7 +143,7 @@ export function subjectToneVars(color: SubjectColor) {
   } as const;
 }
 
-function subjectColorMeta(color: SubjectColor) {
+function subjectColorMeta(color: SubjectColorPreset) {
   const tone = subjectTone(color);
   return {
     label: SUBJECT_COLOR_LABEL[color],
@@ -84,7 +154,7 @@ function subjectColorMeta(color: SubjectColor) {
 }
 
 export const SUBJECT_COLOR_META: Record<
-  SubjectColor,
+  SubjectColorPreset,
   { label: string; swatch: string; tint: string; text: string }
 > = {
   pink: subjectColorMeta("pink"),
@@ -98,6 +168,10 @@ export const SUBJECT_COLOR_META: Record<
   teal: subjectColorMeta("teal"),
   indigo: subjectColorMeta("indigo"),
 };
+
+export function isSubjectColorValue(value: unknown): value is SubjectColorValue {
+  return isSubjectColor(value) || isHexColor(value);
+}
 
 export const TOPIC_STATUSES = [
   "not_started",
@@ -184,7 +258,7 @@ export const ONBOARDING_STATUSES = [
 
 export type OnboardingStatus = (typeof ONBOARDING_STATUSES)[number];
 
-export function isSubjectColor(value: unknown): value is SubjectColor {
+export function isSubjectColor(value: unknown): value is SubjectColorPreset {
   return (
     typeof value === "string" &&
     (SUBJECT_COLORS as readonly string[]).includes(value)
@@ -203,30 +277,4 @@ export function isResourceType(value: unknown): value is ResourceType {
     typeof value === "string" &&
     (RESOURCE_TYPES as readonly string[]).includes(value)
   );
-}
-
-/** Real progress from topic statuses — no invented percentages beyond status weights. */
-export function topicProgressSummary(
-  topics: { status: TopicStatus; parent_id: string | null }[],
-) {
-  const roots = topics.filter((t) => t.parent_id === null);
-  const total = roots.length;
-  const mastered = roots.filter((t) => t.status === "mastered").length;
-  const inProgress = roots.filter(
-    (t) => t.status === "studying" || t.status === "practicing",
-  ).length;
-  const notStarted = roots.filter((t) => t.status === "not_started").length;
-  const weightSum = roots.reduce(
-    (sum, t) => sum + TOPIC_STATUS_META[t.status].weight,
-    0,
-  );
-  const maxWeight = total * TOPIC_STATUS_META.mastered.weight;
-
-  return {
-    total,
-    mastered,
-    inProgress,
-    notStarted,
-    completionRatio: maxWeight === 0 ? null : weightSum / maxWeight,
-  };
 }

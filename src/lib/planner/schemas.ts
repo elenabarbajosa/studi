@@ -10,7 +10,7 @@ export const timeWindowSchema = z.object({
   end: timeHHmm,
 });
 
-export const plannerPreferencesInputSchema = z.object({
+export const plannerPreferencesFieldsSchema = z.object({
   planning_period: z.enum(PLANNING_PERIODS),
   intensity: z.enum(PLAN_INTENSITIES),
   max_hours_per_day: z.number().min(0.5).max(12),
@@ -25,9 +25,29 @@ export const plannerPreferencesInputSchema = z.object({
   prioritized_topic_ids: z.array(z.string().uuid()).default([]),
   excluded_topic_ids: z.array(z.string().uuid()).default([]),
   until_assessment_id: z.string().uuid().nullable(),
+  target_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .optional()
+    .default(null),
+  /** Ephemeral NL hint for Gemini — not persisted as a DB preference column. */
+  user_instruction: z.string().max(500).optional().default(""),
 });
 
-export type PlannerPreferencesInput = z.infer<typeof plannerPreferencesInputSchema>;
+export const plannerPreferencesInputSchema = plannerPreferencesFieldsSchema.superRefine(
+  (value, ctx) => {
+    if (value.planning_period === "custom" && !value.target_date) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["target_date"],
+        message: "Choose a date for a custom one-day plan",
+      });
+    }
+  },
+);
+
+export type PlannerPreferencesInput = z.infer<typeof plannerPreferencesFieldsSchema>;
 
 export const aiPlanRecommendationSchema = z.object({
   summary: z.string().max(600).optional().default(""),
@@ -159,5 +179,5 @@ export const adjustPlanPayloadSchema = z.object({
     "completed_early",
     "manual",
   ]),
-  preferences: plannerPreferencesInputSchema.partial().optional(),
+  preferences: plannerPreferencesFieldsSchema.partial().optional(),
 });

@@ -47,16 +47,26 @@ function readStoredBundle(): StoredBundle | null {
 }
 
 export function useFocusTimer(initialConfig: FocusConfig) {
-  const [config] = useState(initialConfig);
+  const [config, setConfig] = useState(initialConfig);
+  const configRef = useRef(config);
   const [engine, setEngine] = useState<FocusEngineState>(() =>
     createEngine("pomodoro", initialConfig),
   );
+  const engineRef = useRef(engine);
   const [now, setNow] = useState(0);
   const [clientSessionId, setClientSessionId] = useState<string | null>(null);
   const [meta, setMeta] = useState<SessionMeta | null>(null);
   const lastKnownRef = useRef(0);
   const onPhaseCompleteRef = useRef<((phase: string) => void) | null>(null);
   const didRestoreRef = useRef(false);
+
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
+
+  useEffect(() => {
+    engineRef.current = engine;
+  }, [engine]);
 
   useEffect(() => {
     if (didRestoreRef.current) return;
@@ -149,14 +159,24 @@ export function useFocusTimer(initialConfig: FocusConfig) {
     persist(engine, clientSessionId, meta);
   }, [engine, clientSessionId, meta, persist]);
 
+  const applyConfig = useCallback((patch: Partial<FocusConfig>) => {
+    if (engineRef.current.runState !== "idle") return;
+    const nextConfig = { ...configRef.current, ...patch };
+    const nextEngine = createEngine(engineRef.current.mode, nextConfig);
+    configRef.current = nextConfig;
+    engineRef.current = nextEngine;
+    setConfig(nextConfig);
+    setEngine(nextEngine);
+  }, []);
+
   const switchMode = useCallback(
     (mode: FocusTimerMode) => {
       if (engine.runState === "running" || engine.runState === "paused") return;
-      setEngine(createEngine(mode, config));
+      setEngine(createEngine(mode, configRef.current));
       setClientSessionId(null);
       setMeta(null);
     },
-    [config, engine.runState],
+    [engine.runState],
   );
 
   const begin = useCallback(
@@ -168,7 +188,7 @@ export function useFocusTimer(initialConfig: FocusConfig) {
       clientSessionId: string;
     }) => {
       const t = Date.now();
-      const next = start(createEngine(engine.mode, config), t);
+      const next = start(createEngine(engine.mode, configRef.current), t);
       const m: SessionMeta = {
         subjectId: opts.subjectId,
         topicId: opts.topicId,
@@ -183,7 +203,7 @@ export function useFocusTimer(initialConfig: FocusConfig) {
       lastKnownRef.current = t;
       return { engine: next, meta: m, startedAt: t };
     },
-    [config, engine.mode],
+    [engine.mode],
   );
 
   const doPause = useCallback(() => {
@@ -201,7 +221,7 @@ export function useFocusTimer(initialConfig: FocusConfig) {
   }, []);
 
   const doReset = useCallback(() => {
-    setEngine(createEngine(engine.mode, config));
+    setEngine(createEngine(engine.mode, configRef.current));
     setClientSessionId(null);
     setMeta(null);
     try {
@@ -209,7 +229,7 @@ export function useFocusTimer(initialConfig: FocusConfig) {
     } catch {
       /* ignore */
     }
-  }, [config, engine.mode]);
+  }, [engine.mode]);
 
   const doFinish = useCallback(() => {
     const t = Date.now();
@@ -230,6 +250,7 @@ export function useFocusTimer(initialConfig: FocusConfig) {
     displayMs: displayMs(engine, now),
     remaining: remainingMs(engine, now),
     progress: progress01(engine, now),
+    applyConfig,
     switchMode,
     begin,
     pause: doPause,
