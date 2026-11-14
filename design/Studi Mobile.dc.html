@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/lucide-static@0.460.0/font/lucide.css">
+<style>
+body{margin:0;background:#E6E0DC;font-family:'Geist',system-ui,sans-serif;color:#241C1F;-webkit-font-smoothing:antialiased}
+a{color:#A63D57;text-decoration:none}a:hover{color:#7E2A40}
+*{box-sizing:border-box}
+</style>
+</helmet>
+<section style="padding:72px;background:#E6E0DC;min-width:max-content;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:10px;max-width:1100px">
+<div style="font-size:15px;font-weight:600;color:#A63D57">Turn 3 · iPhone 17 Pro · 402×874</div>
+<div style="font-size:44px;font-weight:600;letter-spacing:-0.035em;line-height:1.05">studi<span style="color:#D98A9B">.</span> mobile</div>
+<div style="font-size:17px;color:#5E5357;line-height:1.5;text-wrap:pretty">Five-tab bar: Today, Calendar, Focus (raised centre), Tasks, More. Everything else lives in More. Creation happens in bottom sheets within thumb reach. All content is <strong>mock data</strong>. Live: Focus timer, Calendar day strip, task checkboxes, sheet subject picker.</div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:56px 48px;width:2400px">
+
+<!-- 3a CALENDAR -->
+<div id="3a" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="background:#241C1F;color:#fff;border-radius:7px;padding:3px 9px;font-weight:600;font-size:14px">3a</span><span style="font-size:19px;font-weight:600">Calendar</span></div>
+<span style="font-size:14px;color:#5E5357;width:402px;line-height:1.45">Swipeable week strip with load dots; the day below is a timeline. Tap a day to switch. Long-press the grid to create.</span>
+<div style="width:402px;height:874px;border-radius:56px;background:#FDFBFA;box-shadow:0 0 0 10px #1F1A1C,0 40px 60px -30px rgba(60,30,40,.5);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<div style="height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0;font-size:16px;font-weight:600"><span>9:41</span><span style="position:absolute;left:50%;top:11px;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000"></span><span style="display:flex;gap:6px;align-items:center"><i class="icon-signal" style="font-size:15px"></i><i class="icon-wifi" style="font-size:15px"></i><i class="icon-battery-full" style="font-size:18px"></i></span></div>
+<div style="padding:8px 20px 0;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:baseline;gap:6px"><span style="font-size:28px;font-weight:600;letter-spacing:-0.035em">November</span><span style="font-size:28px;color:#8A7E82;letter-spacing:-0.035em">2026</span></div><div style="display:flex;gap:8px"><span style="width:38px;height:38px;border-radius:50%;background:#F4EFEB;display:flex;align-items:center;justify-content:center"><i class="icon-list" style="font-size:17px"></i></span><span style="width:38px;height:38px;border-radius:50%;background:#F4EFEB;display:flex;align-items:center;justify-content:center"><i class="icon-calendar-days" style="font-size:17px"></i></span></div></div>
+<div style="display:grid;grid-template-columns:repeat(7,1fr);padding:14px 12px 10px;gap:2px">
+<sc-for list="{{ strip }}" as="d" hint-placeholder-count="7"><div onClick="{{ d.pick }}" style="cursor:pointer;height:72px;border-radius:18px;background:{{ d.bg }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font-size:12px;font-weight:600;color:{{ d.lc }}">{{ d.l }}</span><span style="font-size:19px;font-weight:600;color:{{ d.fg }}">{{ d.n }}</span><div style="display:flex;gap:2px;height:5px"><sc-for list="{{ d.dots }}" as="c" hint-placeholder-count="2"><span style="width:5px;height:5px;border-radius:50%;background:{{ c }}"></span></sc-for></div></div></sc-for>
+</div>
+<div style="padding:4px 20px 8px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:15px;font-weight:600">{{ dayTitle }}</span><span style="font-size:13px;color:#5E5357">{{ daySummary }}</span></div>
+<div style="flex:1;position:relative;overflow:hidden;margin:0 0 0 0">
+<sc-for list="{{ mHours }}" as="h" hint-placeholder-count="10"><div style="position:absolute;left:0;right:0;top:{{ h.y }}px;display:flex;align-items:center;gap:8px;padding-left:20px"><span style="width:38px;font-size:11.5px;color:#8A7E82;font-variant-numeric:tabular-nums">{{ h.l }}</span><span style="flex:1;border-top:1px solid #F1EBE7"></span></div></sc-for>
+<sc-for list="{{ dayEvents }}" as="e" hint-placeholder-count="5"><div style="position:absolute;left:70px;right:16px;top:{{ e.y }}px;height:{{ e.h }}px;border-radius:14px;background:{{ e.bg }};border:{{ e.bd }};color:{{ e.fg }};padding:7px 12px;display:flex;align-items:flex-start;gap:8px;overflow:hidden;opacity:{{ e.op }}"><i class="{{ e.ic }}" style="font-size:14px;margin-top:2px"></i><div style="display:flex;flex-direction:column;line-height:1.3;min-width:0"><span style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.t }}</span><span style="font-size:12px;opacity:.9;white-space:nowrap">{{ e.time }}</span></div></div></sc-for>
+<sc-if value="{{ showNow }}"><div style="position:absolute;left:62px;right:16px;top:{{ nowY }}px;height:2px;background:#A63D57"><span style="position:absolute;left:-5px;top:-4px;width:10px;height:10px;border-radius:50%;background:#A63D57"></span></div></sc-if>
+<span style="position:absolute;right:20px;bottom:104px;width:56px;height:56px;border-radius:20px;background:#241C1F;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 24px -10px rgba(36,28,31,.6)"><i class="icon-plus" style="font-size:24px;color:#fff"></i></span>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:0;height:88px;background:rgba(253,251,250,.96);border-top:1px solid #EFE8E4;display:flex;justify-content:space-around;padding:8px 8px 0">
+<sc-for list="{{ tabsCal }}" as="b" hint-placeholder-count="5"><div style="width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;color:{{ b.fg }}"><div style="width:{{ b.sz }}px;height:{{ b.sz }}px;margin-top:{{ b.mt }}px;border-radius:50%;background:{{ b.bg }};display:flex;align-items:center;justify-content:center"><i class="{{ b.ic }}" style="font-size:{{ b.isz }}px;color:{{ b.icc }}"></i></div><span style="font-size:11px;font-weight:600">{{ b.n }}</span></div></sc-for>
+</div>
+<span style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:136px;height:5px;border-radius:3px;background:#241C1F"></span>
+</div>
+</div>
+
+<!-- 3b TASKS + SHEET -->
+<div id="3b" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="background:#241C1F;color:#fff;border-radius:7px;padding:3px 9px;font-weight:600;font-size:14px">3b</span><span style="font-size:19px;font-weight:600">Tasks · quick add sheet</span></div>
+<span style="font-size:14px;color:#5E5357;width:402px;line-height:1.45">One line to add; chips set subject, date and priority. Swipe a task right to complete, left to reschedule.</span>
+<div style="width:402px;height:874px;border-radius:56px;background:#FDFBFA;box-shadow:0 0 0 10px #1F1A1C,0 40px 60px -30px rgba(60,30,40,.5);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<div style="height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0;font-size:16px;font-weight:600"><span>9:41</span><span style="position:absolute;left:50%;top:11px;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000"></span><span style="display:flex;gap:6px;align-items:center"><i class="icon-signal" style="font-size:15px"></i><i class="icon-wifi" style="font-size:15px"></i><i class="icon-battery-full" style="font-size:18px"></i></span></div>
+<div style="padding:8px 20px 0;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:28px;font-weight:600;letter-spacing:-0.035em">Tasks</span><span style="width:38px;height:38px;border-radius:50%;background:#F4EFEB;display:flex;align-items:center;justify-content:center"><i class="icon-sliders-horizontal" style="font-size:17px"></i></span></div>
+<div style="display:flex;gap:6px;overflow:hidden"><sc-for list="{{ taskTabs }}" as="t" hint-placeholder-count="4"><span style="flex:none;height:34px;padding:0 14px;border-radius:999px;background:{{ t.bg }};color:{{ t.fg }};display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600">{{ t.n }}<span style="font-size:12px;opacity:.7">{{ t.c }}</span></span></sc-for></div>
+</div>
+<div style="padding:10px 20px 0;display:flex;flex-direction:column">
+<sc-for list="{{ mTasks }}" as="t" hint-placeholder-count="5">
+<div style="position:relative;border-radius:16px;overflow:hidden;margin:0 {{ t.mx }}px">
+<div style="position:absolute;inset:0;background:#4E9E78;display:{{ t.swD }};align-items:center;padding-left:18px;color:#fff;font-size:13px;font-weight:600;gap:6px"><i class="icon-check" style="font-size:16px"></i>Done</div>
+<div onClick="{{ t.toggle }}" style="cursor:pointer;position:relative;display:flex;align-items:center;gap:12px;min-height:60px;background:#FDFBFA;border-bottom:1px solid #F1EBE7;transform:translateX({{ t.tx }}px);padding:0 {{ t.px }}px">
+<span style="width:24px;height:24px;border-radius:50%;flex:none;border:1.8px solid {{ t.ring }};background:{{ t.fill }};display:flex;align-items:center;justify-content:center;transition:all .2s"><i class="{{ t.ck }}" style="font-size:14px;color:#fff"></i></span>
+<div style="display:flex;flex-direction:column;min-width:0;flex:1;gap:3px"><span style="font-size:15px;color:{{ t.fg }};text-decoration:{{ t.dec }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span><span style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#5E5357"><span style="display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:{{ t.sc }}"></span>{{ t.sn }}</span><span style="display:{{ t.subD }};align-items:center;gap:3px"><i class="icon-list-checks" style="font-size:12px"></i>{{ t.sub }}</span></span></div>
+<span style="font-size:12px;font-weight:700;color:{{ t.pc }}">{{ t.p }}</span>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="position:absolute;inset:0;background:rgba(36,28,31,.32)"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;background:#FDFBFA;border-radius:30px 30px 0 0;padding:10px 20px 40px;display:flex;flex-direction:column;gap:14px;box-shadow:0 -10px 40px rgba(36,28,31,.2)">
+<span style="align-self:center;width:38px;height:5px;border-radius:3px;background:#DED5D0"></span>
+<div style="display:flex;align-items:center;gap:12px;min-height:48px"><span style="width:24px;height:24px;border-radius:50%;border:1.8px solid #C9BDB8;flex:none"></span><span style="font-size:18px;font-weight:500">Review eigenvectors<span style="display:inline-block;width:2px;height:20px;background:#A63D57;margin-left:2px;vertical-align:-4px"></span></span></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ sheetSubj }}" as="s" hint-placeholder-count="6"><span onClick="{{ s.pick }}" style="cursor:pointer;height:36px;padding:0 12px 0 10px;border-radius:999px;background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.ring }};display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:{{ s.c }}"></span>{{ s.n }}</span></sc-for></div>
+<div style="display:flex;gap:6px"><span style="height:36px;padding:0 12px;border-radius:999px;background:#241C1F;color:#fff;display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600"><i class="icon-calendar" style="font-size:14px"></i>Tomorrow</span><span style="height:36px;padding:0 12px;border-radius:999px;background:#F4EFEB;display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600"><i class="icon-flag" style="font-size:14px"></i>Priority</span><span style="height:36px;padding:0 12px;border-radius:999px;background:#F4EFEB;display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600"><i class="icon-list-checks" style="font-size:14px"></i>Subtasks</span></div>
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;color:#5E5357">Topic: Eigenvalues &amp; eigenvectors</span><span style="width:52px;height:52px;border-radius:50%;background:#A63D57;display:flex;align-items:center;justify-content:center"><i class="icon-arrow-up" style="font-size:22px;color:#fff"></i></span></div>
+</div>
+<span style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:136px;height:5px;border-radius:3px;background:#241C1F"></span>
+</div>
+</div>
+
+<!-- 3c FOCUS DARK -->
+<div id="3c" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="background:#241C1F;color:#fff;border-radius:7px;padding:3px 9px;font-weight:600;font-size:14px">3c</span><span style="font-size:19px;font-weight:600">Focus · full screen, dark</span></div>
+<span style="font-size:14px;color:#5E5357;width:402px;line-height:1.45">Tab bar hides while running. Controls sit in the lower third. Tap the timer to start or pause.</span>
+<div style="width:402px;height:874px;border-radius:56px;background:radial-gradient(ellipse 90% 55% at 50% 38%, #3A2830 0%, #171315 75%);box-shadow:0 0 0 10px #1F1A1C,0 40px 60px -30px rgba(20,10,15,.6);overflow:hidden;position:relative;display:flex;flex-direction:column;color:#F3ECEE">
+<div style="height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0;font-size:16px;font-weight:600"><span>9:41</span><span style="position:absolute;left:50%;top:11px;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000"></span><span style="display:flex;gap:6px;align-items:center"><i class="icon-signal" style="font-size:15px"></i><i class="icon-wifi" style="font-size:15px"></i><i class="icon-battery-full" style="font-size:18px"></i></span></div>
+<div style="padding:8px 20px 0;display:flex;align-items:center;justify-content:space-between"><span style="width:40px;height:40px;border-radius:50%;background:#2B2427;display:flex;align-items:center;justify-content:center"><i class="icon-chevron-down" style="font-size:20px"></i></span><div style="display:flex;gap:2px;background:#2B2427;border-radius:999px;padding:3px;font-size:13px;font-weight:600"><span onClick="{{ setPomo }}" style="cursor:pointer;padding:7px 14px;border-radius:999px;background:{{ pomoBg }};color:{{ pomoFg }}">Pomodoro</span><span onClick="{{ setWatch }}" style="cursor:pointer;padding:7px 14px;border-radius:999px;background:{{ watchBg }};color:{{ watchFg }}">Stopwatch</span></div><span style="width:40px;height:40px;border-radius:50%;background:#2B2427;display:flex;align-items:center;justify-content:center"><i class="icon-ellipsis" style="font-size:18px"></i></span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px">
+<div onClick="{{ toggle }}" style="cursor:pointer;position:relative;width:300px;height:300px;display:flex;align-items:center;justify-content:center">
+<svg width="300" height="300" viewBox="0 0 300 300" style="position:absolute;inset:0;transform:rotate(-90deg)"><circle cx="150" cy="150" r="138" fill="none" stroke="#3A2E33" stroke-width="10"></circle><circle cx="150" cy="150" r="138" fill="none" stroke="#E9A3B2" stroke-width="10" stroke-linecap="round" stroke-dasharray="867.1" stroke-dashoffset="{{ ringOff }}" style="transition:stroke-dashoffset .9s linear"></circle></svg>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px;position:relative"><span style="font-size:12.5px;font-weight:600;letter-spacing:.08em;color:#E9A3B2;text-transform:uppercase">{{ phaseLabel }}</span><span style="font-size:76px;font-weight:600;letter-spacing:-0.05em;line-height:1;font-variant-numeric:tabular-nums">{{ timeStr }}</span><div style="display:flex;gap:6px;margin-top:4px"><span style="width:7px;height:7px;border-radius:50%;background:#E9A3B2"></span><span style="width:7px;height:7px;border-radius:50%;background:#E9A3B2"></span><span style="width:7px;height:7px;border-radius:50%;border:1.5px solid #6B5A60"></span><span style="width:7px;height:7px;border-radius:50%;border:1.5px solid #6B5A60"></span></div></div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 30px;text-align:center"><span style="display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:600;color:#E9A3B2"><span style="width:8px;height:8px;border-radius:50%;background:#D46A80"></span>Calculus I</span><span style="font-size:17px;color:#F3ECEE;line-height:1.35">Finish exercises 4–9 from sheet 3</span></div>
+</div>
+<div style="padding:0 20px 44px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;gap:8px;justify-content:center"><sc-for list="{{ mSounds }}" as="s" hint-placeholder-count="5"><span onClick="{{ s.pick }}" style="cursor:pointer;width:56px;height:56px;border-radius:18px;background:{{ s.bg }};color:{{ s.fg }};display:flex;align-items:center;justify-content:center"><i class="{{ s.ic }}" style="font-size:20px"></i></span></sc-for></div>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:0 18px">
+<span onClick="{{ reset }}" style="cursor:pointer;width:56px;height:56px;border-radius:50%;background:#2B2427;display:flex;align-items:center;justify-content:center"><i class="icon-rotate-ccw" style="font-size:20px"></i></span>
+<span onClick="{{ toggle }}" style="cursor:pointer;width:88px;height:88px;border-radius:50%;background:#E9A3B2;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 30px -10px rgba(233,163,178,.5)"><i class="{{ toggleIcon }}" style="font-size:34px;color:#241C1F;margin-left:{{ toggleNudge }}px"></i></span>
+<span style="width:56px;height:56px;border-radius:50%;background:#2B2427;display:flex;align-items:center;justify-content:center"><i class="icon-check" style="font-size:21px"></i></span>
+</div>
+<span style="text-align:center;font-size:12.5px;color:#8F8287">Today 1h 50m of 3h · next: break 5:00</span>
+</div>
+<span style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:136px;height:5px;border-radius:3px;background:#F3ECEE"></span>
+</div>
+</div>
+
+<!-- 3d STUDY TOGETHER -->
+<div id="3d" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="background:#241C1F;color:#fff;border-radius:7px;padding:3px 9px;font-weight:600;font-size:14px">3d</span><span style="font-size:19px;font-weight:600">Study Together hub</span></div>
+<span style="font-size:14px;color:#5E5357;width:402px;line-height:1.45">Reached from More or the Today tile. Live rooms first, invitations inline, and room creation in three short steps.</span>
+<div style="width:402px;height:874px;border-radius:56px;background:#FDFBFA;box-shadow:0 0 0 10px #1F1A1C,0 40px 60px -30px rgba(60,30,40,.5);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<div style="height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0;font-size:16px;font-weight:600"><span>9:41</span><span style="position:absolute;left:50%;top:11px;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000"></span><span style="display:flex;gap:6px;align-items:center"><i class="icon-signal" style="font-size:15px"></i><i class="icon-wifi" style="font-size:15px"></i><i class="icon-battery-full" style="font-size:18px"></i></span></div>
+<div style="padding:8px 20px 0;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;gap:10px"><i class="icon-chevron-left" style="font-size:22px"></i><span style="font-size:28px;font-weight:600;letter-spacing:-0.035em;flex:1">Together</span><span style="height:38px;padding:0 14px;border-radius:999px;background:#A63D57;color:#fff;display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600"><i class="icon-plus" style="font-size:15px"></i>Room</span></div>
+<div style="background:#FBEDEF;border-radius:22px;padding:14px 16px;display:flex;align-items:center;gap:12px"><div style="width:42px;height:42px;border-radius:50%;background:#E6F3EC;color:#2F6E50;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center">LG</div><div style="flex:1;display:flex;flex-direction:column;line-height:1.3"><span style="font-size:14px;font-weight:600">Lucía invited you</span><span style="font-size:12.5px;color:#6B4450">"Stats final prep" · private · 50/10</span></div><span style="width:40px;height:40px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center"><i class="icon-x" style="font-size:16px"></i></span><span style="width:40px;height:40px;border-radius:50%;background:#A63D57;display:flex;align-items:center;justify-content:center"><i class="icon-check" style="font-size:17px;color:#fff"></i></span></div>
+<span style="font-size:17px;font-weight:600;margin-top:4px">Live now</span>
+<sc-for list="{{ rooms }}" as="r" hint-placeholder-count="2">
+<div style="background:{{ r.bg }};border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:flex-start;justify-content:space-between"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:17px;font-weight:600;letter-spacing:-0.01em">{{ r.n }}</span><span style="font-size:12.5px;color:{{ r.sub }}">{{ r.meta }}</span></div><div style="display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:24px;font-weight:600;letter-spacing:-0.03em;font-variant-numeric:tabular-nums">{{ r.time }}</span><span style="font-size:11.5px;color:{{ r.sub }};font-weight:600">{{ r.phase }}</span></div></div>
+<div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex"><sc-for list="{{ r.people }}" as="p" hint-placeholder-count="3"><span style="width:32px;height:32px;border-radius:50%;background:{{ p.bg }};color:{{ p.fg }};font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2.5px solid {{ r.bd }};margin-right:-8px">{{ p.i }}</span></sc-for></div><span style="height:40px;padding:0 18px;border-radius:999px;background:#241C1F;color:#fff;display:flex;align-items:center;font-size:14px;font-weight:600">Join</span></div>
+</div>
+</sc-for>
+<span style="font-size:17px;font-weight:600;margin-top:4px">Friends studying solo</span>
+<div style="display:flex;gap:14px"><sc-for list="{{ solo }}" as="f" hint-placeholder-count="4"><div style="width:72px;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="position:relative;width:56px;height:56px;border-radius:50%;background:{{ f.bg }};color:{{ f.fg }};font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2.5px #FDFBFA,0 0 0 4.5px {{ f.ring }}">{{ f.i }}</div><span style="font-size:12.5px;font-weight:600">{{ f.n }}</span><span style="font-size:11px;color:#5E5357;margin-top:-4px">{{ f.s }}</span></div></sc-for></div>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:0;height:88px;background:rgba(253,251,250,.96);border-top:1px solid #EFE8E4;display:flex;justify-content:space-around;padding:8px 8px 0">
+<sc-for list="{{ tabsMore }}" as="b" hint-placeholder-count="5"><div style="width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;color:{{ b.fg }}"><div style="width:{{ b.sz }}px;height:{{ b.sz }}px;margin-top:{{ b.mt }}px;border-radius:50%;background:{{ b.bg }};display:flex;align-items:center;justify-content:center"><i class="{{ b.ic }}" style="font-size:{{ b.isz }}px;color:{{ b.icc }}"></i></div><span style="font-size:11px;font-weight:600">{{ b.n }}</span></div></sc-for>
+</div>
+<span style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:136px;height:5px;border-radius:3px;background:#241C1F"></span>
+</div>
+</div>
+
+<!-- 3e PROGRESS -->
+<div id="3e" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="background:#241C1F;color:#fff;border-radius:7px;padding:3px 9px;font-weight:600;font-size:14px">3e</span><span style="font-size:19px;font-weight:600">Progress</span></div>
+<span style="font-size:14px;color:#5E5357;width:402px;line-height:1.45">Streak and goal side by side, badge shelf scrolls horizontally, leaderboard only if opted in.</span>
+<div style="width:402px;height:874px;border-radius:56px;background:#FDFBFA;box-shadow:0 0 0 10px #1F1A1C,0 40px 60px -30px rgba(60,30,40,.5);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<div style="height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0;font-size:16px;font-weight:600"><span>9:41</span><span style="position:absolute;left:50%;top:11px;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000"></span><span style="display:flex;gap:6px;align-items:center"><i class="icon-signal" style="font-size:15px"></i><i class="icon-wifi" style="font-size:15px"></i><i class="icon-battery-full" style="font-size:18px"></i></span></div>
+<div style="padding:8px 16px 0;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:10px;padding:0 4px 2px"><i class="icon-chevron-left" style="font-size:22px"></i><span style="font-size:28px;font-weight:600;letter-spacing:-0.035em">Progress</span></div>
+<div style="display:grid;grid-template-columns:1.15fr 1fr;gap:12px">
+<div style="background:#FAF0DF;border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:10px"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12.5px;color:#8A5A12;font-weight:600">Streak</span><i class="icon-flame" style="font-size:20px;color:#C98A2E"></i></div><span style="font-size:48px;font-weight:600;letter-spacing:-0.05em;line-height:1">6<span style="font-size:16px;letter-spacing:-0.01em"> days</span></span><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"><sc-for list="{{ streak7 }}" as="d" hint-placeholder-count="7"><span style="aspect-ratio:1;border-radius:6px;background:{{ d.bg }};border:{{ d.bd }}"></span></sc-for></div><span style="font-size:12px;color:#8A5A12">Best 11</span></div>
+<div style="background:#FBEDEF;border-radius:24px;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><div style="position:relative;width:104px;height:104px"><svg width="104" height="104" viewBox="0 0 104 104" style="transform:rotate(-90deg)"><circle cx="52" cy="52" r="44" fill="none" stroke="#F3D9DF" stroke-width="10"></circle><circle cx="52" cy="52" r="44" fill="none" stroke="#A63D57" stroke-width="10" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="160"></circle></svg><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-size:22px;font-weight:600;letter-spacing:-0.03em">42%</span></div></div><span style="font-size:13px;font-weight:600">12h 40m of 30h</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;padding-top:4px"><div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 4px"><span style="font-size:17px;font-weight:600">Badges</span><span style="font-size:13px;color:#5E5357">7 of 17</span></div>
+<div style="display:flex;gap:12px;overflow:hidden;padding:4px 4px 2px"><sc-for list="{{ mBadges }}" as="b" hint-placeholder-count="5"><div style="width:70px;flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center"><div style="position:relative;width:62px;height:62px;border-radius:20px;background:{{ b.bg }};display:flex;align-items:center;justify-content:center;box-shadow:{{ b.sh }};transform:rotate({{ b.rot }}deg)"><i class="{{ b.ic }}" style="font-size:26px;color:{{ b.fg }}"></i></div><span style="font-size:11.5px;font-weight:600;line-height:1.2">{{ b.n }}</span></div></sc-for></div></div>
+<div style="background:#EEF3EF;border-radius:22px;padding:14px 16px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:center;gap:8px"><i class="icon-users" style="font-size:15px;color:#2F6E50"></i><span style="font-size:14px;font-weight:600;flex:1">Exam crunch · 40h together</span><span style="font-size:12px;color:#2F4A3C">3 days</span></div><div style="height:6px;border-radius:3px;background:#fff"><div style="width:64%;height:100%;border-radius:3px;background:#2F6E50"></div></div><span style="font-size:12.5px;color:#2F4A3C">25h 40m done · you added 9h 10m</span></div>
+<div style="display:flex;flex-direction:column;padding:0 4px"><span style="font-size:17px;font-weight:600;padding-bottom:4px">Friends this week</span>
+<sc-for list="{{ mBoard }}" as="r" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:12px;height:48px;border-bottom:1px solid #F1EBE7;font-weight:{{ r.w }}"><span style="width:16px;font-size:13.5px;font-weight:700;color:{{ r.rc }}">{{ r.rank }}</span><span style="width:30px;height:30px;border-radius:50%;background:{{ r.ab }};color:{{ r.af }};font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ r.i }}</span><span style="flex:1;font-size:14.5px">{{ r.n }}</span><span style="font-size:14px;font-variant-numeric:tabular-nums;font-weight:600">{{ r.v }}</span></div></sc-for></div>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:0;height:88px;background:rgba(253,251,250,.96);border-top:1px solid #EFE8E4;display:flex;justify-content:space-around;padding:8px 8px 0">
+<sc-for list="{{ tabsMore }}" as="b" hint-placeholder-count="5"><div style="width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;color:{{ b.fg }}"><div style="width:{{ b.sz }}px;height:{{ b.sz }}px;margin-top:{{ b.mt }}px;border-radius:50%;background:{{ b.bg }};display:flex;align-items:center;justify-content:center"><i class="{{ b.ic }}" style="font-size:{{ b.isz }}px;color:{{ b.icc }}"></i></div><span style="font-size:11px;font-weight:600">{{ b.n }}</span></div></sc-for>
+</div>
+<span style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:136px;height:5px;border-radius:3px;background:#241C1F"></span>
+</div>
+</div>
+
+<!-- 3f MORE -->
+<div id="3f" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="background:#241C1F;color:#fff;border-radius:7px;padding:3px 9px;font-weight:600;font-size:14px">3f</span><span style="font-size:19px;font-weight:600">More</span></div>
+<span style="font-size:14px;color:#5E5357;width:402px;line-height:1.45">Secondary features as a tile grid with live hints, so nothing from the desktop sidebar is lost.</span>
+<div style="width:402px;height:874px;border-radius:56px;background:#FDFBFA;box-shadow:0 0 0 10px #1F1A1C,0 40px 60px -30px rgba(60,30,40,.5);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<div style="height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0;font-size:16px;font-weight:600"><span>9:41</span><span style="position:absolute;left:50%;top:11px;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000"></span><span style="display:flex;gap:6px;align-items:center"><i class="icon-signal" style="font-size:15px"></i><i class="icon-wifi" style="font-size:15px"></i><i class="icon-battery-full" style="font-size:18px"></i></span></div>
+<div style="padding:8px 16px 0;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:12px;padding:6px 4px 8px"><div style="width:56px;height:56px;border-radius:50%;background:#F6D5DC;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#A63D57">EB</div><div style="flex:1;display:flex;flex-direction:column;line-height:1.3"><span style="font-size:18px;font-weight:600">Elena Barbajosa</span><span style="font-size:13px;color:#5E5357">@elenabarbajosa · View profile</span></div><i class="icon-chevron-right" style="font-size:18px;color:#8A7E82"></i></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><sc-for list="{{ moreTiles }}" as="m" hint-placeholder-count="6"><div style="background:{{ m.bg }};border-radius:22px;padding:14px;height:112px;display:flex;flex-direction:column;justify-content:space-between"><i class="{{ m.ic }}" style="font-size:22px;color:{{ m.fg }}"></i><div style="display:flex;flex-direction:column;line-height:1.3"><span style="font-size:15px;font-weight:600">{{ m.n }}</span><span style="font-size:12.5px;color:{{ m.fg }}">{{ m.h }}</span></div></div></sc-for></div>
+<div style="background:#F4EFEB;border-radius:22px;padding:4px 16px;display:flex;flex-direction:column"><sc-for list="{{ moreRows }}" as="r" hint-placeholder-count="3"><div style="display:flex;align-items:center;gap:12px;height:50px;border-bottom:{{ r.bb }}"><i class="{{ r.ic }}" style="font-size:18px;color:#5E5357"></i><span style="flex:1;font-size:15px">{{ r.n }}</span><span style="font-size:13px;color:#5E5357">{{ r.v }}</span><i class="icon-chevron-right" style="font-size:16px;color:#8A7E82"></i></div></sc-for></div>
+</div>
+<div style="position:absolute;left:0;right:0;bottom:0;height:88px;background:rgba(253,251,250,.96);border-top:1px solid #EFE8E4;display:flex;justify-content:space-around;padding:8px 8px 0">
+<sc-for list="{{ tabsMore }}" as="b" hint-placeholder-count="5"><div style="width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;color:{{ b.fg }}"><div style="width:{{ b.sz }}px;height:{{ b.sz }}px;margin-top:{{ b.mt }}px;border-radius:50%;background:{{ b.bg }};display:flex;align-items:center;justify-content:center"><i class="{{ b.ic }}" style="font-size:{{ b.isz }}px;color:{{ b.icc }}"></i></div><span style="font-size:11px;font-weight:600">{{ b.n }}</span></div></sc-for>
+</div>
+<span style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:136px;height:5px;border-radius:3px;background:#241C1F"></span>
+</div>
+</div>
+
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { day:5, done:{4:true}, sheetSubj:'alg', mode:'pomo', running:false, remaining:1062, elapsed:0, primary:'rain' };
+  componentDidMount(){ this.iv=setInterval(()=>{ if(!this.state.running) return; this.setState(s=> s.mode==='pomo'?{remaining:Math.max(0,s.remaining-1)}:{elapsed:s.elapsed+1}); },1000); }
+  componentWillUnmount(){ clearInterval(this.iv); }
+  renderVals() {
+    const st = this.state;
+    const S = {
+      alg:{n:'Linear Algebra',c:'#8E7CCB',t:'#EFEBFA',d:'#5B4A99'}, cal:{n:'Calculus I',c:'#D46A80',t:'#FBE9EC',d:'#A23A55'},
+      ada:{n:'Algorithms',c:'#4E9E78',t:'#E6F3EC',d:'#2F6E50'}, est:{n:'Statistics',c:'#6A7BCF',t:'#E9ECFA',d:'#3E4FA0'},
+      nube:{n:'Cloud',c:'#4C93C9',t:'#E5F0F9',d:'#2B6896'}, ia:{n:'Natural & AI',c:'#C98A2E',t:'#FAF0DF',d:'#8A5A12'}
+    };
+    const tab = (n,ic,active,center) => center ? {n,ic,fg:'#A63D57',sz:48,mt:-14,bg:'#A63D57',isz:20,icc:'#fff'} : {n,ic,fg:active?'#A63D57':'#7A6E72',sz:30,mt:0,bg:'transparent',isz:22,icc:active?'#A63D57':'#7A6E72'};
+    const tabs = a => [tab('Today','icon-house',a==='Today'),tab('Calendar','icon-calendar',a==='Calendar'),tab('Focus','icon-play',false,true),tab('Tasks','icon-circle-check',a==='Tasks'),tab('More','icon-ellipsis',a==='More')];
+    // calendar
+    const fmtH = h => `${Math.floor(h)}:${String(Math.round((h%1)*60)).padStart(2,'0')}`;
+    const evByDay = {
+      0:[[9,1.5,'Calculus I lecture','cal','class'],[11,1.5,'Algorithms lecture','ada','class'],[16,1.5,'Focus · Linear Algebra','alg','done']],
+      1:[[9,1.5,'Linear Algebra','alg','class'],[12,1.5,'Statistics','est','class'],[17,1,'Focus · Calculus','cal','done']],
+      2:[[9,1.5,'Calculus I lecture','cal','class'],[13,1,'Gym',null,'personal'],[15,1.5,'Cloud lab','nube','class']],
+      3:[[10,1.5,'AI seminar','ia','class'],[12,1.5,'Algorithms lecture','ada','class'],[17,1,'Focus · Statistics','est','done']],
+      4:[[9,1.5,'Linear Algebra','alg','class'],[12,1,'Quiz 3 · Statistics','est','exam'],[19,2,'Marta\u2019s birthday dinner',null,'personal']],
+      5:[[10.75,0.85,'Focus · Calculus','cal','done'],[12.5,1,'Lunch',null,'personal'],[16,1.5,'Focus · Algorithms','ada','done'],[18.5,1,'Stats study group','est','class'],[20,1.5,'Focus · Calculus','cal','plan']],
+      6:[[10,2,'Calculus review','cal','plan'],[16,1,'Flashcards · Algebra','alg','plan']]
+    };
+    const evStyle = (s,k) => { if(k==='personal') return {bg:'#EFEAE6',bd:'none',fg:'#5E5357',ic:'icon-user'}; const x=S[s];
+      if(k==='class') return {bg:x.t,bd:'none',fg:x.d,ic:'icon-school'}; if(k==='done') return {bg:x.c,bd:'none',fg:'#fff',ic:'icon-timer'};
+      if(k==='exam') return {bg:'#241C1F',bd:'none',fg:'#fff',ic:'icon-graduation-cap'}; return {bg:'#fff',bd:`1.5px dashed ${x.c}`,fg:x.d,ic:'icon-timer'}; };
+    const H0 = 9, HH = 46;
+    const mHours = Array.from({length:13},(_,i)=>({l:`${H0+i}:00`, y:i*HH}));
+    const evs = evByDay[st.day]||[];
+    const dayEvents = evs.map(([s0,du,t,s,k])=>({t,time:`${fmtH(s0)}–${fmtH(s0+du)}`,y:(s0-H0)*HH+8,h:Math.max(40,du*HH-4),op: st.day<5||(st.day===5&&s0<19)?0.85:1,...evStyle(s,k)}));
+    const wd = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const strip = wd.map((l,i)=>{ const a=st.day===i, today=i===5;
+      return {l:l[0], n:9+i, bg:a?'#241C1F':'transparent', fg:a?'#fff':(today?'#A63D57':'#241C1F'), lc:a?'#CFC4C8':(today?'#A63D57':'#7A6E72'),
+        dots:(evByDay[i]||[]).slice(0,3).map(e=>e[3]?S[e[3]].c:'#B9AEB2'), pick:()=>this.setState({day:i})}; });
+    const tot = evs.filter(e=>e[4]==='done'||e[4]==='plan').reduce((a,e)=>a+e[2],0);
+    const dayTitle = st.day===5 ? 'Today · Saturday 14' : `${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][st.day]} ${9+st.day}`;
+    const daySummary = `${evs.length} items · ${Math.floor(tot)}h ${String(Math.round(tot%1*60)).padStart(2,'0')}m focus`;
+    // tasks
+    const raw = [['Integration by parts — exercises 4–9','cal','!!!','2/6'],['Summary, unit 5: confidence intervals','est','!!',''],['Implement Dijkstra with a binary heap','ada','!!!','1/3'],['Read "Attention Is All You Need"','ia','!',''],['Set up S3 bucket for lab 3','nube','','']];
+    const P = {'!!!':'#A63D57','!!':'#B5702A','!':'#7A6E72'};
+    const mTasks = raw.map(([title,s,p,sub],i)=>{ const done=!!st.done[i], sw=i===1;
+      return {title,sn:S[s].n,sc:S[s].c,p,pc:P[p]||'#7A6E72',sub,subD:sub?'flex':'none',
+        ring:done?'#A63D57':'#C9BDB8',fill:done?'#A63D57':'transparent',ck:done?'icon-check':'',fg:done?'#8A7E82':'#241C1F',dec:done?'line-through':'none',
+        swD: sw?'flex':'none', tx: sw?86:0, px: sw?12:0, mx:0,
+        toggle:()=>this.setState(x=>({done:{...x.done,[i]:!x.done[i]}}))}; });
+    const taskTabs = [['Today','4',1],['Upcoming','9'],['All','23'],['Done','41']].map(([n,c,a])=>({n,c,bg:a?'#241C1F':'#F4EFEB',fg:a?'#fff':'#241C1F'}));
+    const sheetSubj = Object.entries(S).map(([k,x])=>{ const a=st.sheetSubj===k; return {n:x.n,c:x.c,bg:a?x.t:'#F4EFEB',fg:a?x.d:'#3E3438',ring:a?`inset 0 0 0 1.5px ${x.c}`:'none',pick:()=>this.setState({sheetSubj:k})}; });
+    // focus
+    const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+    const pomo = st.mode==='pomo', frac = pomo? st.remaining/1500 : (st.elapsed%3600)/3600;
+    const SD = [['silence','icon-volume-x'],['white','icon-audio-waveform'],['rain','icon-cloud-rain'],['cafe','icon-coffee'],['forest','icon-trees']];
+    const mSounds = SD.map(([id,ic])=>{ const a=st.primary===id; return {ic,bg:a?'#E9A3B2':'#2B2427',fg:a?'#241C1F':'#BDB1B5',pick:()=>this.setState({primary:id})}; });
+    // together
+    const A = {is:{i:'IS',bg:'#E5F0F9',fg:'#2B6896'},mr:{i:'MR',bg:'#E6F3EC',fg:'#2F6E50'},lg:{i:'LG',bg:'#FAF0DF',fg:'#8A5A12'},pn:{i:'PN',bg:'#EFEBFA',fg:'#5B4A99'},me:{i:'EB',bg:'#F6D5DC',fg:'#A63D57'}};
+    const rooms = [
+      {n:'Late library',meta:'Marco · friends only · 3 of 8',time:'14:12',phase:'FOCUS 3/4',bg:'#EEF3EF',sub:'#2F4A3C',bd:'#EEF3EF',people:[A.mr,A.is,A.pn]},
+      {n:'Algorithms crew',meta:'Isabella · friends only · 2 of 6',time:'03:40',phase:'BREAK',bg:'#F4EFEB',sub:'#5E5357',bd:'#F4EFEB',people:[A.is,A.lg]}
+    ];
+    const solo = [{...A.is,n:'Isabella',s:'Lin. Alg',ring:'#4E9E78'},{...A.lg,n:'Lucía',s:'Break',ring:'#E0A84F'},{...A.pn,n:'Pablo',s:'Stats',ring:'#4E9E78'},{...A.mr,n:'Marco',s:'Host',ring:'#4E9E78'}];
+    // progress
+    const streak7 = [1,1,1,1,1,2,0].map(v=>({bg: v===2?'#C98A2E':(v?'#F0D5A8':'transparent'), bd: v===0?'1.5px dashed #E0C79C':'none'}));
+    const mBadges = [['Night owl','icon-moon-star','alg',1],['Marathon','icon-timer','cal',1],['Deep diver','icon-waves','nube',1],['Early bird','icon-sunrise','ia',1],['Week warrior','icon-flame','',0]]
+      .map(([n,ic,k,u],i)=>({n,ic,bg:u?S[k].t:'#F1ECE8',fg:u?S[k].d:'#B9AEB2',sh:u?`inset 0 0 0 2px ${S[k].c}55`:'none',rot:u?(i%2?3:-3):0}));
+    const mBoard = [['1','Isabella','14h 05m',A.is],['2','You','12h 40m',A.me,1],['3','Marco Ruiz','11h 20m',A.mr],['4','Lucía Gómez','8h 10m',A.lg]].map(([rank,n,v,p,me])=>({rank,n,v,i:p.i,ab:p.bg,af:p.fg,w:me?600:400,rc:rank==='1'?'#C98A2E':'#8A7E82'}));
+    // more
+    const moreTiles = [['Study Together','icon-coffee','2 rooms live','#EEF3EF','#2F6E50'],['Subjects','icon-book-open','6 · 15/38 topics','#EFEBFA','#5B4A99'],['Study Planner','icon-calendar-range','14h planned','#FBEDEF','#A23A55'],['Progress','icon-trophy','6-day streak','#FAF0DF','#8A5A12'],['Statistics','icon-chart-column','12h 40m this week','#E5F0F9','#2B6896'],['Friends','icon-users','1 request','#F4EFEB','#5E5357']]
+      .map(([n,ic,h,bg,fg])=>({n,ic,h,bg,fg}));
+    const moreRows = [['icon-settings','Settings',''],['icon-palette','Appearance','Light · Pink'],['icon-shield','Privacy','Friends only']].map(([ic,n,v],i)=>({ic,n,v,bb:i<2?'1px solid #E6DDD8':'none'}));
+    return {
+      strip, mHours, dayEvents, dayTitle, daySummary, showNow: st.day===5, nowY:(19.33-H0)*HH+8,
+      tabsCal: tabs('Calendar'), tabsMore: tabs('More'),
+      mTasks, taskTabs, sheetSubj,
+      pomoBg: pomo?'#F3ECEE':'transparent', pomoFg: pomo?'#241C1F':'#BDB1B5', watchBg: !pomo?'#F3ECEE':'transparent', watchFg: !pomo?'#241C1F':'#BDB1B5',
+      setPomo: ()=>this.setState({mode:'pomo',running:false}), setWatch: ()=>this.setState({mode:'watch',running:false}),
+      phaseLabel: pomo?(st.running?'Focus · 2 of 4':'Paused · 2 of 4'):(st.running?'Stopwatch':'Stopwatch · ready'),
+      timeStr: pomo?fmt(st.remaining):fmt(st.elapsed), ringOff: 867.1*(1-frac),
+      toggle: ()=>this.setState(s=>({running:!s.running})), toggleIcon: st.running?'icon-pause':'icon-play', toggleNudge: st.running?0:4,
+      reset: ()=>this.setState({running:false,remaining:1500,elapsed:0}),
+      mSounds, rooms, solo, streak7, mBadges, mBoard, moreTiles, moreRows
+    };
+  }
+}
+</script>
+</body>
+</html>

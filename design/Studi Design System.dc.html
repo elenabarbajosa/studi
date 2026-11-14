@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/lucide-static@0.460.0/font/lucide.css">
+<style>
+body{margin:0;background:#E6E0DC;font-family:'Geist',system-ui,sans-serif;color:#241C1F;-webkit-font-smoothing:antialiased}
+a{color:#A63D57;text-decoration:none}a:hover{color:#7E2A40}
+*{box-sizing:border-box}
+input[type=range]{accent-color:#A63D57;width:100%;margin:0}
+@keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
+</style>
+</helmet>
+<section style="padding:72px;background:#E6E0DC;min-width:max-content;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:10px;max-width:1100px">
+<div style="font-size:15px;font-weight:600;color:#A63D57">Turn 4 · Design system</div>
+<div style="font-size:44px;font-weight:600;letter-spacing:-0.035em;line-height:1.05">studi<span style="color:#D98A9B">.</span> system</div>
+<div style="font-size:17px;color:#5E5357;line-height:1.5;max-width:900px;text-wrap:pretty">Tokens and components behind every screen. Token names match <code style="font-family:'Geist Mono';font-size:15px">HANDOFF.md</code>, which maps them to CSS variables for Tailwind and shadcn/ui. Toggle the theme and accent to see everything re-tint.</div>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+<div style="display:flex;gap:2px;background:#F4EFEB;border-radius:999px;padding:3px;font-size:13.5px;font-weight:600"><sc-for list="{{ modeBtns }}" as="m" hint-placeholder-count="2"><span onClick="{{ m.pick }}" style="cursor:pointer;padding:6px 16px;border-radius:999px;background:{{ m.bg }};color:{{ m.fg }}">{{ m.n }}</span></sc-for></div>
+<div style="display:flex;gap:8px"><sc-for list="{{ accBtns }}" as="a" hint-placeholder-count="6"><span onClick="{{ a.pick }}" title="{{ a.n }}" style="cursor:pointer;width:30px;height:30px;border-radius:50%;background:{{ a.base }};box-shadow:{{ a.ring }}"></span></sc-for></div>
+</div>
+</div>
+
+<div style="width:1600px;background:{{ t.canvas }};color:{{ t.ink }};border-radius:24px;padding:48px;display:flex;flex-direction:column;gap:56px;transition:background .3s,color .3s">
+
+<!-- COLOR -->
+<div id="4a" style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="background:{{ t.ink }};color:{{ t.canvas }};border-radius:7px;padding:3px 9px;font-weight:600;font-size:13px">4a</span><span style="font-size:24px;font-weight:600;letter-spacing:-0.03em">Color</span><span style="font-size:14px;color:{{ t.ink2 }}">Surfaces separate by tone, not borders. Accent only marks action and "now".</span></div>
+<div style="display:grid;grid-template-columns:repeat(8,1fr);gap:10px"><sc-for list="{{ neutrals }}" as="c" hint-placeholder-count="8"><div style="display:flex;flex-direction:column;gap:6px"><div style="height:72px;border-radius:16px;background:{{ c.v }};box-shadow:inset 0 0 0 1px {{ t.hair }}"></div><span style="font-size:13px;font-weight:600">{{ c.n }}</span><span style="font-family:'Geist Mono';font-size:11.5px;color:{{ t.ink2 }}">{{ c.v }}</span><span style="font-size:12px;color:{{ t.ink2 }};line-height:1.35">{{ c.u }}</span></div></sc-for></div>
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px"><sc-for list="{{ accentRows }}" as="a" hint-placeholder-count="6"><div style="display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:18px;box-shadow:{{ a.ring }}"><div style="display:flex;height:48px;border-radius:12px;overflow:hidden"><span style="flex:1;background:{{ a.soft }}"></span><span style="flex:1;background:{{ a.base }}"></span><span style="flex:1;background:{{ a.ink }}"></span></div><span style="font-size:13px;font-weight:600">{{ a.n }}</span><span style="font-family:'Geist Mono';font-size:11px;color:{{ t.ink2 }}">{{ a.soft }} · {{ a.base }} · {{ a.ink }}</span></div></sc-for></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:14px;font-weight:600">Subject palette (10, matches today's picker) · dot / tint / text</span><div style="display:grid;grid-template-columns:repeat(10,1fr);gap:8px"><sc-for list="{{ subjPal }}" as="s" hint-placeholder-count="10"><div style="background:{{ s.t }};border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px"><span style="width:14px;height:14px;border-radius:50%;background:{{ s.c }}"></span><span style="font-size:12.5px;font-weight:600;color:{{ s.d }}">{{ s.n }}</span></div></sc-for></div></div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:13px"><span style="background:#E6F3EC;color:#2F6E50;border-radius:999px;padding:5px 12px;font-weight:600">success #2F6E50</span><span style="background:#FAF0DF;color:#8A5A12;border-radius:999px;padding:5px 12px;font-weight:600">warning #8A5A12</span><span style="background:#FBE4E4;color:#A1302C;border-radius:999px;padding:5px 12px;font-weight:600">danger #A1302C</span><span style="background:{{ t.sunken }};color:{{ t.ink2 }};border-radius:999px;padding:5px 12px;font-weight:600">Text tones meet 4.5:1 on canvas and tiles; ink-4 is for icons/dividers only</span></div>
+</div>
+
+<!-- TYPE + SPACE -->
+<div id="4b" style="display:grid;grid-template-columns:1.3fr 1fr;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="background:{{ t.ink }};color:{{ t.canvas }};border-radius:7px;padding:3px 9px;font-weight:600;font-size:13px">4b</span><span style="font-size:24px;font-weight:600;letter-spacing:-0.03em">Type · Geist</span></div>
+<sc-for list="{{ typeScale }}" as="s" hint-placeholder-count="10"><div style="display:grid;grid-template-columns:150px 1fr;align-items:baseline;gap:16px;padding:8px 0;border-bottom:1px solid {{ t.hair }}"><div style="display:flex;flex-direction:column"><span style="font-size:13px;font-weight:600">{{ s.n }}</span><span style="font-family:'Geist Mono';font-size:11px;color:{{ t.ink2 }}">{{ s.spec }}</span></div><span style="font-size:{{ s.fs }}px;font-weight:{{ s.w }};letter-spacing:{{ s.ls }}em;line-height:1.15;font-variant-numeric:tabular-nums">{{ s.ex }}</span></div></sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:22px">
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:18px;font-weight:600">Spacing · 4px base</span><div style="display:flex;align-items:flex-end;gap:10px"><sc-for list="{{ spaces }}" as="s" hint-placeholder-count="9"><div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="width:{{ s }}px;height:{{ s }}px;border-radius:4px;background:{{ t.accSoft }};box-shadow:inset 0 0 0 1px {{ t.accBase }}"></span><span style="font-family:'Geist Mono';font-size:11px;color:{{ t.ink2 }}">{{ s }}</span></div></sc-for></div></div>
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:18px;font-weight:600">Radii</span><div style="display:flex;gap:12px"><sc-for list="{{ radii }}" as="r" hint-placeholder-count="6"><div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="width:64px;height:64px;border-radius:{{ r.v }}px;background:{{ t.sunken }};box-shadow:inset 0 0 0 1.5px {{ t.ink3 }}"></span><span style="font-size:12px;font-weight:600">{{ r.n }}</span><span style="font-family:'Geist Mono';font-size:11px;color:{{ t.ink2 }}">{{ r.v }}</span></div></sc-for></div><span style="font-size:13px;color:{{ t.ink2 }};line-height:1.45">Nested radii shrink by the padding: a 26px tile with 16px padding holds 10–14px children. Pills only for buttons, chips and segmented controls.</span></div>
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:18px;font-weight:600">Elevation</span><div style="display:flex;gap:16px"><sc-for list="{{ shadows }}" as="s" hint-placeholder-count="4"><div style="display:flex;flex-direction:column;gap:8px;align-items:center"><span style="width:96px;height:64px;border-radius:16px;background:{{ t.raised }};box-shadow:{{ s.v }}"></span><span style="font-size:12px;font-weight:600">{{ s.n }}</span></div></sc-for></div></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:18px;font-weight:600">Layout</span><span style="font-size:13.5px;color:{{ t.ink2 }};line-height:1.55">Sidebar 228 (rail 68) · content card inset 10px, radius 18 · page padding 28 · tile gap 14 · max reading width 760 · bento: 12-col grid.</span></div>
+</div>
+</div>
+
+<!-- COMPONENTS -->
+<div id="4c" style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="background:{{ t.ink }};color:{{ t.canvas }};border-radius:7px;padding:3px 9px;font-weight:600;font-size:13px">4c</span><span style="font-size:24px;font-weight:600;letter-spacing:-0.03em">Components</span><span style="font-size:14px;color:{{ t.ink2 }}">Each maps to a shadcn/ui primitive restyled with tokens.</span></div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+
+<div style="background:{{ t.raised }};border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 0 1px {{ t.hair }}">
+<span style="font-size:13px;font-weight:600;color:{{ t.ink2 }}">Buttons · default / hover / focus / disabled / loading</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+<span style="height:40px;padding:0 18px;border-radius:999px;background:{{ t.accInk }};color:#fff;display:flex;align-items:center;gap:7px;font-size:14px;font-weight:600"><i class="icon-play" style="font-size:13px"></i>Primary</span>
+<span style="height:40px;padding:0 18px;border-radius:999px;background:{{ t.accInkH }};color:#fff;display:flex;align-items:center;font-size:14px;font-weight:600">Hover</span>
+<span style="height:40px;padding:0 18px;border-radius:999px;background:{{ t.accInk }};color:#fff;display:flex;align-items:center;font-size:14px;font-weight:600;box-shadow:0 0 0 2px {{ t.raised }},0 0 0 4px {{ t.accBase }}">Focus</span>
+<span style="height:40px;padding:0 18px;border-radius:999px;background:{{ t.sunken }};color:{{ t.ink3 }};display:flex;align-items:center;font-size:14px;font-weight:600">Disabled</span>
+<span style="height:40px;padding:0 18px;border-radius:999px;background:{{ t.accInk }};color:#fff;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;opacity:.85"><span style="width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff"></span>Saving</span>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+<span style="height:40px;padding:0 18px;border-radius:999px;background:{{ t.sunken }};display:flex;align-items:center;gap:7px;font-size:14px;font-weight:500"><i class="icon-plus" style="font-size:14px"></i>Secondary</span>
+<span style="height:40px;padding:0 18px;border-radius:999px;background:{{ t.ink }};color:{{ t.canvas }};display:flex;align-items:center;font-size:14px;font-weight:600">Contrast</span>
+<span style="height:40px;padding:0 14px;display:flex;align-items:center;font-size:14px;font-weight:500;color:{{ t.ink2 }}">Ghost</span>
+<span style="width:40px;height:40px;border-radius:50%;background:{{ t.sunken }};display:flex;align-items:center;justify-content:center"><i class="icon-ellipsis" style="font-size:17px"></i></span>
+<span style="height:40px;padding:0 18px;border-radius:999px;background:#FBE4E4;color:#A1302C;display:flex;align-items:center;font-size:14px;font-weight:600">Delete</span>
+</div>
+<span style="font-size:12px;color:{{ t.ink2 }}">Heights: 32 compact · 40 default · 48–56 hero/mobile · 84 timer</span>
+</div>
+
+<div style="background:{{ t.raised }};border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 0 0 1px {{ t.hair }}">
+<span style="font-size:13px;font-weight:600;color:{{ t.ink2 }}">Inputs · filled, no outline until focus</span>
+<div style="height:44px;border-radius:14px;background:{{ t.sunken }};display:flex;align-items:center;padding:0 14px;font-size:14px;color:{{ t.ink3 }}">Room name</div>
+<div style="height:44px;border-radius:14px;background:{{ t.raised }};box-shadow:0 0 0 2px {{ t.accBase }};display:flex;align-items:center;padding:0 14px;font-size:14px">Late library<span style="width:1.5px;height:18px;background:{{ t.accInk }};margin-left:1px"></span></div>
+<div style="display:flex;flex-direction:column;gap:4px"><div style="height:44px;border-radius:14px;background:{{ t.dangerSoft }};box-shadow:0 0 0 1.5px #D9706B;display:flex;align-items:center;padding:0 14px;font-size:14px;color:{{ t.ink }}">elena barbajosa</div><span style="font-size:12.5px;color:{{ t.danger }};display:flex;align-items:center;gap:5px"><i class="icon-circle-alert" style="font-size:13px"></i>Usernames can't contain spaces</span></div>
+<div style="height:44px;border-radius:14px;background:{{ t.sunken }};display:flex;align-items:center;gap:8px;padding:0 14px;font-size:14px"><span style="width:8px;height:8px;border-radius:50%;background:#D46A80"></span><span style="flex:1">Calculus I</span><i class="icon-chevrons-up-down" style="font-size:14px;color:{{ t.ink3 }}"></i></div>
+</div>
+
+<div style="background:{{ t.raised }};border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 0 1px {{ t.hair }}">
+<span style="font-size:13px;font-weight:600;color:{{ t.ink2 }}">Selection controls · live</span>
+<div style="display:flex;gap:2px;background:{{ t.sunken }};border-radius:999px;padding:3px;font-size:13px;font-weight:600;align-self:flex-start"><sc-for list="{{ segs }}" as="s" hint-placeholder-count="3"><span onClick="{{ s.pick }}" style="cursor:pointer;padding:6px 14px;border-radius:999px;background:{{ s.bg }};color:{{ s.fg }}">{{ s.n }}</span></sc-for></div>
+<div style="display:flex;align-items:center;gap:18px">
+<span onClick="{{ flip }}" style="cursor:pointer;width:44px;height:26px;border-radius:13px;background:{{ swBg }};position:relative;transition:background .2s"><span style="position:absolute;top:3px;left:{{ swX }}px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .2s"></span></span>
+<span onClick="{{ check }}" style="cursor:pointer;width:22px;height:22px;border-radius:50%;border:1.8px solid {{ ckRing }};background:{{ ckFill }};display:flex;align-items:center;justify-content:center"><i class="{{ ckIc }}" style="font-size:13px;color:#fff"></i></span>
+<span style="width:20px;height:20px;border-radius:6px;background:{{ t.ink }};display:flex;align-items:center;justify-content:center"><i class="icon-check" style="font-size:12px;color:{{ t.canvas }}"></i></span>
+<div style="display:flex;gap:4px"><sc-for list="{{ stepper }}" as="d" hint-placeholder-count="5"><span onClick="{{ d.pick }}" style="cursor:pointer;width:32px;height:32px;border-radius:50%;background:{{ d.bg }};color:{{ d.fg }};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">{{ d.n }}</span></sc-for></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:{{ t.ink2 }}">Slider</span><strong>{{ sv }} min</strong></div><input type="range" min="5" max="90" step="5" value="{{ sv }}" onChange="{{ onSv }}"></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px"><span style="height:32px;padding:0 12px 0 10px;border-radius:999px;background:#FBE9EC;color:#A23A55;box-shadow:inset 0 0 0 1.5px #D46A80;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="width:7px;height:7px;border-radius:50%;background:#D46A80"></span>Selected chip</span><span style="height:32px;padding:0 12px;border-radius:999px;background:{{ t.sunken }};display:flex;align-items:center;font-size:13px;font-weight:600">Chip</span></div>
+</div>
+
+<div style="background:{{ t.raised }};border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 0 0 1px {{ t.hair }}">
+<span style="font-size:13px;font-weight:600;color:{{ t.ink2 }}">Tiles · the core container</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+<div style="background:{{ t.accSoft }};border-radius:20px;padding:14px;height:96px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-size:11.5px;font-weight:600;color:{{ t.accInk }};text-transform:uppercase;letter-spacing:.05em">Hero tile</span><span style="font-size:14px;font-weight:600;color:{{ t.ink }}">One per screen</span></div>
+<div style="background:{{ t.sunken }};border-radius:20px;padding:14px;height:96px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-size:11.5px;font-weight:600;color:{{ t.ink2 }};text-transform:uppercase;letter-spacing:.05em">Data tile</span><span style="font-size:14px;font-weight:600">Charts, numbers</span></div>
+<div style="background:{{ t.raised }};box-shadow:0 0 0 1px {{ t.hair }};border-radius:20px;padding:14px;height:96px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-size:11.5px;font-weight:600;color:{{ t.ink2 }};text-transform:uppercase;letter-spacing:.05em">List tile</span><span style="font-size:14px;font-weight:600">Tasks, rows</span></div>
+<div style="background:{{ t.succSoft }};border-radius:20px;padding:14px;height:96px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-size:11.5px;font-weight:600;color:{{ t.succ }};text-transform:uppercase;letter-spacing:.05em">Context tile</span><span style="font-size:14px;font-weight:600;color:{{ t.ink }}">Social, subject</span></div>
+</div>
+</div>
+
+<div style="background:{{ t.raised }};border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 0 1px {{ t.hair }}">
+<span style="font-size:13px;font-weight:600;color:{{ t.ink2 }}">Avatars, presence, progress</span>
+<div style="display:flex;align-items:center;gap:14px">
+<div style="position:relative;width:44px;height:44px;border-radius:50%;background:#E5F0F9;color:#2B6896;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center">IS<span style="position:absolute;right:-1px;bottom:-1px;width:13px;height:13px;border-radius:50%;background:#4E9E78;border:2.5px solid {{ t.raised }}"></span></div>
+<div style="position:relative;width:44px;height:44px;border-radius:50%;background:#FAF0DF;color:#8A5A12;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center">LG<span style="position:absolute;right:-1px;bottom:-1px;width:13px;height:13px;border-radius:50%;background:#E0A84F;border:2.5px solid {{ t.raised }}"></span></div>
+<div style="display:flex"><span style="width:32px;height:32px;border-radius:50%;background:#E6F3EC;color:#2F6E50;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2.5px solid {{ t.raised }}">MR</span><span style="width:32px;height:32px;border-radius:50%;background:#EFEBFA;color:#5B4A99;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2.5px solid {{ t.raised }};margin-left:-8px">PN</span><span style="width:32px;height:32px;border-radius:50%;background:{{ t.sunken }};font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2.5px solid {{ t.raised }};margin-left:-8px">+3</span></div>
+<div style="position:relative;width:52px;height:52px;margin-left:auto"><svg width="52" height="52" viewBox="0 0 52 52" style="transform:rotate(-90deg)"><circle cx="26" cy="26" r="21" fill="none" stroke="{{ t.accSoft }}" stroke-width="6"></circle><circle cx="26" cy="26" r="21" fill="none" stroke="{{ t.accBase }}" stroke-width="6" stroke-linecap="round" stroke-dasharray="132" stroke-dashoffset="76"></circle></svg><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600">42%</span></div>
+</div>
+<div style="display:flex;gap:3px"><span style="flex:1;height:6px;border-radius:3px;background:#D46A80"></span><span style="flex:1;height:6px;border-radius:3px;background:#D46A80"></span><span style="flex:1;height:6px;border-radius:3px;background:#D46A80"></span><span style="flex:1;height:6px;border-radius:3px;background:{{ t.sunken }}"></span><span style="flex:1;height:6px;border-radius:3px;background:{{ t.sunken }}"></span></div>
+<div style="height:6px;border-radius:3px;background:{{ t.sunken }}"><div style="width:42%;height:100%;border-radius:3px;background:{{ t.accBase }}"></div></div>
+<span style="font-size:12px;color:{{ t.ink2 }}">Presence: green focusing · amber break · none offline. Always paired with text for color-blind users.</span>
+</div>
+
+<div style="background:{{ t.raised }};border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 0 0 1px {{ t.hair }}">
+<span style="font-size:13px;font-weight:600;color:{{ t.ink2 }}">Calendar event chips</span>
+<sc-for list="{{ evChips }}" as="e" hint-placeholder-count="6"><div style="height:40px;border-radius:10px;background:{{ e.bg }};border:{{ e.bd }};color:{{ e.fg }};display:flex;align-items:center;gap:8px;padding:0 10px;font-size:13px;font-weight:600"><i class="{{ e.ic }}" style="font-size:14px"></i>{{ e.n }}<span style="margin-left:auto;font-size:11.5px;font-weight:500;opacity:.9">{{ e.k }}</span></div></sc-for>
+</div>
+
+<div style="background:{{ t.raised }};border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 0 1px {{ t.hair }}">
+<span style="font-size:13px;font-weight:600;color:{{ t.ink2 }}">Badges · unlocked / new / locked</span>
+<div style="display:flex;gap:18px">
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:66px;height:66px;border-radius:22px;background:#EFEBFA;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 2px #8E7CCB55,0 6px 14px -8px #8E7CCB;transform:rotate(-3deg)"><i class="icon-moon-star" style="font-size:28px;color:#5B4A99"></i></div><span style="font-size:12px;font-weight:600">Night owl</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="position:relative;width:66px;height:66px;border-radius:22px;background:#FBE9EC;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 2px #D46A8055,0 6px 14px -8px #D46A80;transform:rotate(3deg)"><i class="icon-timer" style="font-size:28px;color:#A23A55"></i><span style="position:absolute;top:-5px;right:-5px;background:#A63D57;color:#fff;font-size:9.5px;font-weight:700;border-radius:999px;padding:2px 6px">NEW</span></div><span style="font-size:12px;font-weight:600">Marathon</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="position:relative;width:66px;height:66px;border-radius:22px;background:{{ t.sunken }};display:flex;align-items:center;justify-content:center"><i class="icon-flame" style="font-size:28px;color:{{ t.ink4 }}"></i><span style="position:absolute;bottom:-4px;left:10px;right:10px;height:5px;border-radius:3px;background:{{ t.hair }}"><span style="display:block;width:86%;height:100%;border-radius:3px;background:#C98A2E"></span></span></div><span style="font-size:12px;font-weight:600">6 / 7</span></div>
+</div>
+<span style="font-size:12px;color:{{ t.ink2 }}">Unlock: scale 0.6→1.08→1, 3° tilt settles, 12 dots burst once. Reduced motion: fade only.</span>
+</div>
+
+<div style="background:{{ t.raised }};border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 0 0 1px {{ t.hair }}">
+<span style="font-size:13px;font-weight:600;color:{{ t.ink2 }}">Toasts</span>
+<div style="background:#241C1F;color:#FAF7F5;border-radius:18px;padding:12px 14px;display:flex;align-items:center;gap:12px"><i class="icon-circle-check" style="font-size:18px;color:#86B79B"></i><span style="flex:1;font-size:13.5px">Session saved · 51 min Calculus I</span><span style="font-size:13px;font-weight:600;color:#E9A3B2">Undo</span></div>
+<div style="background:#241C1F;color:#FAF7F5;border-radius:18px;padding:12px 14px;display:flex;align-items:center;gap:12px"><span style="width:30px;height:30px;border-radius:50%;background:#E5F0F9;color:#2B6896;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">IS</span><span style="flex:1;font-size:13.5px">Isabella sent a friend request</span><span style="font-size:13px;font-weight:600;color:#E9A3B2">Accept</span></div>
+<div style="background:{{ t.dangerSoft }};color:{{ t.danger }};border-radius:18px;padding:12px 14px;display:flex;align-items:center;gap:12px"><i class="icon-wifi-off" style="font-size:18px"></i><span style="flex:1;font-size:13.5px;font-weight:500">Offline · timer keeps running, saves on reconnect</span></div>
+</div>
+
+<div style="background:{{ t.raised }};border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 0 0 1px {{ t.hair }}">
+<span style="font-size:13px;font-weight:600;color:{{ t.ink2 }}">Loading skeleton</span>
+<div style="display:flex;align-items:center;gap:12px"><span style="width:40px;height:40px;border-radius:50%;background:linear-gradient(90deg,{{ t.sunken }} 0,{{ t.hair }} 50%,{{ t.sunken }} 100%);background-size:400px 100%;animation:shimmer 1.4s infinite linear"></span><div style="flex:1;display:flex;flex-direction:column;gap:8px"><span style="height:12px;width:70%;border-radius:6px;background:linear-gradient(90deg,{{ t.sunken }} 0,{{ t.hair }} 50%,{{ t.sunken }} 100%);background-size:400px 100%;animation:shimmer 1.4s infinite linear"></span><span style="height:10px;width:45%;border-radius:5px;background:{{ t.sunken }}"></span></div></div>
+<span style="height:96px;border-radius:20px;background:linear-gradient(90deg,{{ t.sunken }} 0,{{ t.hair }} 50%,{{ t.sunken }} 100%);background-size:400px 100%;animation:shimmer 1.4s infinite linear"></span>
+<span style="font-size:12px;color:{{ t.ink2 }}">Skeletons match the final tile shape. Shown after 300ms only.</span>
+</div>
+
+<div style="background:{{ t.raised }};border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 0 0 1px {{ t.hair }}">
+<span style="font-size:13px;font-weight:600;color:{{ t.ink2 }}">Empty state · always offers the first action</span>
+<div style="background:{{ t.accSoft }};border-radius:22px;padding:22px;display:flex;flex-direction:column;align-items:flex-start;gap:10px">
+<div style="display:flex;gap:6px"><span style="width:28px;height:28px;border-radius:9px;background:{{ t.emptySq }}"></span><span style="width:28px;height:28px;border-radius:9px;background:{{ t.emptySq }};opacity:.7"></span><span style="width:28px;height:28px;border-radius:9px;background:{{ t.accBase }}"></span></div>
+<span style="font-size:17px;font-weight:600;color:{{ t.ink }}">No exams on the calendar yet</span>
+<span style="font-size:13.5px;color:{{ t.ink2 }};line-height:1.45">Add your first exam and Studi will count down and suggest what to review.</span>
+<span style="height:36px;padding:0 14px;border-radius:999px;background:{{ t.accInk }};color:#fff;display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600"><i class="icon-plus" style="font-size:14px"></i>Add exam</span>
+</div>
+</div>
+
+<div style="background:{{ t.raised }};border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 0 0 1px {{ t.hair }}">
+<span style="font-size:13px;font-weight:600;color:{{ t.ink2 }}">Overlays · dialog (desktop) ⇄ sheet (mobile)</span>
+<div style="position:relative;height:200px;border-radius:18px;background:{{ t.sunken }};overflow:hidden">
+<div style="position:absolute;inset:0;background:rgba(36,28,31,.28)"></div>
+<div style="position:absolute;left:18px;top:22px;width:190px;background:{{ t.raised }};border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 24px 50px -16px rgba(36,28,31,.4)"><span style="font-size:13.5px;font-weight:600">New subject</span><span style="height:28px;border-radius:9px;background:{{ t.sunken }}"></span><div style="display:flex;gap:4px"><span style="width:16px;height:16px;border-radius:50%;background:#D46A80"></span><span style="width:16px;height:16px;border-radius:50%;background:#4C93C9"></span><span style="width:16px;height:16px;border-radius:50%;background:#4E9E78"></span><span style="width:16px;height:16px;border-radius:50%;background:#8E7CCB"></span></div><span style="align-self:flex-end;height:26px;padding:0 12px;border-radius:999px;background:{{ t.accInk }};color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center">Create</span></div>
+<div style="position:absolute;right:18px;bottom:0;width:150px;height:150px;background:{{ t.raised }};border-radius:20px 20px 0 0;padding:8px 12px;display:flex;flex-direction:column;gap:8px"><span style="align-self:center;width:28px;height:4px;border-radius:2px;background:{{ t.hair }}"></span><span style="height:24px;border-radius:8px;background:{{ t.sunken }}"></span><span style="height:24px;border-radius:8px;background:{{ t.sunken }}"></span><span style="height:30px;border-radius:999px;background:{{ t.accInk }}"></span></div>
+</div>
+<span style="font-size:12px;color:{{ t.ink2 }}">Same form component; container switches at 768px (Dialog → Drawer from vaul, already in shadcn).</span>
+</div>
+
+<div style="background:{{ t.raised }};border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 0 0 1px {{ t.hair }}">
+<span style="font-size:13px;font-weight:600;color:{{ t.ink2 }}">Navigation</span>
+<div style="display:flex;flex-direction:column;gap:2px;background:{{ t.chrome }};border-radius:16px;padding:8px">
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:10px;font-size:14px;background:{{ t.raised }};font-weight:600;box-shadow:0 1px 2px rgba(60,30,40,.08)"><i class="icon-layout-grid" style="font-size:16px;color:{{ t.accInk }}"></i>Active</div>
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:10px;font-size:14px;background:{{ t.hover }};font-weight:500"><i class="icon-calendar" style="font-size:16px;color:{{ t.ink3 }}"></i>Hover<span style="margin-left:auto;font-size:11.5px;color:{{ t.ink2 }}">G C</span></div>
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:10px;font-size:14px;font-weight:500"><i class="icon-coffee" style="font-size:16px;color:{{ t.ink3 }}"></i>With count<span style="margin-left:auto;font-size:11.5px;background:{{ t.sunken }};border-radius:6px;padding:1px 6px;font-weight:600">2</span></div>
+</div>
+<div style="display:flex;justify-content:space-around;align-items:flex-end;background:{{ t.raised }};box-shadow:0 0 0 1px {{ t.hair }};border-radius:18px;padding:10px 4px 8px"><sc-for list="{{ tabDemo }}" as="b" hint-placeholder-count="5"><div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:{{ b.fg }}"><span style="width:{{ b.sz }}px;height:{{ b.sz }}px;border-radius:50%;background:{{ b.bg }};display:flex;align-items:center;justify-content:center"><i class="{{ b.ic }}" style="font-size:18px;color:{{ b.icc }}"></i></span><span style="font-size:10.5px;font-weight:600">{{ b.n }}</span></div></sc-for></div>
+</div>
+
+</div>
+</div>
+
+<!-- MOTION -->
+<div id="4d" style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="background:{{ t.ink }};color:{{ t.canvas }};border-radius:7px;padding:3px 9px;font-weight:600;font-size:13px">4d</span><span style="font-size:24px;font-weight:600;letter-spacing:-0.03em">Motion</span><span style="font-size:14px;color:{{ t.ink2 }}">ease-out cubic-bezier(.2,.8,.2,1). Nothing loops except the running timer.</span></div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px"><sc-for list="{{ motion }}" as="m" hint-placeholder-count="8"><div style="background:{{ t.sunken }};border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between"><span style="font-size:14px;font-weight:600">{{ m.n }}</span><span style="font-family:'Geist Mono';font-size:12px;color:{{ t.ink2 }}">{{ m.d }}</span></div><span style="font-size:13px;color:{{ t.ink2 }};line-height:1.45">{{ m.s }}</span></div></sc-for></div>
+</div>
+
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { dark:false, accent:'Pink', seg:'Week', sw:true, ck:false, step:4, sv:25 };
+  renderVals() {
+    const st = this.state;
+    const ACC = [['Pink','#F6D5DC','#D98A9B','#A63D57','#8E3049','#3A2329','#E9A3B2'],['Blue','#DCE8F6','#7FA8D9','#2F6497','#24507B','#1F2A36','#9DBDE3'],['Sage','#DDEBE2','#86B79B','#2F6E50','#245840','#1E2B24','#A3CBB3'],['Lavender','#E7E1F6','#A99BDB','#5B4A99','#4A3C80','#272236','#BDB2E6'],['Peach','#F8E0D2','#E7A57F','#9A4F24','#7E401C','#33251E','#EDBA9A'],['Neutral','#E9E4E1','#9C9094','#4A3F43','#362D31','#2A2427','#BDB1B5']];
+    const a = ACC.find(x=>x[0]===st.accent);
+    const L = {canvas:'#FDFBFA',chrome:'#F4EFEB',sunken:'#F4EFEB',raised:'#FFFFFF',hover:'#EDE6E1',hair:'#ECE5E1',ink:'#241C1F',ink2:'#5E5357',ink3:'#7A6E72',ink4:'#B9AEB2',accSoft:a[1],accBase:a[2],accInk:a[3],accInkH:a[4],succSoft:'#E6F3EC',succ:'#2F6E50',dangerSoft:'#FBE4E4',danger:'#A1302C',emptySq:'#FFFFFF'};
+    const D = {canvas:'#1F1A1C',chrome:'#171315',sunken:'#2B2427',raised:'#262022',hover:'#332B2E',hair:'#3A3034',ink:'#F3ECEE',ink2:'#BDB1B5',ink3:'#9C9094',ink4:'#5E5357',accSoft:a[5],accBase:a[6],accInk:a[3],accInkH:a[4],succSoft:'#1E2B24',succ:'#A3CBB3',dangerSoft:'#3A2326',danger:'#F0A19C',emptySq:'#5A3F47'};
+    const t = st.dark ? D : L;
+    const neutrals = (st.dark ? [
+      ['chrome','#171315','sidebar, app bg'],['canvas','#1F1A1C','content card'],['raised','#262022','list tiles'],['sunken','#2B2427','data tiles, inputs'],['hairline','#3A3034','dividers'],['ink-3','#9C9094','meta text'],['ink-2','#BDB1B5','secondary text'],['ink','#F3ECEE','primary text']
+    ] : [
+      ['chrome','#F4EFEB','sidebar, app bg'],['canvas','#FDFBFA','content card'],['raised','#FFFFFF','list tiles, dialogs'],['sunken','#F4EFEB','data tiles, inputs'],['hairline','#ECE5E1','dividers'],['ink-3','#7A6E72','meta text (4.6:1)'],['ink-2','#5E5357','secondary text'],['ink','#241C1F','primary text']
+    ]).map(([n,v,u])=>({n,v,u}));
+    const accentRows = ACC.map(x=>({n:x[0],soft:st.dark?x[5]:x[1],base:st.dark?x[6]:x[2],ink:x[3],ring: x[0]===st.accent?`0 0 0 2px ${x[3]}`:`0 0 0 1px ${t.hair}`}));
+    const subjPal = [['Rose','#D46A80','#FBE9EC','#A23A55'],['Sky','#4C93C9','#E5F0F9','#2B6896'],['Mint','#4E9E78','#E6F3EC','#2F6E50'],['Lilac','#8E7CCB','#EFEBFA','#5B4A99'],['Apricot','#E08A5B','#FBEBE1','#9A4F24'],['Slate','#6B7280','#EEEFF1','#3F4550'],['Coral','#D9706B','#FBE7E5','#A1302C'],['Amber','#C98A2E','#FAF0DF','#8A5A12'],['Teal','#3E9C96','#E1F2F0','#226B66'],['Indigo','#6A7BCF','#E9ECFA','#3E4FA0']].map(([n,c,tt,d])=>({n,c,t:tt,d}));
+    const typeScale = [
+      ['Display','40 / 600 / -3.5%',40,600,-0.035,'Good evening, Elena'],['Page title','30 / 600 / -3.5%',30,600,-0.035,'Statistics'],['Section','22 / 600 / -2%',22,600,-0.02,'Upcoming exams'],['Tile title','16 / 600',16,600,-0.01,'Friends this week'],
+      ['Body','15 / 400 / 1.5',15,400,0,'Integration by parts, exercises 4–9'],['Nav · button','14 / 500–600',14,500,0,'Study Together'],['Label · meta','12.5–13 / 500',13,500,0,'Calculus I · Midterm in 5 days'],['Overline','12.5 / 600 / caps',12.5,600,0.05,'UP NEXT'],
+      ['Stat','34 / 600 / tabular',34,600,-0.04,'12h 40m'],['Timer','92 / 600 / tabular',92,600,-0.05,'17:42']
+    ].map(([n,spec,fs,w,ls,ex])=>({n,spec,fs,w,ls,ex}));
+    const spaces = [4,8,12,14,16,20,24,28,40];
+    const radii = [['xs',6],['sm',10],['md',14],['lg',20],['xl',26],['pill',999]].map(([n,v])=>({n,v: v===999?32:v}));
+    const shadows = [['flat','0 0 0 1px '+t.hair],['card','0 1px 3px rgba(60,30,40,.08)'],['popover','0 24px 50px -16px rgba(60,30,40,.35)'],['hero CTA','0 14px 30px -12px rgba(166,61,87,.7)']].map(([n,v])=>({n,v}));
+    const segs = ['Day','Week','Month'].map(n=>({n,bg:st.seg===n?t.raised:'transparent',fg:st.seg===n?t.ink:t.ink2,pick:()=>this.setState({seg:n})}));
+    const stepper = [2,3,4,5,6].map(n=>({n,bg:st.step===n?t.accInk:t.sunken,fg:st.step===n?'#fff':t.ink,pick:()=>this.setState({step:n})}));
+    const evChips = [['Class · Calculus lecture','#FBE9EC','none','#A23A55','icon-school','tint'],['Study session · done','#D46A80','none','#fff','icon-timer','solid'],['Planned session','transparent','1.5px dashed #D46A80','#A23A55','icon-timer','dashed'],['Exam · Midterm 2','#241C1F','none','#fff','icon-graduation-cap','ink'],['Deadline · Lab report','#E5F0F9','none','#2B6896','icon-flag','all-day'],['Personal · Gym',st.dark?'#332B2E':'#EFEAE6','none',t.ink2,'icon-user','neutral']].map(([n,bg,bd,fg,ic,k])=>({n,bg,bd,fg,ic,k}));
+    const tabDemo = [['Today','icon-house',1],['Calendar','icon-calendar'],['Focus','icon-play',0,1],['Tasks','icon-circle-check'],['More','icon-ellipsis']].map(([n,ic,act,c])=>({n,ic,sz:c?40:28,bg:c?t.accInk:'transparent',icc:c?'#fff':(act?t.accInk:t.ink3),fg:act||c?t.accInk:t.ink3}));
+    const motion = [['Sidebar collapse','220ms','Width 228→68, labels fade at 60%. ⌘\\ toggles.'],['Page change','160ms','Content fades + 6px rise. Sidebar never moves.'],['Sheet / dialog','280ms','Spring from bottom (mobile), scale .97→1 (desktop).'],['Task complete','300ms','Check fills, row strikes, collapses after 1.2s with undo.'],['Start focus','400ms','Hero tile expands to Focus; ring draws from 0.'],['Theme / accent','300ms','Color-only crossfade on root variables.'],['Badge unlock','700ms','Scale + tilt + one dot burst, then toast.'],['Weekly goal hit','1s','Ring completes, fills solid, streak flame pulses once.']].map(([n,d,s])=>({n,d,s}));
+    return {
+      t, neutrals, accentRows, subjPal, typeScale, spaces, radii, shadows, segs, stepper, evChips, tabDemo, motion,
+      modeBtns: [['Light',false],['Dark',true]].map(([n,v])=>({n,bg:st.dark===v?'#241C1F':'transparent',fg:st.dark===v?'#fff':'#5E5357',pick:()=>this.setState({dark:v})})),
+      accBtns: ACC.map(x=>({n:x[0],base:x[2],ring:x[0]===st.accent?`0 0 0 2px #E6E0DC,0 0 0 4px ${x[3]}`:'none',pick:()=>this.setState({accent:x[0]})})),
+      swBg: st.sw?t.accInk:t.hair, swX: st.sw?21:3, flip: ()=>this.setState(s=>({sw:!s.sw})),
+      ckRing: st.ck?t.accInk:t.ink4, ckFill: st.ck?t.accInk:'transparent', ckIc: st.ck?'icon-check':'', check: ()=>this.setState(s=>({ck:!s.ck})),
+      sv: st.sv, onSv: e=>this.setState({sv:+e.target.value})
+    };
+  }
+}
+</script>
+</body>
+</html>

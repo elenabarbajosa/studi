@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/lucide-static@0.460.0/font/lucide.css">
+<style>
+:root{--chrome:#F4EFEB;--canvas:#FDFBFA;--raised:#FFFFFF;--sunken:#F4EFEB;--hover:#EDE6E1;--hair:#ECE5E1;--ink:#241C1F;--ink2:#5E5357;--ink3:#7A6E72;--ink4:#B9AEB2;--acc-soft:#F6D5DC;--acc:#D98A9B;--acc-text:#A63D57;--btn:#A63D57;--on-btn:#FFFFFF;--shadow:rgba(60,30,40,.08);--hero-ink:#6B4450}
+body{margin:0;background:var(--chrome);color:var(--ink);font-family:'Geist',system-ui,sans-serif;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+*{box-sizing:border-box}
+a{color:var(--acc-text);text-decoration:none}a:hover{color:var(--ink)}
+input,button{font-family:inherit}
+input[type=range]{accent-color:var(--btn);width:100%;margin:0;height:20px;cursor:pointer}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;background:var(--chrome);color:var(--ink)">
+
+<sc-if value="{{ desktop }}" hint-placeholder-val="{{ true }}">
+<div style="width:68px;flex:none;display:{{ railSpacer }}"></div>
+<aside style="width:{{ sideW }}px;flex:none;position:{{ asidePos }};left:0;top:0;z-index:50;height:100vh;display:flex;flex-direction:column;padding:20px 12px 14px;transition:width .22s cubic-bezier(.2,.8,.2,1);overflow-x:hidden;overflow-y:auto;scrollbar-width:none;background:{{ asideBg }};box-shadow:{{ asideShadow }}">
+<div style="display:flex;flex-direction:{{ headDir }};align-items:center;justify-content:space-between;padding:0 {{ headPad }}px 18px;gap:8px">
+<span style="font-size:24px;font-weight:600;letter-spacing:-0.045em;line-height:1;white-space:nowrap">{{ brand }}<span style="color:var(--acc)">.</span></span>
+<span onClick="{{ toggleCollapse }}" title="Collapse sidebar (⌘\)" style="cursor:pointer;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none" style-hover="background:var(--hover)"><i class="icon-panel-left" style="font-size:16px;color:var(--ink3)"></i></span>
+</div>
+<div onClick="{{ goFocusQuick }}" style="cursor:pointer;display:flex;align-items:center;gap:10px;height:38px;padding:0 11px;margin-bottom:18px;background:var(--btn);color:var(--on-btn);border-radius:12px;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden" style-hover="filter:brightness(.92)"><i class="icon-play" style="font-size:15px;flex:none"></i><span style="display:{{ lblD }}">Start focus</span><span style="margin-left:auto;font-size:11.5px;opacity:.8;display:{{ lblD }}">F</span></div>
+<sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+<div style="display:flex;flex-direction:column;gap:1px;margin-bottom:14px">
+<div style="font-size:12px;font-weight:500;color:var(--ink3);padding:0 10px 5px;height:{{ g.lh }}px;overflow:hidden;white-space:nowrap">{{ g.label }}</div>
+<sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3"><div onClick="{{ it.go }}" title="{{ it.n }}" style="cursor:pointer;display:flex;align-items:center;gap:10px;height:36px;padding:0 11px;border-radius:10px;font-size:14px;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.w }};box-shadow:{{ it.sh }};white-space:nowrap;overflow:hidden" style-hover="background:{{ it.hbg }}"><i class="{{ it.ic }}" style="font-size:16px;color:{{ it.icc }};flex:none"></i><span style="display:{{ lblD }}">{{ it.n }}</span><span style="margin-left:auto;font-size:11.5px;background:var(--hover);border-radius:6px;padding:1px 6px;font-weight:600;display:{{ it.bd }}">{{ it.badge }}</span></div></sc-for>
+</div>
+</sc-for>
+<div style="margin-top:auto;display:flex;flex-direction:column;gap:4px">
+<div onClick="{{ goSettings }}" style="cursor:pointer;display:flex;align-items:center;gap:10px;height:36px;padding:0 11px;border-radius:10px;font-size:14px;color:var(--ink2);background:{{ setBg }};white-space:nowrap" style-hover="background:var(--hover)"><i class="icon-settings" style="font-size:16px;color:var(--ink3);flex:none"></i><span style="display:{{ lblD }}">Settings</span><span style="margin-left:auto;font-size:11.5px;color:var(--ink3);display:{{ lblD }}">⌘,</span></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 6px"><div style="width:32px;height:32px;flex:none;border-radius:50%;background:var(--acc-soft);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--acc-text)">EB</div><div style="display:{{ lblD }};flex-direction:column;line-height:1.25;white-space:nowrap"><span style="font-size:13.5px;font-weight:600">{{ displayName }}</span><span style="font-size:12px;color:var(--ink2)">@elenabarbajosa</span></div></div>
+</div>
+</aside>
+</sc-if>
+
+<main style="flex:1;min-width:0;margin:{{ mainMargin }};background:var(--canvas);border-radius:{{ mainRadius }};box-shadow:0 1px 3px var(--shadow);min-height:{{ mainMinH }};padding-bottom:{{ mainPadB }};position:relative;transition:background .3s">
+
+<!-- DASHBOARD -->
+<sc-if value="{{ is.dashboard }}" hint-placeholder-val="{{ true }}">
+<div style="padding:{{ pad }};display:flex;flex-direction:column;gap:18px;animation:rise .25s ease-out">
+<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;color:var(--ink2);font-weight:500">Saturday, 14 November · Week 10</span><span style="font-size:{{ h1 }}px;font-weight:600;letter-spacing:-0.035em;line-height:1.1">Good evening, {{ firstName }}</span></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<sc-if value="{{ gam }}"><span onClick="{{ goProgress }}" style="cursor:pointer;height:36px;display:flex;align-items:center;gap:6px;padding:0 13px;border-radius:999px;background:#FAF0DF;color:#8A5A12;font-size:13.5px;font-weight:600"><i class="icon-flame" style="font-size:14px"></i>6 days</span></sc-if>
+<span onClick="{{ goTasks }}" style="cursor:pointer;height:36px;display:flex;align-items:center;gap:7px;padding:0 14px;border-radius:999px;background:var(--sunken);font-size:13.5px;font-weight:500" style-hover="background:var(--hover)"><i class="icon-plus" style="font-size:15px"></i>Task</span>
+<span onClick="{{ newEventNow }}" style="cursor:pointer;height:36px;display:flex;align-items:center;gap:7px;padding:0 14px;border-radius:999px;background:var(--sunken);font-size:13.5px;font-weight:500" style-hover="background:var(--hover)"><i class="icon-calendar-plus" style="font-size:15px"></i>Event</span>
+<span onClick="{{ newRoom }}" style="cursor:pointer;height:36px;display:flex;align-items:center;gap:7px;padding:0 14px;border-radius:999px;background:var(--sunken);font-size:13.5px;font-weight:500" style-hover="background:var(--hover)"><i class="icon-users" style="font-size:15px"></i>Room</span>
+</div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:14px">
+<div style="flex:7 1 480px;min-width:0;background:var(--acc-soft);border-radius:26px;padding:24px 26px;display:flex;gap:24px;align-items:center;flex-wrap:wrap;transition:background .3s">
+<div style="flex:1 1 240px;display:flex;flex-direction:column;gap:10px;min-width:0">
+<span style="font-size:12.5px;font-weight:600;color:var(--acc-text);letter-spacing:.05em;text-transform:uppercase">{{ upNext.label }}</span>
+<span style="font-size:26px;font-weight:600;letter-spacing:-0.03em;line-height:1.15">{{ upNext.title }}</span>
+<span style="font-size:14.5px;color:var(--hero-ink);line-height:1.5">{{ upNext.meta }}</span>
+</div>
+<div style="position:relative;width:200px;height:200px;flex:none;display:flex;align-items:center;justify-content:center;margin:0 auto">
+<svg width="200" height="200" viewBox="0 0 200 200" style="position:absolute;inset:0;transform:rotate(-90deg)"><circle cx="100" cy="100" r="88" fill="none" stroke="var(--canvas)" stroke-opacity=".6" stroke-width="10"></circle><circle cx="100" cy="100" r="88" fill="none" stroke="var(--acc)" stroke-width="10" stroke-linecap="round" stroke-dasharray="552.9" stroke-dashoffset="{{ dialOff }}" style="transition:stroke-dashoffset .25s"></circle></svg>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px;position:relative">
+<span style="font-size:44px;font-weight:600;letter-spacing:-0.04em;line-height:1;font-variant-numeric:tabular-nums">{{ fLen }}m</span>
+<div style="display:flex;gap:4px"><span onClick="{{ lenDown }}" aria-label="Shorter" style="cursor:pointer;width:30px;height:30px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center"><i class="icon-minus" style="font-size:14px"></i></span><span onClick="{{ lenUp }}" aria-label="Longer" style="cursor:pointer;width:30px;height:30px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center"><i class="icon-plus" style="font-size:14px"></i></span></div>
+<span onClick="{{ startUpNext }}" style="cursor:pointer;height:40px;padding:0 20px;border-radius:999px;background:var(--btn);color:var(--on-btn);display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:600;box-shadow:0 10px 22px -10px var(--btn)"><i class="icon-play" style="font-size:14px"></i>Start</span>
+</div>
+</div>
+</div>
+<div style="flex:5 1 320px;min-width:0;background:var(--sunken);border-radius:26px;padding:22px 24px;display:flex;flex-direction:column;justify-content:space-between;gap:16px">
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;color:var(--ink2);font-weight:500">Focus this week</span><span style="font-size:38px;font-weight:600;letter-spacing:-0.04em;font-variant-numeric:tabular-nums;line-height:1">{{ weekStr }}</span><span style="font-size:13.5px;color:var(--ink2)">{{ weekPct }}% of {{ goalH }}h goal</span></div>
+<div style="display:flex;gap:10px;align-items:flex-end;height:110px"><sc-for list="{{ weekBars }}" as="b" hint-placeholder-count="7"><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:11.5px;color:var(--ink2);font-variant-numeric:tabular-nums">{{ b.v }}</span><div style="width:100%;height:{{ b.h }}px;border-radius:9px;background:{{ b.bg }};transition:height .4s"></div><span style="font-size:12px;color:{{ b.fg }};font-weight:600">{{ b.d }}</span></div></sc-for></div>
+</div>
+<div style="flex:5 1 340px;min-width:0;background:var(--raised);border-radius:26px;padding:20px 22px;display:flex;flex-direction:column;box-shadow:0 0 0 1px var(--hair)">
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding-bottom:8px"><span style="font-size:16px;font-weight:600">Today</span><span onClick="{{ goTasks }}" style="cursor:pointer;font-size:13px;color:var(--acc-text);font-weight:500">{{ todayCount }}</span></div>
+<div style="display:flex;align-items:center;gap:10px;height:44px;border-radius:12px;background:var(--sunken);padding:0 12px;margin-bottom:4px"><i class="icon-plus" style="font-size:16px;color:var(--ink3)"></i><input ref="{{ qaRef }}" value="{{ qa }}" onChange="{{ qaChange }}" onKeyDown="{{ qaKey }}" placeholder="Add task · try @calc !! tomorrow" style="flex:1;min-width:0;border:none;background:transparent;outline:none;font-size:14px;color:var(--ink)"></div>
+<sc-for list="{{ todayTasks }}" as="t" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:11px;min-height:44px;border-bottom:1px solid var(--hair)">
+<span onClick="{{ t.toggle }}" role="checkbox" style="cursor:pointer;width:22px;height:22px;border-radius:50%;flex:none;border:1.8px solid {{ t.ring }};background:{{ t.fill }};display:flex;align-items:center;justify-content:center;transition:all .2s"><i class="{{ t.ck }}" style="font-size:12px;color:var(--on-btn)"></i></span>
+<span style="font-size:14.5px;color:{{ t.fg }};text-decoration:{{ t.dec }};flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .2s">{{ t.title }}</span>
+<span style="font-size:12px;font-weight:700;color:{{ t.pc }}">{{ t.p }}</span>
+<span title="{{ t.sn }}" style="width:9px;height:9px;flex:none;border-radius:50%;background:{{ t.sc }}"></span>
+<span onClick="{{ t.start }}" title="Focus on this" style="cursor:pointer;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none" style-hover="background:var(--sunken)"><i class="icon-play" style="font-size:13px;color:var(--ink3)"></i></span>
+</div>
+</sc-for>
+<sc-if value="{{ todayEmpty }}"><div style="padding:18px 0;display:flex;flex-direction:column;gap:4px"><span style="font-size:15px;font-weight:600">Nothing due today</span><span style="font-size:13.5px;color:var(--ink2)">Add one above, or plan a study block for an upcoming exam.</span></div></sc-if>
+</div>
+<div style="flex:4 1 300px;min-width:0;background:var(--raised);border-radius:26px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;box-shadow:0 0 0 1px var(--hair)">
+<div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:16px;font-weight:600">Countdown</span><span onClick="{{ goCalendar }}" style="cursor:pointer;font-size:13px;color:var(--acc-text);font-weight:500">Calendar</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1">
+<sc-for list="{{ exams }}" as="u" hint-placeholder-count="4"><div onClick="{{ u.open }}" style="cursor:pointer;background:{{ u.t }};border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;gap:10px;min-width:0"><span style="font-size:26px;font-weight:600;letter-spacing:-0.03em;color:{{ u.d }};line-height:1">{{ u.days }}<span style="font-size:13px"> d</span></span><div style="display:flex;flex-direction:column;line-height:1.3;min-width:0"><span style="font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.title }}</span><span style="font-size:12px;color:{{ u.d }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.type }} · {{ u.sn }}</span></div></div></sc-for>
+</div>
+</div>
+<div style="flex:3 1 240px;min-width:0;background:#E6F3EC;color:#241C1F;border-radius:26px;padding:20px 22px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:#4E9E78"></span><span style="font-size:16px;font-weight:600">3 friends live</span></div>
+<div style="display:flex"><sc-for list="{{ liveFriends }}" as="f" hint-placeholder-count="3"><div style="width:46px;height:46px;border-radius:50%;background:{{ f.bg }};color:{{ f.fg }};font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;border:3px solid #E6F3EC;margin-right:-10px">{{ f.i }}</div></sc-for></div>
+<span style="font-size:13.5px;color:#2F4A3C;line-height:1.45">Marco's room <strong>Late library</strong> is mid-pomodoro.</span>
+<span onClick="{{ joinLate }}" style="cursor:pointer;margin-top:auto;height:40px;border-radius:999px;background:#241C1F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600" style-hover="background:#3A3034">Join room</span>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- TASKS -->
+<sc-if value="{{ is.tasks }}" hint-placeholder-val="{{ false }}">
+<div style="padding:{{ pad }};display:flex;flex-direction:column;gap:16px;max-width:900px;animation:rise .25s ease-out">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><span style="font-size:{{ h1 }}px;font-weight:600;letter-spacing:-0.035em">Tasks</span><div style="display:flex;gap:2px;background:var(--sunken);border-radius:999px;padding:3px;font-size:13px;font-weight:600"><sc-for list="{{ taskTabs }}" as="t" hint-placeholder-count="4"><span onClick="{{ t.pick }}" style="cursor:pointer;padding:6px 13px;border-radius:999px;background:{{ t.bg }};color:{{ t.fg }};display:flex;gap:5px">{{ t.n }}<span style="opacity:.6">{{ t.c }}</span></span></sc-for></div></div>
+<div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ subjFilter }}" as="s" hint-placeholder-count="7"><span onClick="{{ s.pick }}" style="cursor:pointer;height:32px;padding:0 12px 0 10px;border-radius:999px;background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.ring }};display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="width:7px;height:7px;border-radius:50%;background:{{ s.c }};display:{{ s.dd }}"></span>{{ s.n }}</span></sc-for></div>
+<div style="display:flex;align-items:center;gap:10px;height:50px;border-radius:14px;background:var(--sunken);padding:0 14px"><i class="icon-plus" style="font-size:17px;color:var(--ink3)"></i><input ref="{{ qaRef }}" value="{{ qa }}" onChange="{{ qaChange }}" onKeyDown="{{ qaKey }}" placeholder="New task — @subject !!! today / tomorrow / week, then Enter" style="flex:1;min-width:0;border:none;background:transparent;outline:none;font-size:15px;color:var(--ink)"><span style="font-size:12px;color:var(--ink3);border:1px solid var(--hair);border-radius:5px;padding:0 5px">↵</span></div>
+<sc-if value="{{ qaPreview.show }}"><div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink2);margin-top:-8px;padding-left:4px"><span>Will add:</span><span style="display:inline-flex;align-items:center;gap:5px;background:{{ qaPreview.t }};color:{{ qaPreview.d }};border-radius:999px;padding:2px 9px 2px 7px;font-weight:600"><span style="width:6px;height:6px;border-radius:50%;background:{{ qaPreview.c }}"></span>{{ qaPreview.sn }}</span><span style="font-weight:600">{{ qaPreview.due }}</span><span style="font-weight:700;color:var(--acc-text)">{{ qaPreview.p }}</span></div></sc-if>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ taskList }}" as="t" hint-placeholder-count="6">
+<div style="display:flex;align-items:center;gap:12px;min-height:58px;border-bottom:1px solid var(--hair)">
+<span onClick="{{ t.toggle }}" role="checkbox" style="cursor:pointer;width:24px;height:24px;border-radius:50%;flex:none;border:1.8px solid {{ t.ring }};background:{{ t.fill }};display:flex;align-items:center;justify-content:center;transition:all .2s"><i class="{{ t.ck }}" style="font-size:13px;color:var(--on-btn)"></i></span>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;color:{{ t.fg }};text-decoration:{{ t.dec }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span><span style="display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--ink2);flex-wrap:wrap"><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:{{ t.sc }}"></span>{{ t.sn }}</span><span>{{ t.due }}</span><span style="display:{{ t.subD }};align-items:center;gap:3px"><i class="icon-list-checks" style="font-size:12px"></i>{{ t.subs }}</span></span></div>
+<span style="font-size:12px;font-weight:700;color:{{ t.pc }}">{{ t.p }}</span>
+<span onClick="{{ t.start }}" title="Focus on this" style="cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none" style-hover="background:var(--sunken)"><i class="icon-play" style="font-size:14px;color:var(--ink3)"></i></span>
+</div>
+</sc-for>
+<sc-if value="{{ taskEmpty }}"><div style="padding:40px 0;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center"><span style="width:48px;height:48px;border-radius:16px;background:var(--acc-soft);display:flex;align-items:center;justify-content:center"><i class="icon-circle-check" style="font-size:22px;color:var(--acc-text)"></i></span><span style="font-size:16px;font-weight:600">All clear here</span><span style="font-size:13.5px;color:var(--ink2)">Nothing matches this view.</span></div></sc-if>
+</div>
+</div>
+</sc-if>
+
+<!-- FOCUS -->
+<sc-if value="{{ is.focus }}" hint-placeholder-val="{{ false }}">
+<div style="padding:{{ pad }};display:flex;flex-wrap:wrap;gap:14px;animation:rise .25s ease-out">
+<div style="flex:1.4 1 460px;min-width:0;background:var(--acc-soft);border-radius:28px;padding:22px 24px;display:flex;flex-direction:column;align-items:center;gap:18px;transition:background .3s">
+<div style="align-self:stretch;display:flex;align-items:center;justify-content:space-between;gap:10px">
+<div style="display:flex;gap:2px;background:var(--raised);border-radius:999px;padding:3px;font-size:13.5px;font-weight:600"><span onClick="{{ setPomo }}" style="cursor:pointer;padding:6px 14px;border-radius:999px;background:{{ pomoBg }};color:{{ pomoFg }}">Pomodoro</span><span onClick="{{ setWatch }}" style="cursor:pointer;padding:6px 14px;border-radius:999px;background:{{ watchBg }};color:{{ watchFg }}">Stopwatch</span></div>
+<span onClick="{{ zenOn }}" title="Distraction-free (⌘.)" style="cursor:pointer;height:34px;padding:0 12px;border-radius:999px;background:var(--raised);display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500"><i class="icon-maximize-2" style="font-size:14px"></i>Full screen</span>
+</div>
+<div onClick="{{ toggleTimer }}" style="cursor:pointer;position:relative;width:min(340px,76vw);aspect-ratio:1;display:flex;align-items:center;justify-content:center">
+<svg viewBox="0 0 360 360" style="position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)"><circle cx="180" cy="180" r="164" fill="none" stroke="var(--canvas)" stroke-opacity=".6" stroke-width="12"></circle><circle cx="180" cy="180" r="164" fill="none" stroke="var(--acc)" stroke-width="12" stroke-linecap="round" stroke-dasharray="1030.4" stroke-dashoffset="{{ ringOff }}" style="transition:stroke-dashoffset .9s linear"></circle></svg>
+<div role="timer" style="display:flex;flex-direction:column;align-items:center;gap:6px;position:relative"><span style="font-size:13px;font-weight:600;letter-spacing:.08em;color:var(--acc-text);text-transform:uppercase">{{ phaseLabel }}</span><span style="font-size:clamp(56px,11vw,88px);font-weight:600;letter-spacing:-0.05em;line-height:1;font-variant-numeric:tabular-nums">{{ timeStr }}</span><span style="font-size:13px;color:var(--hero-ink)">{{ cycleLabel }}</span></div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center"><span style="display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:600;color:{{ fSubjD }}"><span style="width:8px;height:8px;border-radius:50%;background:{{ fSubjC }}"></span>{{ fSubjN }}</span><input value="{{ fGoal }}" onChange="{{ goalChange }}" placeholder="Set a goal for this session" style="width:min(420px,80vw);text-align:center;border:none;background:transparent;outline:none;font-size:17px;color:var(--ink);font-family:inherit"></div>
+<div style="display:flex;align-items:center;gap:18px">
+<span onClick="{{ resetTimer }}" title="Reset (R)" style="cursor:pointer;width:52px;height:52px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center"><i class="icon-rotate-ccw" style="font-size:19px"></i></span>
+<span onClick="{{ toggleTimer }}" title="Start / pause (Space)" style="cursor:pointer;width:80px;height:80px;border-radius:50%;background:var(--btn);display:flex;align-items:center;justify-content:center;box-shadow:0 14px 30px -12px var(--btn)"><i class="{{ toggleIcon }}" style="font-size:30px;color:var(--on-btn);margin-left:{{ toggleNudge }}px"></i></span>
+<span onClick="{{ finish }}" title="Finish and save (⌘↵)" style="cursor:pointer;width:52px;height:52px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center;opacity:{{ finishOp }}"><i class="icon-check" style="font-size:20px"></i></span>
+</div>
+<span style="font-size:12.5px;color:var(--hero-ink)">Space pause · R reset · ⌘↵ finish &amp; save</span>
+</div>
+<div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:14px">
+<div style="background:var(--raised);border-radius:24px;padding:18px 20px;box-shadow:0 0 0 1px var(--hair);display:flex;flex-direction:column;gap:12px">
+<span style="font-size:15px;font-weight:600">What are you studying?</span>
+<div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ fSubjChips }}" as="s" hint-placeholder-count="6"><span onClick="{{ s.pick }}" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 11px 6px 9px;border-radius:999px;font-size:13px;font-weight:600;background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.ring }}"><span style="width:7px;height:7px;border-radius:50%;background:{{ s.c }}"></span>{{ s.n }}</span></sc-for></div>
+</div>
+<div style="background:var(--sunken);border-radius:24px;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+<span style="font-size:15px;font-weight:600">Rhythm</span>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px"><sc-for list="{{ presets }}" as="p" hint-placeholder-count="4"><div onClick="{{ p.pick }}" style="cursor:pointer;border-radius:14px;padding:9px 10px;background:{{ p.bg }};color:{{ p.fg }};display:flex;flex-direction:column;gap:1px"><span style="font-size:13.5px;font-weight:600">{{ p.n }}</span><span style="font-size:12px;opacity:.85">{{ p.d }}</span></div></sc-for></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Focus</span><strong>{{ fLen }} min</strong></div><input type="range" min="5" max="90" step="5" value="{{ fLen }}" onChange="{{ onLen }}" aria-label="Focus length"></div>
+<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">Break</span><strong>{{ fBrk }} min</strong></div><input type="range" min="1" max="30" value="{{ fBrk }}" onChange="{{ onBrk }}" aria-label="Break length"></div>
+</div>
+</div>
+<div style="background:var(--raised);border-radius:24px;padding:18px 20px;box-shadow:0 0 0 1px var(--hair);display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:15px;font-weight:600">Ambience</span><span style="font-size:12.5px;color:var(--ink2)">Tap to play · "+ Mix" to layer</span></div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px"><sc-for list="{{ sounds }}" as="s" hint-placeholder-count="5"><div onClick="{{ s.pick }}" style="cursor:pointer;height:78px;border-radius:16px;background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.ring }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center"><i class="{{ s.ic }}" style="font-size:19px"></i><span style="font-size:11.5px;font-weight:600;line-height:1.1">{{ s.n }}</span><span onClick="{{ s.pickMix }}" style="font-size:10.5px;font-weight:600;opacity:.85;display:{{ s.mixShow }}">{{ s.mixLabel }}</span></div></sc-for></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px"><div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">{{ primaryName }}</span><strong>{{ fV1 }}%</strong></div><input type="range" min="0" max="100" value="{{ fV1 }}" onChange="{{ onV1 }}"></div><div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink2)">{{ mixName }}</span><strong>{{ fV2 }}%</strong></div><input type="range" min="0" max="100" value="{{ fV2 }}" onChange="{{ onV2 }}"></div></div>
+</div>
+<div style="background:var(--sunken);border-radius:24px;padding:16px 20px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;justify-content:space-between;font-size:13.5px"><span style="color:var(--ink2)">Today</span><span><strong>{{ todayStr }}</strong> of 3h</span></div>
+<div style="height:6px;border-radius:3px;background:var(--hair)"><div style="width:{{ todayPct }}%;height:100%;border-radius:3px;background:var(--acc);transition:width .4s"></div></div>
+<sc-for list="{{ sessionList }}" as="h" hint-placeholder-count="3"><div style="display:flex;align-items:center;gap:10px;font-size:13.5px;padding:4px 0"><span style="color:var(--ink2);width:42px;font-variant-numeric:tabular-nums">{{ h.t }}</span><span style="width:7px;height:7px;border-radius:50%;background:{{ h.c }}"></span><span style="flex:1">{{ h.s }}</span><strong style="font-variant-numeric:tabular-nums">{{ h.d }}</strong></div></sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- CALENDAR -->
+<sc-if value="{{ is.calendar }}" hint-placeholder-val="{{ false }}">
+<div style="padding:{{ pad }};display:flex;flex-direction:column;gap:14px;animation:rise .25s ease-out">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<span style="font-size:{{ h1 }}px;font-weight:600;letter-spacing:-0.035em">November <span style="color:var(--ink3);font-weight:400">2026</span></span>
+<div style="display:flex;align-items:center;gap:4px"><span style="width:32px;height:32px;border-radius:50%;background:var(--sunken);display:flex;align-items:center;justify-content:center"><i class="icon-chevron-left" style="font-size:16px"></i></span><span style="height:32px;padding:0 14px;border-radius:999px;background:var(--sunken);display:flex;align-items:center;font-size:13.5px;font-weight:600">Today</span><span style="width:32px;height:32px;border-radius:50%;background:var(--sunken);display:flex;align-items:center;justify-content:center"><i class="icon-chevron-right" style="font-size:16px"></i></span></div>
+<span onClick="{{ calAdd }}" style="cursor:pointer;margin-left:auto;height:36px;padding:0 16px;border-radius:999px;background:var(--btn);color:var(--on-btn);display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600"><i class="icon-plus" style="font-size:15px"></i>New</span>
+</div>
+<sc-if value="{{ desktop }}" hint-placeholder-val="{{ true }}">
+<span style="font-size:13px;color:var(--ink2)">Click an empty slot to plan a session. Classes are tinted, finished sessions solid, planned ones dashed, exams dark.</span>
+<div style="background:var(--raised);border-radius:20px;box-shadow:0 0 0 1px var(--hair);overflow:hidden">
+<div style="display:grid;grid-template-columns:52px repeat(7,minmax(0,1fr));height:58px;border-bottom:1px solid var(--hair)"><span></span><sc-for list="{{ weekCols }}" as="d" hint-placeholder-count="7"><div style="display:flex;align-items:center;justify-content:center;gap:7px"><span style="font-size:12.5px;font-weight:600;color:{{ d.lc }}">{{ d.l }}</span><span style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;background:{{ d.hbg }};color:{{ d.hfg }}">{{ d.n }}</span></div></sc-for></div>
+<div style="display:flex;position:relative;height:560px">
+<div style="width:52px;flex:none;position:relative"><sc-for list="{{ calHours }}" as="h" hint-placeholder-count="14"><span style="position:absolute;right:8px;top:{{ h.y }}px;font-size:11px;color:var(--ink3);transform:translateY(-6px);font-variant-numeric:tabular-nums">{{ h.l }}</span></sc-for></div>
+<div style="flex:1;position:relative;display:grid;grid-template-columns:repeat(7,minmax(0,1fr))">
+<sc-for list="{{ calHours }}" as="h" hint-placeholder-count="14"><div style="position:absolute;left:0;right:0;top:{{ h.y }}px;border-top:1px solid var(--hair);pointer-events:none"></div></sc-for>
+<sc-for list="{{ weekCols }}" as="d" hint-placeholder-count="7"><div onClick="{{ d.click }}" style="position:relative;border-left:1px solid var(--hair);background:{{ d.col }};cursor:copy" style-hover="background:var(--sunken)">
+<sc-for list="{{ d.evs }}" as="e" hint-placeholder-count="2"><div style="position:absolute;left:3px;right:3px;top:{{ e.y }}px;height:{{ e.h }}px;border-radius:10px;background:{{ e.bg }};border:{{ e.bd }};color:{{ e.fg }};padding:5px 8px;overflow:hidden;display:flex;flex-direction:column;gap:1px;line-height:1.25;opacity:{{ e.op }};cursor:grab;pointer-events:auto"><span style="font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden"><i class="{{ e.ic }}" style="font-size:12px;flex:none"></i><span style="overflow:hidden;text-overflow:ellipsis">{{ e.t }}</span></span><span style="font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:{{ e.tdisp }}">{{ e.time }}</span></div></sc-for>
+</div></sc-for>
+<div style="position:absolute;left:71.43%;width:14.2857%;top:{{ nowY }}px;height:2px;background:var(--btn);pointer-events:none"><span style="position:absolute;left:-5px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--btn)"></span></div>
+</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ mobile }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"><sc-for list="{{ strip }}" as="d" hint-placeholder-count="7"><div onClick="{{ d.pick }}" style="cursor:pointer;height:70px;border-radius:18px;background:{{ d.bg }};color:{{ d.fg }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font-size:12px;font-weight:600;opacity:.8">{{ d.l }}</span><span style="font-size:19px;font-weight:600">{{ d.n }}</span><div style="display:flex;gap:2px;height:5px"><sc-for list="{{ d.dots }}" as="c" hint-placeholder-count="2"><span style="width:5px;height:5px;border-radius:50%;background:{{ c }}"></span></sc-for></div></div></sc-for></div>
+<span style="font-size:15px;font-weight:600;padding-top:4px">{{ dayTitle }}</span>
+<div style="display:flex;flex-direction:column;gap:8px"><sc-for list="{{ dayList }}" as="e" hint-placeholder-count="4"><div style="display:flex;gap:12px;align-items:stretch"><span style="width:44px;font-size:12.5px;color:var(--ink2);padding-top:12px;font-variant-numeric:tabular-nums">{{ e.time }}</span><div style="flex:1;min-height:56px;border-radius:16px;background:{{ e.bg }};border:{{ e.bd }};color:{{ e.fg }};padding:10px 14px;display:flex;align-items:center;gap:10px"><i class="{{ e.ic }}" style="font-size:16px"></i><span style="font-size:15px;font-weight:600">{{ e.t }}</span></div></div></sc-for></div>
+<sc-if value="{{ dayEmpty }}"><div style="padding:24px 0;font-size:14px;color:var(--ink2)">Nothing scheduled. Tap New to plan a study block.</div></sc-if>
+</sc-if>
+</div>
+</sc-if>
+
+<!-- SUBJECTS -->
+<sc-if value="{{ is.subjects }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;min-height:inherit;animation:rise .25s ease-out">
+<div style="flex:1;min-width:0;padding:{{ pad }};display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:{{ h1 }}px;font-weight:600;letter-spacing:-0.035em;line-height:1.1">Subjects</span><span style="font-size:14px;color:var(--ink2)">Select one to open its workspace</span></div><span onClick="{{ openNewSubj }}" style="cursor:pointer;margin-left:auto;height:38px;padding:0 16px;border-radius:999px;background:var(--btn);color:var(--on-btn);display:flex;align-items:center;gap:7px;font-size:14px;font-weight:600"><i class="icon-plus" style="font-size:15px"></i>New subject</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:12px">
+<sc-for list="{{ subjTiles }}" as="s" hint-placeholder-count="6">
+<div onClick="{{ s.open }}" style="cursor:pointer;background:{{ s.t }};border-radius:24px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:{{ s.ring }};min-height:190px;transition:transform .15s" style-hover="transform:translateY(-2px)">
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="width:12px;height:12px;border-radius:50%;background:{{ s.c }}"></span><div style="display:flex;gap:3px" title="Difficulty"><sc-for list="{{ s.diff }}" as="dd" hint-placeholder-count="5"><span style="width:5px;height:14px;border-radius:2px;background:{{ dd }}"></span></sc-for></div></div>
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:18px;font-weight:600;letter-spacing:-0.02em">{{ s.name }}</span><span style="font-size:13px;color:{{ s.d }}">{{ s.desc }}</span></div>
+<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px"><div style="display:flex;gap:3px"><sc-for list="{{ s.seg }}" as="g" hint-placeholder-count="5"><span style="flex:1;height:6px;border-radius:3px;background:{{ g }}"></span></sc-for></div><div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:{{ s.d }};font-weight:500"><span>{{ s.prog }}</span><span style="font-weight:600;white-space:nowrap">{{ s.next }}</span></div></div>
+</div>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{ hasSel }}">
+<aside style="width:{{ subjPanelW }};position:{{ subjPanelPos }};inset:0;z-index:30;flex:none;background:var(--raised);border-left:1px solid var(--hair);display:flex;flex-direction:column;overflow:auto;animation:rise .2s ease-out;border-radius:0 18px 18px 0">
+<div style="padding:22px 22px 16px;background:{{ selT }};display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12.5px;font-weight:600;color:{{ selD }};letter-spacing:.04em;text-transform:uppercase">Subject</span><span onClick="{{ closeSubj }}" aria-label="Close" style="cursor:pointer;width:34px;height:34px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center"><i class="icon-x" style="font-size:16px"></i></span></div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:26px;font-weight:600;letter-spacing:-0.03em">{{ selName }}</span><span style="font-size:13.5px;color:{{ selD }};line-height:1.45">{{ selDesc }}</span></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><span onClick="{{ focusSubj }}" style="cursor:pointer;height:36px;padding:0 14px;border-radius:999px;background:var(--btn);color:var(--on-btn);display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600"><i class="icon-play" style="font-size:13px"></i>Focus on this</span><span onClick="{{ calAdd }}" style="cursor:pointer;height:36px;padding:0 14px;border-radius:999px;background:var(--raised);display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:500"><i class="icon-calendar-plus" style="font-size:14px"></i>Plan</span></div>
+</div>
+<div style="padding:14px 22px 6px;display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:15px;font-weight:600">Topics</span><span style="font-size:12.5px;color:var(--ink2)">{{ selTopicCount }} mastered · tap to change status</span></div>
+<div style="padding:0 22px;display:flex;flex-direction:column">
+<sc-for list="{{ selTopics }}" as="t" hint-placeholder-count="5"><div onClick="{{ t.cyc }}" style="cursor:pointer;display:flex;align-items:center;gap:10px;min-height:46px;border-bottom:1px solid var(--hair)"><i class="{{ t.ic }}" style="font-size:16px;color:{{ t.icc }}"></i><span style="flex:1;font-size:14.5px">{{ t.n }}</span><span style="font-size:11.5px;font-weight:600;color:{{ t.sc }};background:{{ t.sb }};border-radius:999px;padding:2px 9px">{{ t.s }}</span></div></sc-for>
+<sc-if value="{{ selNoTopics }}"><div style="padding:16px 0;font-size:13.5px;color:var(--ink2)">No topics yet. Add the first chapter of the syllabus.</div></sc-if>
+</div>
+<div style="padding:16px 22px 6px;font-size:15px;font-weight:600">Open tasks</div>
+<div style="padding:0 22px 22px;display:flex;flex-direction:column"><sc-for list="{{ selTasks }}" as="t" hint-placeholder-count="2"><div style="display:flex;align-items:center;gap:10px;min-height:44px;border-bottom:1px solid var(--hair)"><span onClick="{{ t.toggle }}" style="cursor:pointer;width:20px;height:20px;border-radius:50%;border:1.8px solid {{ t.ring }};background:{{ t.fill }};flex:none"></span><span style="flex:1;font-size:14px;color:{{ t.fg }};text-decoration:{{ t.dec }}">{{ t.title }}</span><span style="font-size:12px;color:var(--ink2)">{{ t.due }}</span></div></sc-for></div>
+</aside>
+</sc-if>
+</div>
+</sc-if>
+
+<!-- TOGETHER -->
+<sc-if value="{{ is.together }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ notInRoom }}">
+<div style="padding:{{ pad }};display:flex;flex-direction:column;gap:16px;max-width:1100px;animation:rise .25s ease-out">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:{{ h1 }}px;font-weight:600;letter-spacing:-0.035em;line-height:1.1">Study Together</span><span style="font-size:14px;color:var(--ink2)">Synced Pomodoro with friends. Chat opens during breaks.</span></div><span onClick="{{ newRoom }}" style="cursor:pointer;margin-left:auto;height:38px;padding:0 16px;border-radius:999px;background:var(--btn);color:var(--on-btn);display:flex;align-items:center;gap:7px;font-size:14px;font-weight:600"><i class="icon-plus" style="font-size:15px"></i>New room</span></div>
+<sc-if value="{{ hasInvite }}"><div style="background:var(--acc-soft);border-radius:22px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div style="width:44px;height:44px;border-radius:50%;background:#FAF0DF;color:#8A5A12;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center">LG</div><div style="flex:1;min-width:180px;display:flex;flex-direction:column;line-height:1.35"><span style="font-size:14.5px;font-weight:600">Lucía invited you to "Stats final prep"</span><span style="font-size:13px;color:var(--hero-ink)">Private · 50 / 10 · starts when you join</span></div><span onClick="{{ declineInvite }}" style="cursor:pointer;height:38px;padding:0 14px;border-radius:999px;background:var(--raised);display:flex;align-items:center;font-size:13.5px;font-weight:500">Decline</span><span onClick="{{ acceptInvite }}" style="cursor:pointer;height:38px;padding:0 16px;border-radius:999px;background:var(--btn);color:var(--on-btn);display:flex;align-items:center;font-size:13.5px;font-weight:600">Accept &amp; join</span></div></sc-if>
+<span style="font-size:17px;font-weight:600;padding-top:4px">Live now</span>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px">
+<sc-for list="{{ rooms }}" as="r" hint-placeholder-count="2"><div style="background:{{ r.bg }};color:{{ r.fg }};border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;justify-content:space-between;gap:10px"><div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:17px;font-weight:600">{{ r.name }}</span><span style="font-size:12.5px;color:{{ r.sub }}">{{ r.host }} · {{ r.vis }}</span></div><div style="display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:24px;font-weight:600;letter-spacing:-0.03em;font-variant-numeric:tabular-nums">{{ r.time }}</span><span style="font-size:11.5px;color:{{ r.sub }};font-weight:600;text-transform:uppercase">{{ r.phase }}</span></div></div>
+<div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex"><sc-for list="{{ r.people }}" as="p" hint-placeholder-count="3"><span style="width:34px;height:34px;border-radius:50%;background:{{ p.bg }};color:{{ p.fg }};font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2.5px solid var(--canvas);margin-right:-8px">{{ p.i }}</span></sc-for></div><span onClick="{{ r.join }}" style="cursor:pointer;height:40px;padding:0 18px;border-radius:999px;background:#241C1F;color:#fff;display:flex;align-items:center;font-size:14px;font-weight:600">Join</span></div>
+</div></sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ inRoom }}">
+<div style="min-height:inherit;border-radius:inherit;background:radial-gradient(ellipse 60% 55% at 45% 42%, #33242A 0%, #1F1A1C 70%);color:#F3ECEE;display:flex;flex-wrap:wrap;animation:rise .25s ease-out">
+<div style="flex:1 1 520px;min-width:0;padding:{{ pad }};display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-size:22px;font-weight:600;letter-spacing:-0.02em">{{ roomName }}</span><span style="font-size:12.5px;color:#BDB1B5;background:#2B2427;border-radius:999px;padding:4px 10px">{{ roomMeta }}</span><span onClick="{{ leaveRoom }}" style="cursor:pointer;margin-left:auto;height:36px;padding:0 14px;border-radius:999px;background:#2B2427;display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:500;color:#E9A3B2"><i class="icon-log-out" style="font-size:14px"></i>Leave</span></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:10px 0">
+<div style="position:relative;width:min(360px,74vw);aspect-ratio:1;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 380 380" style="position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)"><circle cx="190" cy="190" r="174" fill="none" stroke="#3A2E33" stroke-width="10"></circle><circle cx="190" cy="190" r="174" fill="none" stroke="#E9A3B2" stroke-width="10" stroke-linecap="round" stroke-dasharray="1093.3" stroke-dashoffset="{{ roomOff }}" style="transition:stroke-dashoffset .9s linear"></circle></svg><div style="display:flex;flex-direction:column;align-items:center;gap:8px;position:relative"><span style="font-size:13px;font-weight:600;letter-spacing:.08em;color:#E9A3B2;text-transform:uppercase">Focus · synced</span><span style="font-size:clamp(56px,11vw,92px);font-weight:600;letter-spacing:-0.05em;line-height:1;font-variant-numeric:tabular-nums">{{ roomTime }}</span><span style="font-size:13px;color:#BDB1B5;display:flex;align-items:center;gap:6px"><i class="icon-refresh-cw" style="font-size:13px"></i>Host controls the timer</span></div></div>
+</div>
+<div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap"><sc-for list="{{ roomPeople }}" as="p" hint-placeholder-count="4"><div style="width:150px;background:#2B2427;border-radius:20px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:7px;opacity:{{ p.op }}"><div style="width:52px;height:52px;border-radius:50%;background:{{ p.bg }};color:{{ p.fg }};font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px #2B2427,0 0 0 5px {{ p.ring }}">{{ p.i }}</div><span style="font-size:14px;font-weight:600">{{ p.n }}</span><span style="font-size:12px;color:#BDB1B5">{{ p.s }}</span></div></sc-for></div>
+</div>
+<aside style="flex:0 1 320px;min-width:280px;background:#171315;display:flex;flex-direction:column;border-radius:0 18px 18px 0">
+<div style="padding:20px 20px 12px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:15px;font-weight:600">Chat</span><span style="font-size:12px;color:#BDB1B5;display:flex;align-items:center;gap:5px"><i class="icon-lock" style="font-size:12px"></i>Opens at break</span></div>
+<div style="flex:1;padding:0 20px;display:flex;flex-direction:column;gap:14px;justify-content:flex-end;opacity:.55;min-height:180px"><sc-for list="{{ chat }}" as="m" hint-placeholder-count="3"><div style="display:flex;gap:10px"><div style="width:28px;height:28px;flex:none;border-radius:50%;background:{{ m.bg }};color:{{ m.fg }};font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ m.i }}</div><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:#BDB1B5"><strong style="color:#F3ECEE">{{ m.n }}</strong> · {{ m.t }}</span><span style="font-size:13.5px;line-height:1.4">{{ m.m }}</span></div></div></sc-for></div>
+<div style="padding:14px 16px 18px"><div style="height:44px;border-radius:14px;background:#2B2427;display:flex;align-items:center;gap:8px;padding:0 14px;font-size:13.5px;color:#9C9094"><i class="icon-lock" style="font-size:14px"></i>Messages unlock during the break</div></div>
+</aside>
+</div>
+</sc-if>
+</sc-if>
+
+<!-- FRIENDS -->
+<sc-if value="{{ is.friends }}" hint-placeholder-val="{{ false }}">
+<div style="padding:{{ pad }};display:flex;flex-direction:column;gap:16px;max-width:820px;animation:rise .25s ease-out">
+<span style="font-size:{{ h1 }}px;font-weight:600;letter-spacing:-0.035em">Friends</span>
+<div style="display:flex;align-items:center;gap:10px;height:46px;border-radius:14px;background:var(--sunken);padding:0 14px"><i class="icon-search" style="font-size:16px;color:var(--ink3)"></i><input value="{{ friendsQ }}" onChange="{{ onFriendsQ }}" placeholder="Search by name or @username" style="flex:1;min-width:0;border:none;background:transparent;outline:none;font-size:15px;color:var(--ink)"></div>
+<sc-if value="{{ hasReq }}"><div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:15px;font-weight:600">Requests</span><sc-for list="{{ requests }}" as="r" hint-placeholder-count="2"><div style="display:flex;align-items:center;gap:12px;background:var(--acc-soft);border-radius:18px;padding:10px 12px;flex-wrap:wrap"><span style="width:40px;height:40px;border-radius:50%;background:{{ r.bg }};color:{{ r.fg }};font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ r.i }}</span><div style="flex:1;display:flex;flex-direction:column;line-height:1.3;min-width:120px"><span style="font-size:14.5px;font-weight:600">{{ r.n }}</span><span style="font-size:12.5px;color:var(--hero-ink)">{{ r.u }}</span></div><span onClick="{{ r.decline }}" style="cursor:pointer;height:36px;padding:0 14px;border-radius:999px;background:var(--raised);display:flex;align-items:center;font-size:13.5px">Decline</span><span onClick="{{ r.accept }}" style="cursor:pointer;height:36px;padding:0 14px;border-radius:999px;background:var(--btn);color:var(--on-btn);display:flex;align-items:center;font-size:13.5px;font-weight:600">Accept</span></div></sc-for></div></sc-if>
+<div style="display:flex;flex-direction:column"><span style="font-size:15px;font-weight:600;padding-bottom:6px">Your friends</span><sc-for list="{{ friendsList }}" as="f" hint-placeholder-count="5"><div style="display:flex;align-items:center;gap:12px;min-height:60px;border-bottom:1px solid var(--hair)"><div style="position:relative;width:42px;height:42px;border-radius:50%;background:{{ f.bg }};color:{{ f.fg }};font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">{{ f.i }}<span style="position:absolute;right:-1px;bottom:-1px;width:12px;height:12px;border-radius:50%;background:{{ f.live }};border:2px solid var(--canvas)"></span></div><div style="flex:1;display:flex;flex-direction:column;line-height:1.3;min-width:0"><span style="font-size:14.5px;font-weight:600">{{ f.n }} <span style="font-weight:400;color:var(--ink3)">{{ f.u }}</span></span><span style="font-size:13px;color:var(--ink2)">{{ f.s }}</span></div><i class="icon-chevron-right" style="font-size:16px;color:var(--ink3)"></i></div></sc-for></div>
+<span style="font-size:12.5px;color:var(--ink3)">Statuses respect each friend's privacy settings. Academic details are never shared.</span>
+</div>
+</sc-if>
+
+<!-- STATISTICS -->
+<sc-if value="{{ is.statistics }}" hint-placeholder-val="{{ false }}">
+<div style="padding:{{ pad }};display:flex;flex-direction:column;gap:14px;animation:rise .25s ease-out">
+<span style="font-size:{{ h1 }}px;font-weight:600;letter-spacing:-0.035em">Statistics</span>
+<div style="background:var(--sunken);border-radius:22px;padding:18px 8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));row-gap:16px"><sc-for list="{{ statStrip }}" as="s" hint-placeholder-count="4"><div style="padding:0 20px;display:flex;flex-direction:column;gap:4px;border-left:{{ s.bl }}"><span style="font-size:13px;color:var(--ink2);font-weight:500">{{ s.l }}</span><span style="font-size:32px;font-weight:600;letter-spacing:-0.04em;line-height:1.05;font-variant-numeric:tabular-nums">{{ s.v }}</span><span style="font-size:12.5px;color:var(--ink2)">{{ s.d }}</span></div></sc-for></div>
+<div style="display:flex;flex-wrap:wrap;gap:14px">
+<div style="flex:2 1 460px;min-width:0;background:var(--raised);border-radius:24px;box-shadow:0 0 0 1px var(--hair);padding:18px 22px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-size:16px;font-weight:600">Daily focus</span><span style="font-size:13px;color:var(--ink2)">last 14 days · today updates live</span><span style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink2)"><span style="width:16px;border-top:1.5px dashed var(--btn)"></span>Daily target</span></div>
+<div style="position:relative;height:200px;display:flex;align-items:flex-end;gap:8px"><div style="position:absolute;left:0;right:0;bottom:{{ goalLineY }}px;border-top:1.5px dashed var(--btn);opacity:.7"></div><sc-for list="{{ daily }}" as="d" hint-placeholder-count="14"><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0"><span style="font-size:11px;color:var(--ink2);height:14px;white-space:nowrap">{{ d.v }}</span><div style="width:100%;height:{{ d.h }}px;border-radius:8px;background:{{ d.bg }};transition:height .4s"></div><span style="font-size:11.5px;color:{{ d.fg }};font-weight:600">{{ d.l }}</span></div></sc-for></div>
+</div>
+<div style="flex:1 1 300px;min-width:0;background:var(--raised);border-radius:24px;box-shadow:0 0 0 1px var(--hair);padding:18px 22px;display:flex;flex-direction:column;gap:12px">
+<span style="font-size:16px;font-weight:600">By subject · this week</span>
+<div style="display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px"><sc-for list="{{ bySubj }}" as="b" hint-placeholder-count="6"><span style="width:{{ b.pct }}%;background:{{ b.c }}"></span></sc-for></div>
+<sc-for list="{{ bySubj }}" as="b" hint-placeholder-count="6"><div style="display:flex;align-items:center;gap:10px;font-size:13.5px"><span style="width:9px;height:9px;border-radius:50%;background:{{ b.c }}"></span><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ b.n }}</span><span style="color:var(--ink2);width:38px;text-align:right">{{ b.pct }}%</span><strong style="width:62px;text-align:right;font-variant-numeric:tabular-nums">{{ b.v }}</strong></div></sc-for>
+</div>
+<div style="flex:1 1 100%;min-width:0;background:var(--raised);border-radius:24px;box-shadow:0 0 0 1px var(--hair);padding:18px 22px;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font-size:16px;font-weight:600">Activity</span><span style="font-size:13px;color:var(--ink2)">26 weeks</span></div>
+<div style="overflow-x:auto"><div style="min-width:560px;display:grid;grid-template-columns:repeat(26,1fr);grid-template-rows:repeat(7,16px);grid-auto-flow:column;gap:4px"><sc-for list="{{ heat }}" as="h" hint-placeholder-count="182"><span style="border-radius:4px;background:{{ h }}"></span></sc-for></div></div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- PROGRESS -->
+<sc-if value="{{ is.progress }}" hint-placeholder-val="{{ false }}">
+<div style="padding:{{ pad }};display:flex;flex-direction:column;gap:14px;animation:rise .25s ease-out">
+<span style="font-size:{{ h1 }}px;font-weight:600;letter-spacing:-0.035em">Progress</span>
+<div style="display:flex;flex-wrap:wrap;gap:14px">
+<div style="flex:5 1 360px;min-width:0;background:#FAF0DF;color:#241C1F;border-radius:26px;padding:22px 24px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;color:#8A5A12;font-weight:500">Current streak</span><span style="font-size:60px;font-weight:600;letter-spacing:-0.05em;line-height:1">6 <span style="font-size:22px">days</span></span><span style="font-size:13.5px;color:#8A5A12">Longest 11 · one more day for Week warrior</span></div><div style="width:60px;height:60px;border-radius:20px;background:#C98A2E;display:flex;align-items:center;justify-content:center"><i class="icon-flame" style="font-size:30px;color:#fff"></i></div></div>
+<div style="display:grid;grid-template-columns:repeat(14,1fr);gap:4px"><sc-for list="{{ streak14 }}" as="d" hint-placeholder-count="14"><div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="width:100%;aspect-ratio:1;border-radius:7px;background:{{ d.bg }};border:{{ d.bd }}"></span><span style="font-size:10.5px;color:#8A5A12;font-weight:600">{{ d.l }}</span></div></sc-for></div>
+</div>
+<div style="flex:3 1 220px;min-width:0;background:var(--acc-soft);border-radius:26px;padding:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+<div style="position:relative;width:140px;height:140px"><svg width="140" height="140" viewBox="0 0 140 140" style="transform:rotate(-90deg)"><circle cx="70" cy="70" r="60" fill="none" stroke="var(--canvas)" stroke-opacity=".7" stroke-width="12"></circle><circle cx="70" cy="70" r="60" fill="none" stroke="var(--btn)" stroke-width="12" stroke-linecap="round" stroke-dasharray="377" stroke-dashoffset="{{ goalOff }}" style="transition:stroke-dashoffset .6s"></circle></svg><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-size:28px;font-weight:600;letter-spacing:-0.03em">{{ goalPct }}%</span><span style="font-size:12px;color:var(--hero-ink)">of {{ goalH }}h</span></div></div>
+<span style="font-size:14px;font-weight:600">Weekly goal</span><span style="font-size:12.5px;color:var(--hero-ink)">{{ goalLeft }} left · 1 day</span>
+</div>
+<div style="flex:4 1 280px;min-width:0;background:var(--sunken);border-radius:26px;padding:18px 20px;display:flex;flex-direction:column;gap:4px">
+<span style="font-size:16px;font-weight:600;padding-bottom:6px">Friends this week</span>
+<sc-if value="{{ boardOn }}"><sc-for list="{{ board }}" as="r" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:12px;height:48px;padding:0 10px;border-radius:14px;background:{{ r.bg }}"><span style="width:16px;font-size:13.5px;font-weight:700;color:{{ r.rc }}">{{ r.rank }}</span><span style="width:30px;height:30px;border-radius:50%;background:{{ r.ab }};color:{{ r.af }};font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ r.i }}</span><span style="flex:1;font-size:14px;font-weight:{{ r.w }}">{{ r.n }}</span><strong style="font-size:14px;font-variant-numeric:tabular-nums">{{ r.v }}</strong></div></sc-for></sc-if>
+<sc-if value="{{ boardOff }}"><div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px"><span style="font-size:13.5px;color:var(--ink2);line-height:1.5">The leaderboard is off. When on, friends who also opted in see each other's weekly verified focus time.</span><span onClick="{{ enableBoard }}" style="cursor:pointer;align-self:flex-start;height:38px;padding:0 16px;border-radius:999px;background:var(--ink);color:var(--canvas);display:flex;align-items:center;font-size:13.5px;font-weight:600">Turn on</span></div></sc-if>
+</div>
+</div>
+<div style="background:var(--raised);border-radius:26px;box-shadow:0 0 0 1px var(--hair);padding:20px 22px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font-size:16px;font-weight:600">Achievements</span><span style="font-size:13px;color:var(--ink2)">{{ badgeCount }}</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:18px 10px"><sc-for list="{{ badges }}" as="b" hint-placeholder-count="12"><div style="display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center"><div style="position:relative;width:66px;height:66px;border-radius:22px;background:{{ b.bg }};display:flex;align-items:center;justify-content:center;box-shadow:{{ b.sh }};transform:rotate({{ b.rot }}deg);transition:all .5s"><i class="{{ b.ic }}" style="font-size:28px;color:{{ b.fg }}"></i><span style="position:absolute;top:-5px;right:-5px;background:var(--btn);color:var(--on-btn);font-size:9.5px;font-weight:700;border-radius:999px;padding:2px 6px;display:{{ b.newD }}">NEW</span></div><span style="font-size:12.5px;font-weight:600;line-height:1.2">{{ b.n }}</span><span style="font-size:11.5px;color:var(--ink2);line-height:1.2">{{ b.d }}</span></div></sc-for></div>
+</div>
+</div>
+</sc-if>
+
+<!-- PLANNER -->
+<sc-if value="{{ is.planner }}" hint-placeholder-val="{{ false }}">
+<div style="padding:{{ pad }};display:flex;flex-direction:column;gap:16px;animation:rise .25s ease-out">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:{{ h1 }}px;font-weight:600;letter-spacing:-0.035em;line-height:1.1">Next week</span><span style="font-size:14px;color:var(--ink2)">16–22 Nov · 14h planned of 21h available</span></div><span onClick="{{ addPlan }}" style="cursor:pointer;margin-left:auto;height:38px;padding:0 16px;border-radius:999px;background:var(--btn);color:var(--on-btn);display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600"><i class="icon-calendar-check" style="font-size:15px"></i>Add to calendar</span></div>
+<div style="background:var(--sunken);border-radius:22px;padding:14px 16px;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start"><span style="font-size:14px;font-weight:600;padding-top:8px">Still to plan</span><sc-for list="{{ backlog }}" as="g" hint-placeholder-count="3"><sc-for list="{{ g.items }}" as="x" hint-placeholder-count="1"><div style="height:40px;border-radius:12px;background:var(--raised);display:flex;align-items:center;gap:8px;padding:0 12px;font-size:13.5px;cursor:grab"><i class="icon-grip-vertical" style="font-size:14px;color:var(--ink4)"></i><span style="width:8px;height:8px;border-radius:50%;background:{{ g.c }}"></span>{{ x.n }}<span style="font-size:12px;font-weight:600;color:{{ g.d }};background:{{ g.t }};border-radius:999px;padding:2px 8px">{{ x.h }}</span><span style="font-size:12px;color:var(--ink3)">by {{ g.when }}</span></div></sc-for></sc-for></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">
+<sc-for list="{{ planDays }}" as="d" hint-placeholder-count="7"><div style="background:{{ d.bg }};border-radius:20px;padding:12px 10px;display:flex;flex-direction:column;gap:8px;min-width:0">
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 2px"><span style="font-size:13px;font-weight:600;color:var(--ink2)">{{ d.l }}</span><span style="font-size:20px;font-weight:600">{{ d.n }}</span></div>
+<div style="display:flex;flex-direction:column;gap:4px;padding:0 2px"><div style="height:5px;border-radius:3px;background:var(--hair)"><div style="width:{{ d.pct }}%;height:100%;border-radius:3px;background:#4E9E78"></div></div><span style="font-size:11.5px;color:var(--ink2)">{{ d.cap }}</span></div>
+<sc-for list="{{ d.items }}" as="x" hint-placeholder-count="2"><div style="border-radius:14px;background:{{ x.bg }};color:{{ x.fg }};padding:8px 10px;display:flex;flex-direction:column;gap:2px"><span style="font-size:12.5px;font-weight:600;line-height:1.25">{{ x.t }}</span><span style="font-size:11.5px;opacity:.9">{{ x.m }}</span></div></sc-for>
+</div></sc-for>
+</div>
+</div>
+</sc-if>
+
+<!-- SETTINGS -->
+<sc-if value="{{ is.settings }}" hint-placeholder-val="{{ false }}">
+<div style="padding:{{ pad }};display:flex;flex-direction:{{ setWrap }};gap:28px;animation:rise .25s ease-out">
+<div style="width:{{ setNavW }};flex:none;display:flex;flex-direction:{{ setNavDir }};gap:2px;overflow-x:auto">
+<span style="font-size:{{ h1 }}px;font-weight:600;letter-spacing:-0.035em;padding:0 10px 14px;display:{{ setTitleD }}">Settings</span>
+<sc-for list="{{ setSecs }}" as="s" hint-placeholder-count="6"><div onClick="{{ s.pick }}" style="cursor:pointer;flex:none;display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-radius:12px;font-size:14px;background:{{ s.bg }};font-weight:{{ s.w }};box-shadow:{{ s.sh }};white-space:nowrap" style-hover="background:var(--sunken)"><i class="{{ s.ic }}" style="font-size:16px;color:{{ s.icc }}"></i>{{ s.n }}</div></sc-for>
+</div>
+<div style="flex:1;min-width:0;max-width:720px;display:flex;flex-direction:column;gap:22px">
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:24px;font-weight:600;letter-spacing:-0.03em">{{ setTitle }}</span><span style="font-size:13px;color:var(--ink2);display:flex;align-items:center;gap:6px"><i class="icon-cloud-check" style="font-size:15px;color:#4E9E78"></i>Saved</span></div>
+<sc-if value="{{ secProfile }}"><div style="display:flex;flex-direction:column;gap:16px"><div style="display:flex;align-items:center;gap:16px"><div style="width:84px;height:84px;border-radius:50%;background:var(--acc-soft);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:var(--acc-text)">EB</div><div style="display:flex;gap:8px;flex-wrap:wrap"><span style="height:38px;padding:0 14px;border-radius:999px;background:var(--sunken);display:flex;align-items:center;font-size:13.5px;font-weight:500">Upload photo</span><span style="height:38px;padding:0 14px;border-radius:999px;background:var(--sunken);display:flex;align-items:center;font-size:13.5px;font-weight:500">Use Google photo</span></div></div><label style="display:flex;flex-direction:column;gap:6px;font-size:13.5px;font-weight:500">Display name<input value="{{ displayName }}" onChange="{{ onName }}" style="height:46px;border-radius:14px;border:none;background:var(--sunken);padding:0 14px;font-size:15px;color:var(--ink);outline-color:var(--acc)"></label><span style="font-size:12.5px;color:var(--ink2)">Changes appear in the sidebar and greeting immediately.</span></div></sc-if>
+<sc-if value="{{ secAppearance }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><sc-for list="{{ themes }}" as="t" hint-placeholder-count="3"><div onClick="{{ t.pick }}" style="cursor:pointer;display:flex;flex-direction:column;gap:8px"><div style="height:96px;border-radius:18px;background:{{ t.bg }};box-shadow:{{ t.ring }};padding:10px;display:flex;gap:6px;overflow:hidden"><div style="width:30%;display:flex;flex-direction:column;gap:5px"><span style="height:6px;border-radius:3px;background:{{ t.line }}"></span><span style="height:6px;border-radius:3px;background:{{ t.line }};width:70%"></span></div><div style="flex:1;border-radius:10px;background:{{ t.card }};padding:7px;display:flex;flex-direction:column;gap:5px"><span style="height:18px;border-radius:6px;background:var(--acc)"></span><span style="height:6px;border-radius:3px;background:{{ t.line }}"></span></div></div><span style="font-size:13.5px;font-weight:{{ t.w }};display:flex;align-items:center;gap:6px"><i class="{{ t.ic }}" style="font-size:14px"></i>{{ t.n }}</span></div></sc-for></div>
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:14px;font-weight:500">Accent</span><div style="display:flex;gap:14px;flex-wrap:wrap"><sc-for list="{{ accents }}" as="a" hint-placeholder-count="6"><div onClick="{{ a.pick }}" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="width:44px;height:44px;border-radius:50%;background:{{ a.c }};box-shadow:{{ a.ring }};display:flex;align-items:center;justify-content:center;transition:box-shadow .2s"><i class="{{ a.ck }}" style="font-size:18px;color:#fff"></i></span><span style="font-size:12.5px;font-weight:{{ a.w }}">{{ a.n }}</span></div></sc-for></div></div>
+<span style="font-size:13px;color:var(--ink2)">The whole prototype re-tints immediately. Subject colors stay as they are.</span>
+</div></sc-if>
+<sc-if value="{{ secFocus }}"><div style="display:flex;flex-direction:column;gap:18px">
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px"><sc-for list="{{ setPresets }}" as="p" hint-placeholder-count="4"><div onClick="{{ p.pick }}" style="cursor:pointer;border-radius:16px;padding:12px;background:{{ p.bg }};color:{{ p.fg }};box-shadow:0 0 0 1px var(--hair);display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600">{{ p.n }}</span><span style="font-size:12px;opacity:.85">{{ p.d }} min</span></div></sc-for></div>
+<div style="background:var(--sunken);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:18px">
+<sc-for list="{{ sliders }}" as="s" hint-placeholder-count="2"><div style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font-size:14px;font-weight:500">{{ s.n }}</span><span style="font-size:22px;font-weight:600;letter-spacing:-0.02em">{{ s.v }}<span style="font-size:13px;color:var(--ink2);font-weight:500"> min</span></span></div><input type="range" min="{{ s.min }}" max="{{ s.max }}" step="{{ s.step }}" value="{{ s.v }}" onChange="{{ s.on }}"></div></sc-for>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span style="font-size:14px;font-weight:500">Long break after</span><div style="display:flex;gap:4px"><sc-for list="{{ everyDots }}" as="d" hint-placeholder-count="5"><span onClick="{{ d.pick }}" style="cursor:pointer;width:36px;height:36px;border-radius:50%;background:{{ d.bg }};color:{{ d.fg }};display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:600">{{ d.n }}</span></sc-for></div></div>
+</div>
+<div style="display:flex;flex-direction:column"><sc-for list="{{ focusToggles }}" as="t" hint-placeholder-count="2"><div onClick="{{ t.flip }}" role="switch" style="cursor:pointer;display:flex;align-items:center;gap:14px;min-height:60px;border-bottom:1px solid var(--hair)"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:500">{{ t.n }}</span><span style="font-size:12.5px;color:var(--ink2)">{{ t.d }}</span></div><span style="width:44px;height:26px;flex:none;border-radius:13px;background:{{ t.bg }};position:relative;transition:background .2s"><span style="position:absolute;top:3px;left:{{ t.x }}px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .2s"></span></span></div></sc-for></div>
+</div></sc-if>
+<sc-if value="{{ secPrivacy }}"><div style="display:flex;flex-direction:column"><sc-for list="{{ privRows }}" as="r" hint-placeholder-count="4"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:62px;border-bottom:1px solid var(--hair);flex-wrap:wrap"><span style="font-size:14px;font-weight:500">{{ r.n }}</span><div style="display:flex;gap:2px;background:var(--sunken);border-radius:999px;padding:3px;font-size:13px;font-weight:600"><sc-for list="{{ r.opts }}" as="o" hint-placeholder-count="3"><span onClick="{{ o.pick }}" style="cursor:pointer;padding:6px 13px;border-radius:999px;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }}">{{ o.o }}</span></sc-for></div></div></sc-for></div></sc-if>
+<sc-if value="{{ secProgress }}"><div style="display:flex;flex-direction:column"><sc-for list="{{ gamToggles }}" as="t" hint-placeholder-count="2"><div onClick="{{ t.flip }}" role="switch" style="cursor:pointer;display:flex;align-items:center;gap:14px;min-height:62px;border-bottom:1px solid var(--hair)"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:500">{{ t.n }}</span><span style="font-size:12.5px;color:var(--ink2)">{{ t.d }}</span></div><span style="width:44px;height:26px;flex:none;border-radius:13px;background:{{ t.bg }};position:relative;transition:background .2s"><span style="position:absolute;top:3px;left:{{ t.x }}px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .2s"></span></span></div></sc-for></div></sc-if>
+<sc-if value="{{ secAccount }}"><div style="display:flex;flex-direction:column;gap:12px"><span style="font-size:14px;color:var(--ink2)">Signed in as elena@cunef.edu</span><span onClick="{{ signOut }}" style="cursor:pointer;align-self:flex-start;height:40px;padding:0 18px;border-radius:999px;background:var(--sunken);display:flex;align-items:center;gap:7px;font-size:14px;font-weight:500"><i class="icon-log-out" style="font-size:15px"></i>Sign out</span></div></sc-if>
+</div>
+</div>
+</sc-if>
+
+<!-- MORE (mobile) -->
+<sc-if value="{{ is.more }}" hint-placeholder-val="{{ false }}">
+<div style="padding:{{ pad }};display:flex;flex-direction:column;gap:14px;animation:rise .25s ease-out">
+<div style="display:flex;align-items:center;gap:12px"><div style="width:52px;height:52px;border-radius:50%;background:var(--acc-soft);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:var(--acc-text)">EB</div><div style="display:flex;flex-direction:column;line-height:1.3"><span style="font-size:18px;font-weight:600">{{ displayName }}</span><span style="font-size:13px;color:var(--ink2)">@elenabarbajosa</span></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><sc-for list="{{ moreTiles }}" as="m" hint-placeholder-count="6"><div onClick="{{ m.go }}" style="cursor:pointer;background:{{ m.bg }};border-radius:22px;padding:14px;height:110px;display:flex;flex-direction:column;justify-content:space-between"><i class="{{ m.ic }}" style="font-size:22px;color:{{ m.fg }}"></i><div style="display:flex;flex-direction:column;line-height:1.3"><span style="font-size:15px;font-weight:600;color:var(--ink)">{{ m.n }}</span><span style="font-size:12.5px;color:{{ m.fg }}">{{ m.h }}</span></div></div></sc-for></div>
+<div onClick="{{ goSettings2 }}" style="cursor:pointer;background:var(--sunken);border-radius:20px;height:56px;padding:0 16px;display:flex;align-items:center;gap:12px"><i class="icon-settings" style="font-size:18px;color:var(--ink2)"></i><span style="flex:1;font-size:15px">Settings</span><i class="icon-chevron-right" style="font-size:16px;color:var(--ink3)"></i></div>
+</div>
+</sc-if>
+
+</main>
+
+<sc-if value="{{ mobile }}" hint-placeholder-val="{{ false }}">
+<nav style="position:fixed;left:0;right:0;bottom:0;z-index:40;height:calc(76px + env(safe-area-inset-bottom));padding:8px 8px env(safe-area-inset-bottom);background:var(--canvas);border-top:1px solid var(--hair);display:flex;justify-content:space-around">
+<sc-for list="{{ mTabs }}" as="b" hint-placeholder-count="5"><div onClick="{{ b.go }}" style="cursor:pointer;width:64px;min-height:52px;display:flex;flex-direction:column;align-items:center;gap:4px;color:{{ b.fg }}"><div style="width:{{ b.sz }}px;height:{{ b.sz }}px;margin-top:{{ b.mt }}px;border-radius:50%;background:{{ b.bg }};display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 0 transparent"><i class="{{ b.ic }}" style="font-size:{{ b.isz }}px;color:{{ b.icc }}"></i></div><span style="font-size:11px;font-weight:600">{{ b.n }}</span></div></sc-for>
+</nav>
+</sc-if>
+
+<sc-if value="{{ zen }}">
+<div style="position:fixed;inset:0;z-index:60;background:radial-gradient(ellipse 70% 60% at 50% 42%, #3A2830 0%, #171315 75%);color:#F3ECEE;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;animation:rise .3s ease-out">
+<span onClick="{{ zenOff }}" style="cursor:pointer;position:absolute;top:22px;right:22px;height:38px;padding:0 14px;border-radius:999px;background:#2B2427;display:flex;align-items:center;gap:7px;font-size:13.5px"><i class="icon-minimize-2" style="font-size:14px"></i>Exit · Esc</span>
+<div onClick="{{ toggleTimer }}" style="cursor:pointer;position:relative;width:min(420px,80vw);aspect-ratio:1;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 360 360" style="position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)"><circle cx="180" cy="180" r="164" fill="none" stroke="#3A2E33" stroke-width="10"></circle><circle cx="180" cy="180" r="164" fill="none" stroke="#E9A3B2" stroke-width="10" stroke-linecap="round" stroke-dasharray="1030.4" stroke-dashoffset="{{ ringOff }}" style="transition:stroke-dashoffset .9s linear"></circle></svg><div style="display:flex;flex-direction:column;align-items:center;gap:8px;position:relative"><span style="font-size:13px;font-weight:600;letter-spacing:.08em;color:#E9A3B2;text-transform:uppercase">{{ phaseLabel }}</span><span style="font-size:clamp(64px,14vw,110px);font-weight:600;letter-spacing:-0.05em;line-height:1;font-variant-numeric:tabular-nums">{{ timeStr }}</span></div></div>
+<span style="font-size:18px;color:#D9CCD0;text-align:center;padding:0 24px">{{ fGoal }}</span>
+<div style="display:flex;align-items:center;gap:18px"><span onClick="{{ resetTimer }}" style="cursor:pointer;width:56px;height:56px;border-radius:50%;background:#2B2427;display:flex;align-items:center;justify-content:center"><i class="icon-rotate-ccw" style="font-size:20px"></i></span><span onClick="{{ toggleTimer }}" style="cursor:pointer;width:88px;height:88px;border-radius:50%;background:#E9A3B2;display:flex;align-items:center;justify-content:center"><i class="{{ toggleIcon }}" style="font-size:34px;color:#241C1F;margin-left:{{ toggleNudge }}px"></i></span><span onClick="{{ finish }}" style="cursor:pointer;width:56px;height:56px;border-radius:50%;background:#2B2427;display:flex;align-items:center;justify-content:center"><i class="icon-check" style="font-size:21px"></i></span></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ anyDlg }}">
+<div onClick="{{ closeDlg }}" style="position:fixed;inset:0;z-index:70;background:rgba(23,19,21,.38);display:flex;align-items:{{ dlgAlign }};justify-content:center;padding:0;animation:rise .18s ease-out">
+<div onClick="{{ stop }}" role="dialog" style="width:{{ dlgW }};max-height:90vh;overflow:auto;background:var(--raised);color:var(--ink);border-radius:{{ dlgRadius }};padding:20px 20px {{ dlgPadB }};display:flex;flex-direction:column;gap:16px;box-shadow:0 30px 60px -20px rgba(23,19,21,.5)">
+<sc-if value="{{ dlgEvent }}">
+<div style="display:flex;gap:2px;background:var(--sunken);border-radius:999px;padding:3px;font-size:13px;font-weight:600"><sc-for list="{{ evTypes }}" as="t" hint-placeholder-count="4"><span onClick="{{ t.pick }}" style="cursor:pointer;flex:1;text-align:center;padding:7px 0;border-radius:999px;background:{{ t.bg }};color:{{ t.fg }}">{{ t.n }}</span></sc-for></div>
+<input value="{{ evTitle }}" onChange="{{ onEvTitle }}" onKeyDown="{{ evKey }}" autoFocus placeholder="Title (optional for study blocks)" style="border:none;background:transparent;outline:none;font-size:19px;font-weight:600;color:var(--ink);padding:4px 0">
+<div style="display:flex;align-items:center;gap:10px;font-size:14px"><i class="icon-clock" style="font-size:16px;color:var(--ink3)"></i><span style="flex:1">{{ evWhen }}</span><span onClick="{{ hourEarlier }}" style="cursor:pointer;width:32px;height:32px;border-radius:50%;background:var(--sunken);display:flex;align-items:center;justify-content:center"><i class="icon-minus" style="font-size:14px"></i></span><span onClick="{{ hourLater }}" style="cursor:pointer;width:32px;height:32px;border-radius:50%;background:var(--sunken);display:flex;align-items:center;justify-content:center"><i class="icon-plus" style="font-size:14px"></i></span></div>
+<sc-if value="{{ evShowSubj }}"><div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ evSubj }}" as="s" hint-placeholder-count="6"><span onClick="{{ s.pick }}" style="cursor:pointer;height:34px;padding:0 12px 0 10px;border-radius:999px;background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.ring }};display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="width:7px;height:7px;border-radius:50%;background:{{ s.c }}"></span>{{ s.n }}</span></sc-for></div></sc-if>
+<div style="display:flex;justify-content:flex-end;gap:8px"><span onClick="{{ closeDlg }}" style="cursor:pointer;height:42px;padding:0 16px;border-radius:999px;display:flex;align-items:center;font-size:14px;color:var(--ink2)">Cancel</span><span onClick="{{ createEvent }}" style="cursor:pointer;height:42px;padding:0 20px;border-radius:999px;background:var(--btn);color:var(--on-btn);display:flex;align-items:center;font-size:14px;font-weight:600">Create ↵</span></div>
+</sc-if>
+<sc-if value="{{ dlgSubject }}">
+<span style="font-size:20px;font-weight:600;letter-spacing:-0.02em">New subject</span>
+<div style="background:{{ nsT }};border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:6px;transition:background .2s"><span style="width:12px;height:12px;border-radius:50%;background:{{ nsC }}"></span><input value="{{ newSubjName }}" onChange="{{ onNewSubjName }}" autoFocus placeholder="Subject name" style="border:none;background:transparent;outline:none;font-size:20px;font-weight:600;color:var(--ink);padding:2px 0"><span style="font-size:12.5px;color:{{ nsD }}">Preview of the subject tile</span></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13.5px;font-weight:500">Color</span><div style="display:flex;gap:10px;flex-wrap:wrap"><sc-for list="{{ palPick }}" as="p" hint-placeholder-count="10"><span onClick="{{ p.pick }}" style="cursor:pointer;width:30px;height:30px;border-radius:50%;background:{{ p.c }};box-shadow:{{ p.ring }}"></span></sc-for></div></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13.5px;font-weight:500">Difficulty</span><div style="display:flex;gap:6px"><sc-for list="{{ diffPick }}" as="d" hint-placeholder-count="5"><span onClick="{{ d.pick }}" style="cursor:pointer;flex:1;height:40px;border-radius:12px;background:{{ d.bg }};color:{{ d.fg }};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600">{{ d.n }}</span></sc-for></div></div>
+<div style="display:flex;justify-content:flex-end;gap:8px"><span onClick="{{ closeDlg }}" style="cursor:pointer;height:42px;padding:0 16px;border-radius:999px;display:flex;align-items:center;font-size:14px;color:var(--ink2)">Cancel</span><span onClick="{{ createSubject }}" style="cursor:pointer;height:42px;padding:0 20px;border-radius:999px;background:var(--btn);color:var(--on-btn);display:flex;align-items:center;font-size:14px;font-weight:600">Create subject</span></div>
+</sc-if>
+<sc-if value="{{ dlgRoom }}">
+<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:20px;font-weight:600;letter-spacing:-0.02em">New study room</span><div style="display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;color:var(--ink2)">{{ stepLabel }}</span><div style="display:flex;gap:4px"><sc-for list="{{ stepDots }}" as="d" hint-placeholder-count="3"><span style="width:18px;height:5px;border-radius:3px;background:{{ d.bg }}"></span></sc-for></div></div></div>
+<sc-if value="{{ step1 }}"><div style="display:flex;flex-direction:column;gap:14px"><input value="{{ roomNameV }}" onChange="{{ onRoomName }}" autoFocus placeholder="Evening focus" style="height:48px;border-radius:14px;border:none;background:var(--sunken);padding:0 14px;font-size:16px;color:var(--ink);outline-color:var(--acc)"><div style="display:flex;gap:2px;background:var(--sunken);border-radius:999px;padding:3px;font-size:13.5px;font-weight:600"><sc-for list="{{ roomVis }}" as="v" hint-placeholder-count="2"><span onClick="{{ v.pick }}" style="cursor:pointer;flex:1;text-align:center;padding:8px 0;border-radius:999px;background:{{ v.bg }};color:{{ v.fg }}">{{ v.n }}</span></sc-for></div><span style="font-size:12.5px;color:var(--ink2)">Private rooms need an invitation. Friends-only rooms can be joined by your friends.</span></div></sc-if>
+<sc-if value="{{ step2 }}"><div style="display:flex;flex-direction:column;gap:12px"><span style="font-size:13.5px;font-weight:500">Shared rhythm</span><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"><sc-for list="{{ roomPresets }}" as="p" hint-placeholder-count="3"><div onClick="{{ p.pick }}" style="cursor:pointer;border-radius:16px;padding:14px;background:{{ p.bg }};color:{{ p.fg }};display:flex;flex-direction:column;gap:2px"><span style="font-size:14.5px;font-weight:600">{{ p.n }}</span><span style="font-size:12.5px;opacity:.85">{{ p.d }} min</span></div></sc-for></div><span style="font-size:12.5px;color:var(--ink2)">Long break every 4 cycles · up to 8 people. Fine-tune later in room settings.</span></div></sc-if>
+<sc-if value="{{ step3 }}"><div style="display:flex;flex-direction:column"><div onClick="{{ flipChat }}" style="cursor:pointer;display:flex;align-items:center;gap:14px;min-height:58px;border-bottom:1px solid var(--hair)"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:500">Room chat</span><span style="font-size:12.5px;color:var(--ink2)">Only opens during breaks</span></div><span style="width:44px;height:26px;border-radius:13px;background:{{ chatSw.bg }};position:relative"><span style="position:absolute;top:3px;left:{{ chatSw.x }}px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s"></span></span></div><div onClick="{{ flipInvite }}" style="cursor:pointer;display:flex;align-items:center;gap:14px;min-height:58px"><div style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:500">Members may invite friends</span><span style="font-size:12.5px;color:var(--ink2)">Otherwise only you can invite</span></div><span style="width:44px;height:26px;border-radius:13px;background:{{ inviteSw.bg }};position:relative"><span style="position:absolute;top:3px;left:{{ inviteSw.x }}px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s"></span></span></div></div></sc-if>
+<div style="display:flex;justify-content:space-between;gap:8px"><span onClick="{{ prevStep }}" style="cursor:pointer;height:42px;padding:0 16px;border-radius:999px;display:{{ backVis }};align-items:center;font-size:14px;color:var(--ink2)">Back</span><span style="flex:1"></span><span onClick="{{ nextStep }}" style="cursor:pointer;height:42px;padding:0 20px;border-radius:999px;background:var(--btn);color:var(--on-btn);display:flex;align-items:center;font-size:14px;font-weight:600">{{ nextLabel }}</span></div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ toast }}">
+<div role="status" aria-live="polite" style="position:fixed;left:50%;bottom:{{ toastBottom }};transform:translateX(-50%);z-index:80;background:#241C1F;color:#FAF7F5;border-radius:18px;padding:12px 14px 12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 20px 40px -16px rgba(36,28,31,.6);animation:rise .25s ease-out;max-width:calc(100vw - 32px)"><i class="{{ toastIc }}" style="font-size:18px;color:#E9A3B2"></i><span style="font-size:14px">{{ toastMsg }}</span><span onClick="{{ toastDo }}" style="cursor:pointer;font-size:13.5px;font-weight:600;color:#E9A3B2;display:{{ toastActD }};padding-left:6px">{{ toastAct }}</span></div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    vw: 1440, page:'dashboard', collapsed:false, theme:'Light', accent:'Pink', gam:true, displayName:'Elena Barbajosa',
+    qa:'', taskTab:'Today', taskSubj:null,
+    tasks:[
+      {id:1,title:'Integration by parts — exercises 4–9',s:'cal',p:'!!!',b:'today',due:'Today',subs:[2,6],done:false},
+      {id:2,title:'Summary, unit 5: confidence intervals',s:'est',p:'!!',b:'today',due:'Today',done:false},
+      {id:3,title:'Implement Dijkstra with a binary heap',s:'ada',p:'!!!',b:'today',due:'Today',subs:[1,3],done:false},
+      {id:4,title:'Read "Attention Is All You Need"',s:'ia',p:'!',b:'today',due:'Today',done:false},
+      {id:5,title:'Set up S3 bucket for lab 3',s:'nube',p:'',b:'today',due:'Today',done:true},
+      {id:6,title:'Problem set 4: eigenvalues',s:'alg',p:'!!!',b:'upcoming',due:'Mon 16',subs:[0,5],done:false},
+      {id:7,title:'Mock exam, Calculus I',s:'cal',p:'!!',b:'upcoming',due:'Wed 18',done:false},
+      {id:8,title:'Lab 3 report draft',s:'nube',p:'!!',b:'upcoming',due:'Mon 23',done:false},
+      {id:9,title:'Flashcards: hypothesis tests',s:'est',p:'!',b:'upcoming',due:'Tue 24',done:false},
+      {id:10,title:'Lecture notes, week 9',s:'alg',p:'',b:'done',due:'Thu 12',done:true}
+    ],
+    fMode:'pomo', fRun:false, fLen:25, fBrk:5, fRem:1500, fEl:0, fPreset:'Classic', fSubj:'cal', fGoal:'Finish exercises 4–9 from sheet 3', fPrim:'rain', fMix:'cafe', fV1:60, fV2:25, zen:false, cycle:2,
+    sessions:[{s:'cal',min:51,t:'10:45'},{s:'ada',min:90,t:'16:00'}],
+    events:[
+      {id:1,d:0,s0:9,du:1.5,t:'Calculus I lecture',s:'cal',k:'class'},{id:2,d:0,s0:11,du:1.5,t:'Algorithms lecture',s:'ada',k:'class'},{id:3,d:0,s0:16,du:1.5,t:'Focus · Linear Algebra',s:'alg',k:'done'},
+      {id:4,d:1,s0:9,du:1.5,t:'Linear Algebra',s:'alg',k:'class'},{id:5,d:1,s0:12,du:1.5,t:'Statistics',s:'est',k:'class'},{id:6,d:1,s0:17,du:1,t:'Focus · Calculus',s:'cal',k:'done'},
+      {id:7,d:2,s0:9,du:1.5,t:'Calculus I lecture',s:'cal',k:'class'},{id:8,d:2,s0:13,du:1,t:'Gym',s:null,k:'personal'},{id:9,d:2,s0:15,du:1.5,t:'Cloud lab',s:'nube',k:'class'},
+      {id:10,d:3,s0:10,du:1.5,t:'AI seminar',s:'ia',k:'class'},{id:11,d:3,s0:12,du:1.5,t:'Algorithms lecture',s:'ada',k:'class'},{id:12,d:3,s0:17,du:1,t:'Focus · Statistics',s:'est',k:'done'},
+      {id:13,d:4,s0:9,du:1.5,t:'Linear Algebra',s:'alg',k:'class'},{id:14,d:4,s0:12,du:1,t:'Quiz 3 · Statistics',s:'est',k:'exam'},{id:15,d:4,s0:19,du:2,t:'Marta\u2019s birthday',s:null,k:'personal'},
+      {id:16,d:5,s0:10.75,du:0.85,t:'Focus · Calculus',s:'cal',k:'done'},{id:17,d:5,s0:16,du:1.5,t:'Focus · Algorithms',s:'ada',k:'done'},{id:18,d:5,s0:18.5,du:1,t:'Stats study group',s:'est',k:'class'},{id:19,d:5,s0:20,du:1.5,t:'Focus · Calculus',s:'cal',k:'plan'},
+      {id:20,d:6,s0:10,du:2,t:'Calculus review',s:'cal',k:'plan'},{id:21,d:6,s0:16,du:1,t:'Flashcards',s:'alg',k:'plan'}
+    ],
+    calDay:5, calView:'Week',
+    subjects:[
+      {k:'alg',name:'Linear Algebra',c:'#8E7CCB',desc:'Vectors, matrices and linear maps',diff:4,topics:[['Vector spaces','m'],['Linear maps','m'],['Determinants','m'],['Eigenvalues','r'],['Diagonalization','n']]},
+      {k:'cal',name:'Calculus I',c:'#D46A80',desc:'Limits, derivatives, integrals',diff:4,topics:[['Limits and continuity','m'],['Derivatives','m'],['Applications of the derivative','m'],['Integration techniques','r'],['Definite integrals','r'],['Improper integrals','n']]},
+      {k:'ada',name:'Algorithms',c:'#4E9E78',desc:'Design and analysis of algorithms',diff:5,topics:[['Complexity','m'],['Divide and conquer','m'],['Greedy','m'],['Graphs','r'],['Dynamic programming','n']]},
+      {k:'est',name:'Inferential Statistics',c:'#6A7BCF',desc:'Estimation and hypothesis testing',diff:3,topics:[['Sampling','m'],['Point estimation','m'],['Confidence intervals','r'],['Hypothesis testing','n']]},
+      {k:'nube',name:'Cloud Storage',c:'#4C93C9',desc:'Distributed storage systems',diff:2,topics:[['Object storage','m'],['Replication','n'],['Consistency','n']]},
+      {k:'ia',name:'Natural & AI',c:'#C98A2E',desc:'Cognition, learning, neural models',diff:3,topics:[['Perception','n'],['Learning','n'],['Neural networks','n']]}
+    ],
+    selSubj:null,
+    dlg:null, newSubj:{name:'',c:'#3E9C96',diff:3}, newEv:{d:5,s0:21,t:'',k:'plan',s:'cal'}, roomStep:1, newRoomD:{name:'',vis:'Friends only',preset:'Classic',chat:true,invite:false},
+    rooms:[{id:'late',name:'Late library',host:'Marco',vis:'Friends only',people:['mr','is','pn'],rem:852,phase:'Focus · 3 of 4'},{id:'algo',name:'Algorithms crew',host:'Isabella',vis:'Friends only',people:['is','lg'],rem:220,phase:'Break'}],
+    invite:true, room:null, roomRem:852,
+    requests:[{i:'AT',n:'Ana Torres',u:'@anatorres',bg:'#E1F2F0',fg:'#226B66'},{i:'DV',n:'Diego Vela',u:'@dvela',bg:'#FBEBE1',fg:'#9A4F24'}],
+    friendsQ:'', badges:{first:1,early:1,owl:1,deep:1,mara:1,help:1,plan:1},
+    setSec:'Appearance', every:4, autoStart:false, chimes:true, priv:{avatar:'Private',online:'Friends',status:'Private',stats:'Private'}, board:false,
+    toast:null
+  };
+  qaRef = React.createRef();
+  componentDidMount(){
+    try{ const sv = JSON.parse(localStorage.getItem('studi-proto-v1')||'{}'); const keep={}; ['page','theme','accent','collapsed'].forEach(k=>{ if(sv[k]!==undefined) keep[k]=sv[k]; }); this.setState(keep); }catch(e){}
+    this.onResize = () => this.setState({vw: window.innerWidth}); window.addEventListener('resize', this.onResize); this.onResize();
+    this.iv = setInterval(() => this.tick(), 1000);
+    this.onKey = e => this.key(e); window.addEventListener('keydown', this.onKey);
+    this.mq = window.matchMedia('(prefers-color-scheme: dark)'); this.mqL = () => this.forceUpdate(); this.mq.addEventListener && this.mq.addEventListener('change', this.mqL);
+    this.applyVars();
+  }
+  componentDidUpdate(){ this.applyVars(); try{ localStorage.setItem('studi-proto-v1', JSON.stringify({page:this.state.page,theme:this.state.theme,accent:this.state.accent,collapsed:this.state.collapsed})); }catch(e){} }
+  componentWillUnmount(){ clearInterval(this.iv); window.removeEventListener('resize', this.onResize); window.removeEventListener('keydown', this.onKey); clearTimeout(this.tt); clearTimeout(this.tt2); }
+  isDark(){ const t=this.state.theme; return t==='Dark' || (t==='System' && this.mq && this.mq.matches); }
+  applyVars(){
+    const ACC = {Pink:['#F6D5DC','#D98A9B','#A63D57','#3A2329','#E9A3B2'],Blue:['#DCE8F6','#7FA8D9','#2F6497','#1F2A36','#9DBDE3'],Sage:['#DDEBE2','#86B79B','#2F6E50','#1E2B24','#A3CBB3'],Lavender:['#E7E1F6','#A99BDB','#5B4A99','#272236','#BDB2E6'],Peach:['#F8E0D2','#E7A57F','#9A4F24','#33251E','#EDBA9A'],Neutral:['#E9E4E1','#9C9094','#4A3F43','#2A2427','#BDB1B5']};
+    const a = ACC[this.state.accent], d = this.isDark();
+    const v = d ? {chrome:'#171315',canvas:'#1F1A1C',raised:'#262022',sunken:'#2B2427',hover:'#332B2E',hair:'#3A3034',ink:'#F3ECEE',ink2:'#BDB1B5',ink3:'#9C9094',ink4:'#5E5357','acc-soft':a[3],acc:a[4],'acc-text':a[4],btn:a[4],'on-btn':'#241C1F',shadow:'rgba(0,0,0,.3)','hero-ink':'#D9CCD0'}
+      : {chrome:'#F4EFEB',canvas:'#FDFBFA',raised:'#FFFFFF',sunken:'#F4EFEB',hover:'#EDE6E1',hair:'#ECE5E1',ink:'#241C1F',ink2:'#5E5357',ink3:'#7A6E72',ink4:'#B9AEB2','acc-soft':a[0],acc:a[1],'acc-text':a[2],btn:a[2],'on-btn':'#FFFFFF',shadow:'rgba(60,30,40,.08)','hero-ink':'#4A3F43'};
+    const r = document.documentElement.style; Object.entries(v).forEach(([k,x])=>r.setProperty('--'+k,x));
+  }
+  toast(msg, ic, act, actFn){ clearTimeout(this.tt); this.setState({toast:{msg,ic:ic||'icon-circle-check',act:act||'',actFn:actFn||null}}); this.tt=setTimeout(()=>this.setState({toast:null}),3800); }
+  tick(){
+    const s=this.state, up={};
+    if(s.fRun){ if(s.fMode==='pomo'){ if(s.fRem<=1){ up.fRem=0; up.fRun=false; setTimeout(()=>this.finish(true),0); } else up.fRem=s.fRem-1; } else up.fEl=s.fEl+1; }
+    if(s.room) up.roomRem = s.roomRem>1 ? s.roomRem-1 : 1500;
+    if(Object.keys(up).length) this.setState(up);
+  }
+  key(e){
+    const tag=(e.target.tagName||'').toLowerCase(); const typing = tag==='input'||tag==='textarea';
+    if(e.key==='Escape'){ this.setState({dlg:null,zen:false,selSubj: this.state.dlg?this.state.selSubj:null}); return; }
+    if((e.metaKey||e.ctrlKey) && e.key==='\\'){ e.preventDefault(); this.setState(s=>({collapsed:!s.collapsed})); return; }
+    if((e.metaKey||e.ctrlKey) && e.key===','){ e.preventDefault(); this.go('settings'); return; }
+    if((e.metaKey||e.ctrlKey) && e.key==='Enter' && this.state.page==='focus'){ e.preventDefault(); this.finish(); return; }
+    if((e.metaKey||e.ctrlKey) && e.key==='.'){ e.preventDefault(); this.setState(s=>({zen:!s.zen,page:'focus'})); return; }
+    if(typing || e.metaKey || e.ctrlKey || e.altKey) return;
+    if(e.key==='f'||e.key==='F'){ this.go('focus'); }
+    else if(e.key==='n'||e.key==='N'){ e.preventDefault(); this.go('tasks'); setTimeout(()=>this.qaRef.current&&this.qaRef.current.focus(),60); }
+    else if(e.key===' ' && this.state.page==='focus'){ e.preventDefault(); this.setState(s=>({fRun:!s.fRun})); }
+    else if((e.key==='r'||e.key==='R') && this.state.page==='focus'){ this.resetTimer(); }
+  }
+  go(page){ this.setState({page, expandNarrow:false, room: page==='together'?this.state.room:null, selSubj:null, dlg:null}); const m=document.querySelector('main'); if(m&&m.parentElement) window.scrollTo(0,0); }
+  resetTimer(){ this.setState(s=>({fRun:false,fRem:s.fLen*60,fEl:0})); }
+  finish(auto){
+    const s=this.state; const sec = s.fMode==='pomo' ? s.fLen*60 - s.fRem : s.fEl;
+    if(sec<1 && !auto){ this.toast('Nothing to save yet — start the timer first','icon-info'); return; }
+    const min = Math.max(1, Math.round(sec/60));
+    const now = new Date(); const t = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const first = !s.badges.roll;
+    this.setState(x=>({sessions:[...x.sessions,{s:x.fSubj,min,t}], fRun:false, fRem:x.fLen*60, fEl:0, cycle: x.cycle%4+1, zen:false, badges: {...x.badges, roll:1}}));
+    const subj = s.subjects.find(z=>z.k===s.fSubj);
+    this.toast(`${auto?'Focus complete · ':''}Session saved · ${min} min ${subj?subj.name:''}`,'icon-circle-check','Statistics',()=>this.go('statistics'));
+    if(first && s.gam){ clearTimeout(this.tt2); this.tt2=setTimeout(()=>this.toast('Achievement unlocked · On a roll','icon-medal','View',()=>this.go('progress')),4000); }
+  }
+  parseQA(text){
+    let s=null, p='', b='today', due='Today'; let t=text;
+    t = t.replace(/@(\S+)/, (m,k)=>{ const kk=k.toLowerCase(); const f=this.state.subjects.find(z=>z.k.startsWith(kk)||z.name.toLowerCase().startsWith(kk)); if(f) s=f.k; return ''; });
+    t = t.replace(/(^|\s)(!{1,3})(?=\s|$)/, (m,a,x)=>{ p=x; return ' '; });
+    t = t.replace(/\b(today|tomorrow|week|next week)\b/i, (m)=>{ const w=m.toLowerCase(); if(w==='tomorrow'){b='upcoming';due='Tomorrow';} else if(w.includes('week')){b='upcoming';due='Next week';} return ''; });
+    return {title:t.replace(/\s+/g,' ').trim(), s: s || this.state.taskSubj, p, b, due};
+  }
+  tone(c){ const d=this.isDark(); return {c, t: d?`color-mix(in srgb, ${c} 22%, #262022)`:`color-mix(in srgb, ${c} 14%, #FFFFFF)`, d: d?`color-mix(in srgb, ${c} 55%, #FFFFFF)`:`color-mix(in srgb, ${c} 70%, #241C1F)`}; }
+  renderVals() {
+    const st = this.state, dark = this.isDark();
+    const mobile = st.vw < 768, narrow = st.vw < 1100, collapsed = narrow ? !st.expandNarrow : st.collapsed;
+    const subj = k => st.subjects.find(z=>z.k===k);
+    const T = k => { const z=subj(k); return z ? {...this.tone(z.c), n:z.name} : {c:'#9C9094',t:'var(--sunken)',d:'var(--ink2)',n:'No subject'}; };
+    const go = p => () => this.go(p);
+    // nav
+    const navDef = [
+      {label:'', items:[['dashboard','Dashboard','icon-layout-grid'],['tasks','Tasks','icon-circle-check'],['calendar','Calendar','icon-calendar'],['planner','Study Planner','icon-calendar-range']]},
+      {label:'Study', items:[['focus','Focus','icon-timer'],['subjects','Subjects','icon-book-open']]},
+      {label:'Together', items:[['together','Study Together','icon-coffee'],['friends','Friends','icon-users']]},
+      {label:'Insights', items:[['statistics','Statistics','icon-chart-column'],['progress','Progress','icon-trophy']]}
+    ];
+    const openTasks = st.tasks.filter(t=>t.b==='today'&&!t.done).length;
+    const badgeOf = {tasks: String(openTasks), together: String(st.rooms.length), friends: st.requests.length?String(st.requests.length):''};
+    const navGroups = navDef.map(g=>({label:collapsed?'':g.label, lh: g.label?(collapsed?6:20):0, items: g.items.filter(([p])=> st.gam || p!=='progress').map(([p,n,ic])=>{ const a = st.page===p;
+      return {n,ic,go:go(p),bg:a?'var(--canvas)':'transparent',hbg:a?'var(--canvas)':'var(--hover)',fg:a?'var(--ink)':'var(--ink2)',w:a?600:500,sh:a?'0 1px 2px var(--shadow)':'none',icc:a?'var(--acc-text)':'var(--ink3)',badge:badgeOf[p]||'',bd:(!collapsed&&badgeOf[p])?'block':'none'}; })}));
+    // tasks
+    const P = {'!!!':'#C2475F','!!':'#B5702A','!':'var(--ink3)'};
+    const row = t => { const x=T(t.s); return {title:t.title, sn:x.n, sc:x.c, p:t.p, pc:P[t.p]||'var(--ink3)', due:t.due, subs: t.subs?`${t.subs[0]}/${t.subs[1]}`:'', subD: t.subs?'inline-flex':'none',
+      ring:t.done?'var(--btn)':'var(--ink4)', fill:t.done?'var(--btn)':'transparent', ck:t.done?'icon-check':'', fg:t.done?'var(--ink3)':'var(--ink)', dec:t.done?'line-through':'none',
+      toggle:()=>{ this.setState(s=>({tasks:s.tasks.map(z=>z.id===t.id?{...z,done:!z.done}:z)})); if(!t.done) this.toast('Task completed','icon-circle-check','Undo',()=>this.setState(s=>({tasks:s.tasks.map(z=>z.id===t.id?{...z,done:false}:z)}))); },
+      start:()=>this.setState({page:'focus',fSubj:t.s||st.fSubj,fGoal:t.title,fMode:'pomo',fRem:st.fLen*60,fEl:0,fRun:true})}; };
+    const todayTasks = st.tasks.filter(t=>t.b==='today').sort((a,b)=>(a.done-b.done)).slice(0,6).map(row);
+    const tabFilter = {Today:t=>t.b==='today', Upcoming:t=>t.b==='upcoming'&&!t.done, All:t=>!t.done, Done:t=>t.done};
+    const taskTabs = ['Today','Upcoming','All','Done'].map(n=>({n, c:String(st.tasks.filter(tabFilter[n]).filter(t=>!st.taskSubj||t.s===st.taskSubj).length), bg:st.taskTab===n?'var(--raised)':'transparent', fg:st.taskTab===n?'var(--ink)':'var(--ink2)', pick:()=>this.setState({taskTab:n})}));
+    const taskList = st.tasks.filter(tabFilter[st.taskTab]).filter(t=>!st.taskSubj||t.s===st.taskSubj).sort((a,b)=>(a.done-b.done)||(b.p.length-a.p.length)).map(row);
+    const subjFilter = [{n:'All subjects',c:'',dd:'none',bg:!st.taskSubj?'var(--ink)':'var(--sunken)',fg:!st.taskSubj?'var(--canvas)':'var(--ink)',ring:'none',pick:()=>this.setState({taskSubj:null})}]
+      .concat(st.subjects.map(z=>{ const x=this.tone(z.c), a=st.taskSubj===z.k; return {n:z.name,c:z.c,dd:'block',bg:a?x.t:'var(--sunken)',fg:a?x.d:'var(--ink)',ring:a?`inset 0 0 0 1.5px ${z.c}`:'none',pick:()=>this.setState({taskSubj:a?null:z.k})}; }));
+    const pq = this.parseQA(st.qa); const pqt = T(pq.s);
+    const qaPreview = {show: st.qa.trim().length>2 && (/[@!]/.test(st.qa)||/tomorrow|week/i.test(st.qa)), t:pqt.t, d:pqt.d, c:pqt.c, sn:pqt.n, due:pq.due, p:pq.p};
+    const qaKey = e => { if(e.key==='Enter'){ const r=this.parseQA(st.qa); if(!r.title) return; this.setState(s=>({qa:'', tasks:[{id:Date.now(),title:r.title,s:r.s,p:r.p,b:r.b,due:r.due,done:false},...s.tasks]})); this.toast(`Added to ${r.due==='Today'?'Today':r.due}`,'icon-plus'); } else if(e.key==='Escape'){ e.target.blur(); } };
+    // up next
+    const un = st.tasks.filter(t=>t.b==='today'&&!t.done).sort((a,b)=>b.p.length-a.p.length)[0];
+    const examOf = {cal:'Midterm 2 on Thursday',alg:'Problem set 4 due Monday',nube:'Lab 3 report in 9 days',est:'Final in 12 days'};
+    const upNext = un ? {label:'Up next', title:un.title, meta:`${T(un.s).n}${examOf[un.s]?' · '+examOf[un.s]:''}`} : {label:'All done for today', title:'Review something for Midterm 2', meta:'Calculus I · 3 of 6 topics mastered'};
+    // focus calc
+    const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+    const pomo = st.fMode==='pomo', total = st.fLen*60;
+    const frac = pomo ? st.fRem/total : (st.fEl%3600)/3600;
+    const ft = T(st.fSubj);
+    const presets = [['Sprint',15,3],['Classic',25,5],['Deep',50,10]].map(([n,f,b])=>{ const a=st.fPreset===n; return {n,d:`${f} / ${b}`,bg:a?'var(--ink)':'var(--raised)',fg:a?'var(--canvas)':'var(--ink)',pick:()=>this.setState({fPreset:n,fLen:f,fBrk:b,fRem:f*60,fRun:false})}; })
+      .concat([{n:'Custom',d: st.fPreset==='Custom'?`${st.fLen} / ${st.fBrk}`:'Your own',bg:st.fPreset==='Custom'?'var(--ink)':'var(--raised)',fg:st.fPreset==='Custom'?'var(--canvas)':'var(--ink)',pick:()=>this.setState({fPreset:'Custom'})}]);
+    const SD = [['silence','Silence','icon-volume-x'],['white','White noise','icon-audio-waveform'],['rain','Rain','icon-cloud-rain'],['cafe','Café','icon-coffee'],['forest','Forest','icon-trees']];
+    const nameOf = id => (SD.find(x=>x[0]===id)||[])[1];
+    const sounds = SD.map(([id,n,ic])=>{ const p=st.fPrim===id, m=st.fMix===id; return {n,ic,bg:p?'var(--btn)':'var(--sunken)',fg:p?'var(--on-btn)':'var(--ink)',ring:m?'inset 0 0 0 1.5px var(--acc)':'none',mixShow:(id==='silence'||p)?'none':'block',mixLabel:m?'Mixed ✓':'+ Mix',
+      pick:()=>this.setState(s=>({fPrim:id,fMix:s.fMix===id?'silence':s.fMix})), pickMix:e=>{e.stopPropagation(); this.setState(s=>({fMix:s.fMix===id?'silence':id}));}}; });
+    const fSubjChips = st.subjects.map(z=>{ const x=this.tone(z.c), a=st.fSubj===z.k; return {n:z.name,c:z.c,bg:a?x.t:'var(--sunken)',fg:a?x.d:'var(--ink)',ring:a?`inset 0 0 0 1.5px ${z.c}`:'none',pick:()=>this.setState({fSubj:z.k})}; });
+    const todayMin = 0 + st.sessions.reduce((a,x)=>a+x.min,0);
+    const hm = m => `${Math.floor(m/60)}h ${String(m%60).padStart(2,'0')}m`;
+    const sessionList = st.sessions.slice().reverse().slice(0,4).map(x=>({t:x.t,s:T(x.s).n,c:T(x.s).c,d:x.min>=60?hm(x.min):x.min+'m'}));
+    const weekMin = 619 + todayMin;
+    const goalH = 30;
+    const wv = [2.4,3.0,1.2,2.3,2.0,todayMin/60,0];
+    const weekBars = ['M','T','W','T','F','S','S'].map((d,i)=>({d, v: wv[i]? (wv[i]>=1?wv[i].toFixed(1)+'h':Math.round(wv[i]*60)+'m'):'', h:Math.max(6,Math.min(1,wv[i]/4)*80), bg:i===5?'var(--btn)':(wv[i]?'var(--acc)':'var(--hair)'), fg:i===5?'var(--acc-text)':'var(--ink3)'}));
+    // calendar
+    const H0=8, HH=40;
+    const evStyle = (s,k) => { if(k==='personal') return {bg:'var(--sunken)',bd:'none',fg:'var(--ink2)',ic:'icon-user'}; const x=T(s);
+      if(k==='class') return {bg:x.t,bd:'none',fg:x.d,ic:'icon-school'}; if(k==='done') return {bg:x.c,bd:'none',fg:'#fff',ic:'icon-timer'};
+      if(k==='exam') return {bg:dark?'#F3ECEE':'#241C1F',bd:'none',fg:dark?'#241C1F':'#fff',ic:'icon-graduation-cap'}; return {bg:'var(--raised)',bd:`1.5px dashed ${x.c}`,fg:x.d,ic:'icon-timer'}; };
+    const fmtH = h => `${Math.floor(h)}:${String(Math.round((h%1)*60)).padStart(2,'0')}`;
+    const wd = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const weekCols = wd.map((l,i)=>({l, n:9+i, today:i===5, hbg:i===5?'var(--btn)':'transparent', hfg:i===5?'var(--on-btn)':'var(--ink)', lc:i===5?'var(--acc-text)':'var(--ink3)', col:i>=5?'var(--canvas)':'transparent',
+      click: e => { if(e.target!==e.currentTarget) return; const r=e.currentTarget.getBoundingClientRect(); const h=H0+Math.floor((e.clientY-r.top)/HH*2)/2; this.setState({dlg:'event',newEv:{d:i,s0:Math.min(21,h),t:'',k:'plan',s:st.fSubj}}); },
+      evs: st.events.filter(e=>e.d===i).map(e=>({t:e.t,time:`${fmtH(e.s0)}–${fmtH(e.s0+e.du)}`,y:(e.s0-H0)*HH+1,h:e.du*HH-3,op:(i<5||(i===5&&e.s0<19))&&e.k!=='exam'?0.8:1,tdisp:e.du>=1?'block':'none',...evStyle(e.s,e.k)}))}));
+    const calHours = Array.from({length:14},(_,i)=>({l:`${H0+i}:00`,y:i*HH}));
+    const nowY = (19.33-H0)*HH;
+    const strip = wd.map((l,i)=>{ const a=st.calDay===i; return {l:l[0],n:9+i,bg:a?'var(--ink)':'transparent',fg:a?'var(--canvas)':(i===5?'var(--acc-text)':'var(--ink)'),dots:st.events.filter(e=>e.d===i).slice(0,3).map(e=>e.s?T(e.s).c:'var(--ink4)'),pick:()=>this.setState({calDay:i})}; });
+    const dayList = st.events.filter(e=>e.d===st.calDay).sort((a,b)=>a.s0-b.s0).map(e=>({t:e.t,time:`${fmtH(e.s0)}–${fmtH(e.s0+e.du)}`,...evStyle(e.s,e.k)}));
+    const evTypes = [['plan','Study'],['exam','Exam'],['class','Class'],['personal','Personal']].map(([k,n])=>({n,bg:st.newEv.k===k?'var(--raised)':'transparent',fg:st.newEv.k===k?'var(--ink)':'var(--ink2)',pick:()=>this.setState(s=>({newEv:{...s.newEv,k}}))}));
+    const evSubj = st.subjects.map(z=>{ const x=this.tone(z.c), a=st.newEv.s===z.k; return {n:z.name,c:z.c,bg:a?x.t:'var(--sunken)',fg:a?x.d:'var(--ink)',ring:a?`inset 0 0 0 1.5px ${z.c}`:'none',pick:()=>this.setState(s=>({newEv:{...s.newEv,s:z.k}}))}; });
+    const createEvent = () => { const e=st.newEv; const t = e.t.trim() || (e.k==='plan'?`Focus · ${T(e.s).n}`:'Untitled'); this.setState(s=>({dlg:null,calDay:e.d,events:[...s.events,{id:Date.now(),d:e.d,s0:e.s0,du:e.k==='exam'?2:1.5,t,s:e.k==='personal'?null:e.s,k:e.k}]})); this.toast(`Added to ${wd[e.d]} ${9+e.d} at ${fmtH(e.s0)}`,'icon-calendar-check'); };
+    // subjects
+    const stat = s => s==='m'?{s:'Mastered',sc:'#2F6E50',sb:dark?'#1E2B24':'#E6F3EC',ic:'icon-circle-check',icc:'#4E9E78'}: s==='r'?{s:'Reviewing',sc:dark?'#E0B872':'#8A5A12',sb:dark?'#33281A':'#FAF0DF',ic:'icon-circle-dot',icc:'#C98A2E'}:{s:'Not started',sc:'var(--ink2)',sb:'var(--sunken)',ic:'icon-circle',icc:'var(--ink4)'};
+    const nextOf = {alg:'Problem set · 2d',cal:'Midterm · 5d',ada:'Lab · 9d',est:'Final · 12d',nube:'Lab report · 9d'};
+    const subjTiles = st.subjects.map(z=>{ const x=this.tone(z.c), done=z.topics.filter(t=>t[1]==='m').length;
+      return {name:z.name,desc:z.desc||'No description yet',t:x.t,c:z.c,d:x.d,ring:st.selSubj===z.k?`0 0 0 2px ${z.c}`:'none',diff:[1,2,3,4,5].map(i=>i<=z.diff?z.c:'var(--hair)'),
+        seg:(z.topics.length?z.topics:[[0,'n']]).map(t=>t[1]==='m'?z.c:'var(--raised)'),prog:z.topics.length?`${done} of ${z.topics.length} topics mastered`:'No topics yet',next:nextOf[z.k]||'No exams yet',open:()=>this.setState({selSubj:z.k})}; });
+    const sz = subj(st.selSubj);
+    const szT = sz ? this.tone(sz.c) : {t:'',d:'',c:''};
+    const selTopics = sz ? sz.topics.map((t,i)=>({n:t[0],...stat(t[1]),cyc:()=>this.setState(s=>({subjects:s.subjects.map(q=>q.k!==sz.k?q:{...q,topics:q.topics.map((tt,j)=>j!==i?tt:[tt[0],tt[1]==='n'?'r':tt[1]==='r'?'m':'n'])})}))})) : [];
+    const selTasks = sz ? st.tasks.filter(t=>t.s===sz.k&&!t.done).map(row) : [];
+    const PAL = ['#D46A80','#4C93C9','#4E9E78','#8E7CCB','#E08A5B','#6B7280','#D9706B','#C98A2E','#3E9C96','#6A7BCF'];
+    const palPick = PAL.map(c=>({c,ring:st.newSubj.c===c?`0 0 0 3px var(--raised),0 0 0 5px ${c}`:'none',pick:()=>this.setState(s=>({newSubj:{...s.newSubj,c}}))}));
+    const diffPick = [1,2,3,4,5].map(n=>({n,bg:st.newSubj.diff===n?'var(--btn)':'var(--sunken)',fg:st.newSubj.diff===n?'var(--on-btn)':'var(--ink)',pick:()=>this.setState(s=>({newSubj:{...s.newSubj,diff:n}}))}));
+    const nsT = this.tone(st.newSubj.c);
+    const createSubject = () => { const n=st.newSubj.name.trim(); if(!n){ this.toast('Give the subject a name first','icon-info'); return; } const k='s'+Date.now(); this.setState(s=>({dlg:null,selSubj:k,subjects:[...s.subjects,{k,name:n,c:s.newSubj.c,desc:'',diff:s.newSubj.diff,topics:[]}],newSubj:{name:'',c:'#3E9C96',diff:3}})); this.toast(`${n} created`,'icon-book-open'); };
+    // people
+    const A = {mr:{i:'MR',n:'Marco Ruiz',bg:'#E6F3EC',fg:'#2F6E50'},is:{i:'IS',n:'Isabella',bg:'#E5F0F9',fg:'#2B6896'},lg:{i:'LG',n:'Lucía Gómez',bg:'#FAF0DF',fg:'#8A5A12'},pn:{i:'PN',n:'Pablo',bg:'#EFEBFA',fg:'#5B4A99'},me:{i:'EB',n:'You',bg:'#F6D5DC',fg:'#A63D57'}};
+    const liveFriends = [A.mr,A.is,A.pn];
+    const rooms = st.rooms.map(r=>({...r, time:fmt(r.id===st.room?st.roomRem:r.rem), people:r.people.map(p=>A[p]||A.me), join:()=>this.setState({room:r.id,roomRem:r.rem,page:'together'}), bg: r.phase==='Break'?'var(--sunken)':'#E6F3EC', fg: r.phase==='Break'?'var(--ink)':'#241C1F', sub: r.phase==='Break'?'var(--ink2)':'#2F4A3C'}));
+    const curRoom = st.rooms.find(r=>r.id===st.room);
+    const roomPeople = curRoom ? [...curRoom.people.filter(p=>p!=='me').map((p,i)=>({...A[p], s: i===2?'Away · 3 min':['Algorithms','Linear Algebra','Statistics'][i]||'Focusing', ring: i===2?'#3A2E33':'#4E9E78', op: i===2?.55:1})), {...A.me, n:'You', s:T(st.fSubj).n, ring:'#E9A3B2', op:1}] : [];
+    const roomPresets = [['Sprint','15 / 3'],['Classic','25 / 5'],['Deep','50 / 10']].map(([n,d])=>({n,d,bg:st.newRoomD.preset===n?'var(--ink)':'var(--sunken)',fg:st.newRoomD.preset===n?'var(--canvas)':'var(--ink)',pick:()=>this.setState(s=>({newRoomD:{...s.newRoomD,preset:n}}))}));
+    const roomVis = ['Private','Friends only'].map(n=>({n,bg:st.newRoomD.vis===n?'var(--raised)':'transparent',fg:st.newRoomD.vis===n?'var(--ink)':'var(--ink2)',pick:()=>this.setState(s=>({newRoomD:{...s.newRoomD,vis:n}}))}));
+    const sw = on => ({bg:on?'var(--btn)':'var(--hair)',x:on?21:3});
+    const createRoom = () => { const d=st.newRoomD; const name=d.name.trim()||'Evening focus'; const id='r'+Date.now(); const len={Sprint:15,Classic:25,Deep:50}[d.preset]; this.setState(s=>({dlg:null,roomStep:1,rooms:[{id,name,host:'You',vis:d.vis,people:['me'],rem:len*60,phase:'Focus · 1 of 4'},...s.rooms],room:id,roomRem:len*60,newRoomD:{name:'',vis:'Friends only',preset:'Classic',chat:true,invite:false}})); this.toast(`${name} is live · invite link copied`,'icon-link'); };
+    const chat = [{...A.mr,m:'Starting cycle 3, phones away',t:'break'},{...A.is,m:'Can someone explain eigenvalues after this one?',t:'break'},{...A.me,m:'Yes! I have notes from Tuesday',t:'break'}];
+    // friends
+    const friendsAll = [{...A.is,u:'@isabellastudies',s:'Studying Linear Algebra · 32 min',live:'#4E9E78'},{...A.mr,u:'@marcoruiz',s:'Hosting "Late library"',live:'#4E9E78'},{...A.lg,u:'@luciag',s:'On break',live:'#E0A84F'},{...A.pn,u:'@pablo_n',s:'Studying Statistics',live:'#4E9E78'},{i:'SC',n:'Sofía Castro',u:'@sofiac',bg:'#E1F2F0',fg:'#226B66',s:'Offline · last seen 2h',live:'transparent'}];
+    const friendsList = friendsAll.filter(f=>!st.friendsQ||f.n.toLowerCase().includes(st.friendsQ.toLowerCase())||f.u.includes(st.friendsQ.toLowerCase()));
+    const requests = st.requests.map((r,i)=>({...r, accept:()=>{ this.setState(s=>({requests:s.requests.filter((_,j)=>j!==i)})); this.toast(`You and ${r.n} are now friends`,'icon-user-check'); }, decline:()=>this.setState(s=>({requests:s.requests.filter((_,j)=>j!==i)}))}));
+    // stats
+    const totMin = 2290 + todayMin;
+    const statStrip = [['Today',hm(todayMin),todayMin>=180?'Daily target reached':`${180-todayMin} min to daily target`],['This week',hm(weekMin),`${Math.round(weekMin/60/goalH*100)}% of ${goalH}h`],['Total focus',hm(totMin),'since 1 Sep'],['Sessions',String(59+st.sessions.length),'avg 38 min']].map(([l,v,d],i)=>({l,v,d,bl:i?'1px solid var(--hair)':'none'}));
+    const dv = [2.1,3.4,0,2.8,1.5,4.6,0.8,2.4,3.0,1.2,2.3,2.0,todayMin/60,0];
+    const daily = dv.map((v,i)=>({l:'MTWTFSS'[i%7], v: v? (v>=1?v.toFixed(1)+'h':Math.round(v*60)+'m') : '', h:Math.max(5,Math.min(5,v)/5*150), bg:i===12?'var(--btn)':(i>=7?'var(--acc)':'var(--acc-soft)'), fg:i===12?'var(--acc-text)':'var(--ink3)'}));
+    const bySubjMin = {cal:252,ada:186,alg:156,est:90,nube:48,ia:24}; st.sessions.forEach(x=>{ if(x!==st.sessions[0]&&x!==st.sessions[1]) bySubjMin[x.s]=(bySubjMin[x.s]||0)+x.min; });
+    const bsTot = Object.values(bySubjMin).reduce((a,b)=>a+b,0);
+    const bySubj = Object.entries(bySubjMin).sort((a,b)=>b[1]-a[1]).map(([k,m])=>({n:T(k).n,c:T(k).c,pct:Math.round(m/bsTot*100),v:hm(m)}));
+    let seed=7; const rnd=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; };
+    const hc = ['var(--hair)','var(--acc-soft)','var(--acc)','color-mix(in srgb, var(--acc) 50%, var(--btn))','var(--btn)'];
+    const heat = Array.from({length:182},(_,i)=>{ const w=Math.floor(i/7), d=i%7; if(w===25&&d>5) return 'transparent'; const r=rnd(); const base=w<3?0.35:0.75; return hc[r>base?0:Math.min(4,Math.floor(r/base*5+(d<5?0.6:0)))]; });
+    // progress
+    const goalPct = Math.min(100, Math.round(weekMin/60/goalH*100));
+    const BD = [['first','First focus','Complete a session','icon-sparkles','#8E7CCB'],['early','Early bird','Focus before 8:00','icon-sunrise','#C98A2E'],['owl','Night owl','Focus after 23:00','icon-moon-star','#8E7CCB'],['deep','Deep diver','90-minute session','icon-waves','#4C93C9'],['mara','Marathon','10h in one week','icon-timer','#D46A80'],['help','Helping hand','Invite a friend','icon-hand-heart','#4E9E78'],['roll','On a roll','Save a session in the prototype','icon-medal','#E08A5B'],['week','Week warrior','7-day streak · 6/7','icon-flame'],['social','Social studier','5 rooms · 2/5','icon-coffee'],['ready','Exam ready','All topics reviewed','icon-graduation-cap'],['cent','Century','100 hours · 38/100','icon-gauge'],['plan','Planner','Plan a full week','icon-calendar-check','#4E9E78']];
+    const badges = BD.map(([k,n,d,ic,c],i)=>{ const u=!!st.badges[k]&&c; const x=u?this.tone(c):null; return {n,d,ic,bg:u?x.t:'var(--sunken)',fg:u?x.d:'var(--ink4)',sh:u?`inset 0 0 0 2px ${c}55, 0 6px 14px -8px ${c}`:'none',rot:u?(i%2?3:-3):0,newD:k==='roll'&&u?'block':'none'}; });
+    const badgeCount = BD.filter(([k,,,,c])=>st.badges[k]&&c).length + 0;
+    const streak14 = Array.from({length:14},(_,i)=>{ const done=[0,1,2,3,8,9,10,11,12,13].includes(i), rest=i===6, today=i===13; return {l:'MTWTFSS'[i%7],bg:today?'#C98A2E':(done?'#F0D5A8':(rest?'transparent':(dark?'#33281A':'#F6EADB'))),bd:rest?'1.5px dashed #E0C79C':'none'}; });
+    const board = [['1',A.is,'14h 05m'],['2',A.me,hm(weekMin),1],['3',A.mr,'11h 20m'],['4',A.lg,'8h 10m']].map(([rank,p,v,me])=>({rank,i:p.i,n:me?'You':p.n,v,ab:p.bg,af:p.fg,bg:me?'var(--raised)':'transparent',w:me?600:500,rc:rank==='1'?'#C98A2E':'var(--ink3)'}));
+    // planner
+    const planDays = [['Mon',16,3,[['alg','Eigenvalues','1h'],['cal','Integration by parts','1h 30m']]],['Tue',17,3,[['cal','Definite integrals','2h'],['ada','Graphs revision','1h']]],['Wed',18,3.5,[['cal','Improper integrals','1h 30m'],['cal','Mock exam','2h']]],['Thu',19,2,[['exam','Midterm 2 · 9:00','Calculus I']]],['Fri',20,3,[['nube','Lab 3 report','2h']]],['Sat',21,3,[['est','Confidence intervals','1h 30m']]],['Sun',22,3.5,[]]]
+      .map(([l,n,cap,items],i)=>({l,n,cap:items.length?`${[2.5,3,3.5,0,2,1.5,0][i]}h of ${cap}h`:`${cap}h free`,pct:[83,100,100,0,67,50,0][i],bg:i===3?'var(--acc-soft)':'var(--sunken)',items:items.map(([k,t,m])=>k==='exam'?{t,m,bg:dark?'#F3ECEE':'#241C1F',fg:dark?'#241C1F':'#fff',bd:'none'}:{t,m,bg:T(k).t,fg:T(k).d,bd:'none'})}));
+    const backlog = [['cal','Calculus I · Midterm 2','Thu 19',[['Partial fractions','1h 30m']]],['alg','Linear Algebra · Problem set 4','Mon 16',[['Diagonalization','1h']]],['est','Statistics · Final','Thu 26',[['Hypothesis testing','2h']]]]
+      .map(([k,h,when,items])=>({h,when,c:T(k).c,d:T(k).d,t:T(k).t,items:items.map(([n,hh])=>({n,h:hh}))}));
+    // settings
+    const setSecs = [['Profile','icon-user'],['Appearance','icon-palette'],['Focus & Pomodoro','icon-timer'],['Privacy','icon-shield'],['Progress & badges','icon-trophy'],['Account','icon-key-round']].map(([n,ic])=>({n,ic,bg:st.setSec===n?'var(--canvas)':'transparent',w:st.setSec===n?600:500,sh:st.setSec===n?'0 1px 2px var(--shadow)':'none',icc:st.setSec===n?'var(--acc-text)':'var(--ink3)',pick:()=>this.setState({setSec:n})}));
+    const ss = n => st.setSec===n;
+    const ACCL = [['Pink','#D98A9B'],['Blue','#7FA8D9'],['Sage','#86B79B'],['Lavender','#A99BDB'],['Peach','#E7A57F'],['Neutral','#9C9094']];
+    const accents = ACCL.map(([n,c])=>({n,c,ring:st.accent===n?`0 0 0 3px var(--canvas),0 0 0 5px ${c}`:'none',ck:st.accent===n?'icon-check':'',w:st.accent===n?600:500,pick:()=>this.setState({accent:n})}));
+    const themes = [['Light','icon-sun','#F4EFEB','#FDFBFA','#E2D9D4'],['Dark','icon-moon','#171315','#2B2427','#3A3034'],['System','icon-monitor','linear-gradient(105deg,#F4EFEB 50%,#171315 50%)','rgba(160,150,150,.35)','rgba(160,150,150,.5)']].map(([n,ic,bg,card,line])=>({n,ic,bg,card,line,ring:st.theme===n?'0 0 0 2px var(--btn)':'0 0 0 1px var(--hair)',w:st.theme===n?600:500,pick:()=>this.setState({theme:n})}));
+    const sliders = [['Focus length',st.fLen,5,90,5,v=>this.setState({fLen:v,fPreset:'Custom',fRem:v*60,fRun:false})],['Short break',st.fBrk,1,30,1,v=>this.setState({fBrk:v,fPreset:'Custom'})]].map(([n,v,min,max,step,f])=>({n,v,min,max,step,on:e=>f(+e.target.value)}));
+    const everyDots = [2,3,4,5,6].map(n=>({n,bg:st.every===n?'var(--btn)':'var(--sunken)',fg:st.every===n?'var(--on-btn)':'var(--ink)',pick:()=>this.setState({every:n})}));
+    const togg = (n,d,on,flip) => ({n,d,flip,...sw(on)});
+    const focusToggles = [togg('Auto-start breaks and next focus','Keep cycling without pressing start',st.autoStart,()=>this.setState(s=>({autoStart:!s.autoStart}))),togg('Ambient sounds and phase chimes','Plays your Ambience selection',st.chimes,()=>this.setState(s=>({chimes:!s.chimes})))];
+    const gamToggles = [togg('Enable gamification','Streaks, badges, challenges. Off hides Progress; history is kept.',st.gam,()=>this.setState(s=>({gam:!s.gam}))),togg('Friends leaderboard','Weekly verified focus time among friends',st.board,()=>this.setState(s=>({board:!s.board})))];
+    const privRows = [['avatar','Avatar'],['online','Online status'],['status','Current study status'],['stats','Study statistics']].map(([k,n])=>({n,opts:['Private','Friends','Public'].map(o=>({o,bg:st.priv[k]===o?'var(--raised)':'transparent',fg:st.priv[k]===o?'var(--ink)':'var(--ink2)',sh:st.priv[k]===o?'0 1px 2px var(--shadow)':'none',pick:()=>this.setState(s=>({priv:{...s.priv,[k]:o}}))}))}));
+    // mobile
+    const tabs = [['dashboard','Today','icon-house'],['calendar','Calendar','icon-calendar'],['focus','Focus','icon-play'],['tasks','Tasks','icon-circle-check'],['more','More','icon-ellipsis']];
+    const inTabs = ['dashboard','calendar','focus','tasks'].includes(st.page);
+    const mTabs = tabs.map(([p,n,ic])=>{ const c=p==='focus', a=c?false:(st.page===p||(p==='more'&&!inTabs)); return {n,ic,go:go(p),sz:c?50:30,mt:c?-16:0,bg:c?'var(--btn)':'transparent',isz:c?20:22,icc:c?'var(--on-btn)':(a?'var(--acc-text)':'var(--ink3)'),fg:a||c?'var(--acc-text)':'var(--ink3)'}; });
+    const moreTiles = [['together','Study Together','icon-coffee',`${st.rooms.length} rooms live`,'#E6F3EC','#2F6E50'],['subjects','Subjects','icon-book-open','6 subjects','#EFEBFA','#5B4A99'],['planner','Study Planner','icon-calendar-range','14h planned','#FBE9EC','#A23A55'],['progress','Progress','icon-trophy','6-day streak','#FAF0DF','#8A5A12'],['statistics','Statistics','icon-chart-column',hm(weekMin)+' this week','#E5F0F9','#2B6896'],['friends','Friends','icon-users',st.requests.length?`${st.requests.length} requests`:'5 friends','var(--sunken)','var(--ink2)']]
+      .filter(([p])=>st.gam||p!=='progress').map(([p,n,ic,h,bg,fg])=>({n,ic,h,bg:dark&&bg.startsWith('#')?'var(--sunken)':bg,fg:dark?'var(--ink2)':fg,go:go(p)}));
+    const is = {}; ['dashboard','tasks','calendar','focus','subjects','together','friends','statistics','progress','planner','settings','more'].forEach(p=>is[p]=st.page===p);
+    return {
+      desktop: !mobile, mobile, sideW: collapsed?68:228, lblD: collapsed?'none':'flex', brand: collapsed?'s':'studi', navGroups,
+      toggleCollapse: ()=> narrow ? this.setState(s=>({expandNarrow:!s.expandNarrow})) : this.setState(s=>({collapsed:!s.collapsed})),
+      asideShadow: narrow && st.expandNarrow ? '0 24px 60px -10px rgba(23,19,21,.35)' : 'none', asidePos: narrow && st.expandNarrow ? 'fixed' : 'sticky', asideBg: narrow && st.expandNarrow ? 'var(--chrome)' : 'transparent', railSpacer: narrow && st.expandNarrow ? 'block' : 'none',
+      setTitleD: mobile ? 'none' : 'block', headDir: collapsed ? 'column' : 'row', headPad: collapsed ? 0 : 8, goSettings: go('settings'), setBg: st.page==='settings'?'var(--canvas)':'transparent',
+      goFocusQuick: ()=>this.setState({page:'focus',fRun:true}), goTasks: go('tasks'), goCalendar: go('calendar'), goProgress: go('progress'),
+      displayName: st.displayName, firstName: st.displayName.split(' ')[0]||'there', gam: st.gam,
+      mainMargin: mobile?'0':'10px 10px 10px 0', mainRadius: mobile?'0':'18px', mainMinH: mobile?'100vh':'calc(100vh - 20px)', mainPadB: mobile?'100px':'0', pad: mobile?'18px 16px 24px':'28px 32px', h1: mobile?28:32,
+      is,
+      // dashboard
+      upNext, dialOff: 552.9*(1-st.fLen/90), fLen: st.fLen, lenUp: ()=>this.setState(s=>({fLen:Math.min(90,s.fLen+5),fPreset:'Custom',fRem:Math.min(90,s.fLen+5)*60})), lenDown: ()=>this.setState(s=>({fLen:Math.max(5,s.fLen-5),fPreset:'Custom',fRem:Math.max(5,s.fLen-5)*60})),
+      startUpNext: ()=> un ? row(un).start() : this.setState({page:'focus',fRun:true}),
+      weekStr: hm(weekMin), weekPct: Math.round(weekMin/60/goalH*100), goalH, weekBars,
+      todayTasks, todayEmpty: todayTasks.length===0, todayCount: `${openTasks} open · all tasks`,
+      qa: st.qa, qaChange: e=>this.setState({qa:e.target.value}), qaKey, qaRef: this.qaRef, qaPreview,
+      exams: [['cal','Midterm 2','Exam',5],['alg','Problem set 4','Due',2],['nube','Lab 3 report','Due',9],['est','Final exam','Exam',12]].sort((a,b)=>a[3]-b[3]).map(([k,title,type,days])=>({title,type,days,sn:T(k).n,t:T(k).t,d:T(k).d,open:()=>this.setState({page:'subjects',selSubj:k})})),
+      liveFriends, joinLate: ()=>this.setState({room:'late',roomRem:st.rooms[0]?st.rooms[0].rem:852,page:'together'}),
+      newEventNow: ()=>this.setState({page:'calendar',dlg:'event',newEv:{d:5,s0:21,t:'',k:'plan',s:st.fSubj}}), newRoom: ()=>this.setState({page:'together',dlg:'room',roomStep:1}),
+      // tasks
+      taskTabs, subjFilter, taskList, taskEmpty: taskList.length===0,
+      // focus
+      pomoBg: pomo?'var(--ink)':'transparent', pomoFg: pomo?'var(--canvas)':'var(--ink2)', watchBg: !pomo?'var(--ink)':'transparent', watchFg: !pomo?'var(--canvas)':'var(--ink2)',
+      setPomo: ()=>{ if(st.fRun&&!pomo){ this.finish(); } this.setState({fMode:'pomo',fRun:false}); }, setWatch: ()=>{ if(st.fRun&&pomo){ this.finish(); } this.setState({fMode:'watch',fRun:false}); },
+      phaseLabel: pomo ? (st.fRun?'Focus':(st.fRem===total?'Ready':'Paused')) : (st.fRun?'Stopwatch':'Stopwatch · ready'),
+      cycleLabel: pomo ? `Cycle ${st.cycle} of ${st.every} · then ${st.cycle===st.every?'long':st.fBrk+' min'} break` : 'Counts up until you finish',
+      timeStr: pomo?fmt(st.fRem):fmt(st.fEl), ringOff: 1030.4*(1-frac), toggleTimer: ()=>this.setState(s=>({fRun:!s.fRun})), toggleIcon: st.fRun?'icon-pause':'icon-play', toggleNudge: st.fRun?0:4,
+      resetTimer: ()=>this.resetTimer(), finish: ()=>this.finish(), finishOp: (pomo?st.fRem<total:st.fEl>0)?1:.5,
+      fSubjN: ft.n, fSubjC: ft.c, fSubjD: ft.d, fGoal: st.fGoal, goalChange: e=>this.setState({fGoal:e.target.value}),
+      presets, fBrk: st.fBrk, onLen: e=>{ const v=+e.target.value; this.setState(s=>({fLen:v,fPreset:'Custom',fRem:s.fRun?s.fRem:v*60})); }, onBrk: e=>this.setState({fBrk:+e.target.value,fPreset:'Custom'}),
+      sounds, fV1: st.fV1, fV2: st.fV2, onV1: e=>this.setState({fV1:+e.target.value}), onV2: e=>this.setState({fV2:+e.target.value}), primaryName: nameOf(st.fPrim), mixName: st.fMix==='silence'?'Mix (off)':'Mix · '+nameOf(st.fMix),
+      fSubjChips, todayStr: hm(todayMin), todayPct: Math.min(100,todayMin/180*100), sessionList,
+      zen: st.zen, zenOn: ()=>this.setState({zen:true}), zenOff: ()=>this.setState({zen:false}),
+      // calendar
+      weekCols, calHours, nowY, strip, dayList, dayEmpty: dayList.length===0, dayTitle: st.calDay===5?'Today · Saturday 14':`${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][st.calDay]} ${9+st.calDay}`,
+      calAdd: ()=>this.setState({dlg:'event',newEv:{d:mobile?st.calDay:5,s0:21,t:'',k:'plan',s:st.fSubj}}),
+      // subjects
+      subjTiles, hasSel: !!sz, selName: sz?sz.name:'', selDesc: sz?(sz.desc||'No description yet'):'', selT: szT.t, selD: szT.d, selC: szT.c, selTopics, selTasks, selTopicCount: sz?`${sz.topics.filter(t=>t[1]==='m').length}/${sz.topics.length}`:'', selNoTopics: sz?sz.topics.length===0:false,
+      closeSubj: ()=>this.setState({selSubj:null}), focusSubj: ()=>this.setState({page:'focus',fSubj:st.selSubj,fGoal:'',fRun:true,fRem:st.fLen*60}),
+      openNewSubj: ()=>this.setState({dlg:'subject'}), newSubjName: st.newSubj.name, onNewSubjName: e=>this.setState({newSubj:{...st.newSubj,name:e.target.value}}), palPick, diffPick, nsT: nsT.t, nsD: nsT.d, nsC: st.newSubj.c, createSubject,
+      subjPanelPos: mobile?'fixed':'relative', subjPanelW: mobile?'100%':'400px',
+      // together
+      rooms, inRoom: !!curRoom, notInRoom: !curRoom, roomName: curRoom?curRoom.name:'', roomMeta: curRoom?`${curRoom.vis} · ${curRoom.people.length} of 8 · host ${curRoom.host}`:'', roomTime: fmt(st.roomRem), roomOff: 1093.3*(1-st.roomRem/1500), roomPeople, chat,
+      leaveRoom: ()=>{ this.setState({room:null}); this.toast('You left the room','icon-log-out'); },
+      hasInvite: st.invite, acceptInvite: ()=>{ const id='stats'; this.setState(s=>({invite:false,rooms:[...s.rooms,{id,name:'Stats final prep',host:'Lucía',vis:'Private',people:['lg','me'],rem:2400,phase:'Focus · 1 of 4'}],room:id,roomRem:2400})); }, declineInvite: ()=>this.setState({invite:false}),
+      roomStep: st.roomStep, step1: st.roomStep===1, step2: st.roomStep===2, step3: st.roomStep===3, stepLabel: `Step ${st.roomStep} of 3`,
+      nextStep: ()=> st.roomStep<3 ? this.setState(s=>({roomStep:s.roomStep+1})) : createRoom(), prevStep: ()=>this.setState(s=>({roomStep:Math.max(1,s.roomStep-1)})), nextLabel: st.roomStep<3?'Continue':'Create room', backVis: st.roomStep>1?'flex':'none',
+      roomNameV: st.newRoomD.name, onRoomName: e=>this.setState({newRoomD:{...st.newRoomD,name:e.target.value}}), roomVis, roomPresets,
+      chatSw: sw(st.newRoomD.chat), inviteSw: sw(st.newRoomD.invite), flipChat: ()=>this.setState(s=>({newRoomD:{...s.newRoomD,chat:!s.newRoomD.chat}})), flipInvite: ()=>this.setState(s=>({newRoomD:{...s.newRoomD,invite:!s.newRoomD.invite}})),
+      stepDots: [1,2,3].map(n=>({bg:n<=st.roomStep?'var(--btn)':'var(--hair)'})),
+      // friends
+      requests, hasReq: st.requests.length>0, friendsList, friendsQ: st.friendsQ, onFriendsQ: e=>this.setState({friendsQ:e.target.value}),
+      // stats
+      statStrip, daily, goalLineY: 4.29/5*150 + 20, bySubj, heat,
+      // progress
+      goalPct, goalOff: 377*(1-goalPct/100), goalLeft: hm(Math.max(0,goalH*60-weekMin)), badges, badgeCount: `${badgeCount} of 17 collected`, streak14, board, boardOn: st.board, boardOff: !st.board, enableBoard: ()=>{ this.setState({board:true}); this.toast('Leaderboard on · friends see your weekly total','icon-trophy'); },
+      // planner
+      planDays, backlog, addPlan: ()=>this.toast('9 planned sessions added to Calendar for 16–22 Nov','icon-calendar-check','View',()=>this.go('calendar')),
+      // settings
+      setSecs, secProfile: ss('Profile'), secAppearance: ss('Appearance'), secFocus: ss('Focus & Pomodoro'), secPrivacy: ss('Privacy'), secProgress: ss('Progress & badges'), secAccount: ss('Account'), setTitle: st.setSec,
+      accents, themes, sliders, everyDots, focusToggles, gamToggles, privRows, onName: e=>this.setState({displayName:e.target.value}),
+      setPresets: presets, signOut: ()=>this.toast('Sign-out is disabled in the prototype','icon-info'),
+      setNavDir: mobile?'row':'column', setNavW: mobile?'100%':'220px', setWrap: mobile?'column':'row',
+      // more / mobile
+      mTabs, moreTiles, goSettings2: go('settings'),
+      // overlays
+      dlgEvent: st.dlg==='event', dlgSubject: st.dlg==='subject', dlgRoom: st.dlg==='room', anyDlg: !!st.dlg, closeDlg: ()=>this.setState({dlg:null,roomStep:1}), stop: e=>e.stopPropagation(),
+      dlgAlign: mobile?'flex-end':'center', dlgRadius: mobile?'28px 28px 0 0':'24px', dlgW: mobile?'100%':'440px', dlgPadB: mobile?'34px':'20px',
+      evTitle: st.newEv.t, onEvTitle: e=>this.setState({newEv:{...st.newEv,t:e.target.value}}), evKey: e=>{ if(e.key==='Enter') createEvent(); }, evWhen: `${wd[st.newEv.d]} ${9+st.newEv.d} Nov · ${fmtH(st.newEv.s0)} → ${fmtH(st.newEv.s0+1.5)}`, evTypes, evSubj, evShowSubj: st.newEv.k!=='personal', createEvent,
+      hourEarlier: ()=>this.setState(s=>({newEv:{...s.newEv,s0:Math.max(8,s.newEv.s0-0.5)}})), hourLater: ()=>this.setState(s=>({newEv:{...s.newEv,s0:Math.min(21,s.newEv.s0+0.5)}})),
+      toast: !!st.toast, toastMsg: st.toast?st.toast.msg:'', toastIc: st.toast?st.toast.ic:'', toastAct: st.toast?st.toast.act:'', toastActD: st.toast&&st.toast.act?'block':'none', toastDo: ()=>{ const f=st.toast&&st.toast.actFn; this.setState({toast:null}); f&&f(); },
+      toastBottom: mobile?'104px':'28px'
+    };
+  }
+}
+</script>
+</body>
+</html>

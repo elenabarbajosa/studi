@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/lucide-static@0.460.0/font/lucide.css">
+<style>
+body{margin:0;background:#E6E0DC;font-family:'Geist',system-ui,sans-serif;color:#241C1F;-webkit-font-smoothing:antialiased}
+a{color:#A63D57;text-decoration:none}a:hover{color:#7E2A40}
+*{box-sizing:border-box}
+</style>
+</helmet>
+<section style="padding:72px;background:#E6E0DC;min-width:max-content;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:10px;max-width:1100px">
+<div style="font-size:15px;font-weight:600;color:#A63D57">Turn 1 · Dashboard directions</div>
+<div style="font-size:44px;font-weight:600;letter-spacing:-0.035em;line-height:1.05">studi<span style="color:#D98A9B">.</span> — three ways to open your day</div>
+<div style="font-size:17px;color:#5E5357;line-height:1.5;text-wrap:pretty">Same tokens, same sidebar, same data; only the composition changes. All three answer "what do I do today, and what's next?" with one hero action. Geist throughout, warm neutrals, pink only for action and "now". Names, subjects, times and numbers are <strong>mock data</strong>. Pick one (or mix parts) and I'll roll it out to every screen.</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:14px"><a href="#1a">1a Calm list</a><span style="color:#8A7E82">·</span><a href="#1b">1b Soft bento</a><span style="color:#8A7E82">·</span><a href="#1c">1c Day timeline</a></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:72px">
+
+<!-- ========== 1a CALM LIST ========== -->
+<div id="1a" style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="background:#241C1F;color:#fff;border-radius:7px;padding:3px 9px;font-weight:600;font-size:14px">1a</span><span style="font-size:22px;font-weight:600;letter-spacing:-0.02em">Calm list</span><span style="font-size:15px;color:#5E5357">Things-style. One reading column; a quiet right rail with no card chrome. Best for low data and daily use.</span></div>
+<div style="display:flex;gap:40px;align-items:flex-start">
+<div style="width:1440px;height:900px;background:#F4EFEB;border-radius:16px;overflow:hidden;box-shadow:0 30px 60px -30px rgba(60,30,40,.35);display:flex">
+<aside style="width:228px;flex:none;display:flex;flex-direction:column;padding:20px 12px 14px">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:0 10px 20px"><span style="font-size:24px;font-weight:600;letter-spacing:-0.045em;line-height:1">studi<span style="color:#D98A9B">.</span></span><i class="icon-panel-left" style="font-size:16px;color:#7A6E72"></i></div>
+<div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;margin-bottom:18px;background:#EAE3DE;border-radius:10px;font-size:13.5px;color:#7A6E72"><i class="icon-search" style="font-size:15px"></i>Search<span style="margin-left:auto;font-size:11.5px">⌘K</span></div>
+<sc-for list="{{ nav }}" as="g" hint-placeholder-count="4">
+<div style="display:flex;flex-direction:column;gap:1px;margin-bottom:16px">
+<sc-if value="{{ g.label }}"><div style="font-size:12px;font-weight:500;color:#7A6E72;padding:0 10px 5px">{{ g.label }}</div></sc-if>
+<sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3"><div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:10px;font-size:14px;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.w }};box-shadow:{{ it.sh }}"><i class="{{ it.ic }}" style="font-size:16px;color:{{ it.icc }}"></i>{{ it.n }}<span style="margin-left:auto;font-size:11.5px;color:{{ it.bc }};background:{{ it.bb }};border-radius:6px;padding:1px 6px;font-weight:600">{{ it.badge }}</span></div></sc-for>
+</div>
+</sc-for>
+<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;font-size:14px;color:#5E5357"><i class="icon-settings" style="font-size:16px;color:#8A7E82"></i>Settings</div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px"><div style="width:32px;height:32px;border-radius:50%;background:#F6D5DC;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#A63D57">EB</div><div style="display:flex;flex-direction:column;line-height:1.25"><span style="font-size:13.5px;font-weight:600">Elena Barbajosa</span><span style="font-size:12px;color:#5E5357">@elenabarbajosa</span></div></div>
+</div>
+</aside>
+<main style="flex:1;margin:10px 10px 10px 0;background:#FDFBFA;border-radius:18px;box-shadow:0 1px 3px rgba(60,30,40,.06);display:flex;overflow:hidden">
+<div style="flex:1;padding:40px 56px 0 64px;display:flex;flex-direction:column;gap:28px;min-width:0">
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;color:#5E5357;font-weight:500">Saturday, 14 November</span><span style="font-size:34px;font-weight:600;letter-spacing:-0.035em;line-height:1.1">Good evening, Elena</span></div>
+<div style="background:#FBEDEF;border-radius:24px;padding:26px 28px;display:flex;align-items:center;gap:24px">
+<div style="width:76px;height:76px;flex:none;border-radius:50%;background:#A63D57;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px -10px rgba(166,61,87,.7)"><i class="icon-play" style="font-size:28px;color:#fff;margin-left:4px"></i></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;min-width:0">
+<span style="font-size:12.5px;font-weight:600;color:#A63D57;letter-spacing:.05em;text-transform:uppercase">Up next</span>
+<span style="font-size:23px;font-weight:600;letter-spacing:-0.025em;line-height:1.2">Integration by parts — exercises 4–9</span>
+<span style="font-size:14px;color:#6B4450">Calculus I · Midterm 2 in 5 days · 3 of 7 topics reviewed</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+<div style="display:flex;gap:4px;background:#fff;border-radius:999px;padding:3px;font-size:13px;font-weight:600"><span style="padding:5px 12px;border-radius:999px;background:#241C1F;color:#fff">25 min</span><span style="padding:5px 12px;color:#5E5357">50 min</span><span style="padding:5px 12px;color:#5E5357">Open</span></div>
+<span style="font-size:12.5px;color:#6B4450">Press F to start</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column">
+<div style="display:flex;align-items:baseline;gap:10px;padding-bottom:8px"><span style="font-size:17px;font-weight:600;letter-spacing:-0.015em">Today</span><span style="font-size:13.5px;color:#5E5357">4 open</span><span style="margin-left:auto;font-size:13.5px;color:#A63D57;font-weight:500">All tasks</span></div>
+<div style="display:flex;align-items:center;gap:12px;height:44px;color:#7A6E72;font-size:14.5px"><i class="icon-plus" style="font-size:18px;width:20px;text-align:center"></i>New task<span style="font-size:13px;color:#A99DA1">try "@calc !high tomorrow"</span></div>
+<sc-for list="{{ tasks }}" as="t" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:12px;height:46px;border-top:1px solid #F1EBE7">
+<span style="width:20px;height:20px;border-radius:50%;flex:none;border:1.5px solid {{ t.ring }};background:{{ t.fill }};display:flex;align-items:center;justify-content:center"><i class="{{ t.ck }}" style="font-size:12px;color:#fff"></i></span>
+<span style="font-size:15px;color:{{ t.fg }};text-decoration:{{ t.dec }};flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span>
+<span style="font-size:13px;color:#7A6E72">{{ t.sub }}</span>
+<span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#5E5357;width:150px;white-space:nowrap;overflow:hidden"><span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ t.sc }}"></span><span style="overflow:hidden;text-overflow:ellipsis">{{ t.sn }}</span></span>
+<span style="font-size:12px;font-weight:700;color:{{ t.pc }};width:26px;text-align:right">{{ t.p }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<span style="font-size:17px;font-weight:600;letter-spacing:-0.015em;padding-bottom:6px">Later today</span>
+<sc-for list="{{ later }}" as="l" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:14px;height:38px;font-size:14.5px"><span style="width:46px;color:#5E5357;font-variant-numeric:tabular-nums">{{ l.t }}</span><span style="width:3px;height:22px;border-radius:2px;background:{{ l.c }}"></span><span style="flex:1">{{ l.title }}</span><span style="font-size:12.5px;color:{{ l.kc }};font-weight:600">{{ l.k }}</span></div>
+</sc-for>
+</div>
+</div>
+<div style="width:320px;flex:none;padding:40px 32px 0 0;display:flex;flex-direction:column;gap:30px">
+<div style="display:flex;align-items:center;gap:18px">
+<div style="position:relative;width:96px;height:96px;flex:none"><svg width="96" height="96" viewBox="0 0 96 96" style="transform:rotate(-90deg)"><circle cx="48" cy="48" r="42" fill="none" stroke="#F1E6E8" stroke-width="8"></circle><circle cx="48" cy="48" r="42" fill="none" stroke="#D98A9B" stroke-width="8" stroke-linecap="round" stroke-dasharray="263.9" stroke-dashoffset="153"></circle></svg><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600">42%</span></div>
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;color:#5E5357">This week</span><span style="font-size:26px;font-weight:600;letter-spacing:-0.03em;font-variant-numeric:tabular-nums">12h 40m</span><span style="font-size:13px;color:#5E5357">of 30h goal</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px"><i class="icon-flame" style="font-size:16px;color:#C98A2E"></i><span style="font-size:15px;font-weight:600">6-day streak</span><span style="font-size:13px;color:#5E5357;margin-left:auto">best 11</span></div>
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px"><sc-for list="{{ streak }}" as="d" hint-placeholder-count="7"><div style="display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:28px;height:28px;border-radius:9px;background:{{ d.bg }};border:{{ d.bd }}"></div><span style="font-size:11.5px;color:#7A6E72;font-weight:500">{{ d.d }}</span></div></sc-for></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:15px;font-weight:600;padding-bottom:6px">Coming up</span>
+<sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:12px;padding:7px 0">
+<div style="width:40px;height:40px;border-radius:12px;background:{{ u.bx }};display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;flex:none"><span style="font-size:16px;font-weight:700;color:{{ u.bf }}">{{ u.days }}</span><span style="font-size:10px;color:{{ u.bf }};font-weight:600;margin-top:2px">days</span></div>
+<div style="display:flex;flex-direction:column;min-width:0;line-height:1.3"><span style="font-size:14px;font-weight:600">{{ u.title }}</span><span style="font-size:12.5px;color:#5E5357">{{ u.type }} · {{ u.sn }}</span></div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font-size:15px;font-weight:600">Friends studying</span>
+<sc-for list="{{ friends }}" as="f" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="position:relative;width:32px;height:32px;border-radius:50%;background:{{ f.bg }};color:{{ f.fg }};font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">{{ f.i }}<span style="position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;border-radius:50%;background:{{ f.live }};border:2px solid #FDFBFA"></span></div>
+<div style="display:flex;flex-direction:column;flex:1;min-width:0;line-height:1.3"><span style="font-size:13.5px;font-weight:600">{{ f.n }}</span><span style="font-size:12.5px;color:#5E5357;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.s }}</span></div>
+<span style="font-size:12.5px;font-weight:600;color:#A63D57">{{ f.cta }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</main>
+</div>
+<!-- 1a phone -->
+<div style="width:402px;height:874px;border-radius:56px;background:#FDFBFA;box-shadow:0 0 0 10px #1F1A1C,0 40px 60px -30px rgba(60,30,40,.5);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<div style="height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0;font-size:16px;font-weight:600"><span>9:41</span><span style="position:absolute;left:50%;top:11px;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000"></span><span style="display:flex;gap:6px;align-items:center"><i class="icon-signal" style="font-size:15px"></i><i class="icon-wifi" style="font-size:15px"></i><i class="icon-battery-full" style="font-size:18px"></i></span></div>
+<div style="flex:1;overflow:hidden;padding:12px 20px 0;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13.5px;color:#5E5357;font-weight:500">Sat, 14 Nov</span><span style="font-size:28px;font-weight:600;letter-spacing:-0.035em">Good evening</span></div><div style="display:flex;align-items:center;gap:5px;background:#FAF0DF;color:#8A5A12;border-radius:999px;padding:6px 11px;font-size:14px;font-weight:600"><i class="icon-flame" style="font-size:14px"></i>6</div></div>
+<div style="background:#FBEDEF;border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font-size:12px;font-weight:600;color:#A63D57;letter-spacing:.05em;text-transform:uppercase">Up next</span><span style="font-size:19px;font-weight:600;letter-spacing:-0.02em;line-height:1.2">Integration by parts — exercises 4–9</span><span style="font-size:13.5px;color:#6B4450">Calculus I · Midterm in 5 days</span></div>
+<div style="height:52px;border-radius:16px;background:#A63D57;color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;font-weight:600"><i class="icon-play" style="font-size:17px"></i>Start 25 min</div>
+</div>
+<div style="display:flex;flex-direction:column">
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding-bottom:4px"><span style="font-size:17px;font-weight:600">Today</span><span style="font-size:13.5px;color:#5E5357">4 open</span></div>
+<sc-for list="{{ tasksShort }}" as="t" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:12px;min-height:54px;border-bottom:1px solid #F1EBE7">
+<span style="width:22px;height:22px;border-radius:50%;flex:none;border:1.5px solid {{ t.ring }}"></span>
+<div style="display:flex;flex-direction:column;min-width:0;flex:1;gap:2px"><span style="font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span><span style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#5E5357"><span style="width:7px;height:7px;border-radius:50%;background:{{ t.sc }}"></span>{{ t.sn }}</span></div>
+<span style="font-size:12px;font-weight:700;color:{{ t.pc }}">{{ t.p }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:10px">
+<div style="flex:1;background:#F4EFEB;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:4px"><span style="font-size:12.5px;color:#5E5357">This week</span><span style="font-size:20px;font-weight:600;letter-spacing:-0.02em">12h 40m</span><div style="height:5px;border-radius:3px;background:#E6DDD8"><div style="width:42%;height:100%;border-radius:3px;background:#D98A9B"></div></div></div>
+<div style="flex:1;background:#F4EFEB;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:4px"><span style="font-size:12.5px;color:#5E5357">Next exam</span><span style="font-size:20px;font-weight:600;letter-spacing:-0.02em">5 days</span><span style="font-size:12.5px;color:#5E5357">Calculus I</span></div>
+</div>
+</div>
+<div style="height:88px;flex:none;background:rgba(253,251,250,.94);border-top:1px solid #EFE8E4;display:flex;justify-content:space-around;padding:8px 8px 0">
+<sc-for list="{{ tabsA }}" as="b" hint-placeholder-count="5"><div style="width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;color:{{ b.fg }}"><div style="width:{{ b.sz }}px;height:{{ b.sz }}px;margin-top:{{ b.mt }}px;border-radius:50%;background:{{ b.bg }};display:flex;align-items:center;justify-content:center"><i class="{{ b.ic }}" style="font-size:{{ b.isz }}px;color:{{ b.icc }}"></i></div><span style="font-size:11px;font-weight:600">{{ b.n }}</span></div></sc-for>
+</div>
+<span style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:136px;height:5px;border-radius:3px;background:#241C1F"></span>
+</div>
+</div>
+</div>
+
+<!-- ========== 1b SOFT BENTO ========== -->
+<div id="1b" style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="background:#241C1F;color:#fff;border-radius:7px;padding:3px 9px;font-weight:600;font-size:14px">1b</span><span style="font-size:22px;font-weight:600;letter-spacing:-0.02em">Soft bento</span><span style="font-size:15px;color:#5E5357">Tinted tiles of different sizes, no borders. Most visual and playful; the focus dial is a live control.</span></div>
+<div style="display:flex;gap:40px;align-items:flex-start">
+<div style="width:1440px;height:900px;background:#F4EFEB;border-radius:16px;overflow:hidden;box-shadow:0 30px 60px -30px rgba(60,30,40,.35);display:flex">
+<aside style="width:228px;flex:none;display:flex;flex-direction:column;padding:20px 12px 14px">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:0 10px 20px"><span style="font-size:24px;font-weight:600;letter-spacing:-0.045em;line-height:1">studi<span style="color:#D98A9B">.</span></span><i class="icon-panel-left" style="font-size:16px;color:#7A6E72"></i></div>
+<div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;margin-bottom:18px;background:#EAE3DE;border-radius:10px;font-size:13.5px;color:#7A6E72"><i class="icon-search" style="font-size:15px"></i>Search<span style="margin-left:auto;font-size:11.5px">⌘K</span></div>
+<sc-for list="{{ nav }}" as="g" hint-placeholder-count="4">
+<div style="display:flex;flex-direction:column;gap:1px;margin-bottom:16px">
+<sc-if value="{{ g.label }}"><div style="font-size:12px;font-weight:500;color:#7A6E72;padding:0 10px 5px">{{ g.label }}</div></sc-if>
+<sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3"><div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:10px;font-size:14px;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.w }};box-shadow:{{ it.sh }}"><i class="{{ it.ic }}" style="font-size:16px;color:{{ it.icc }}"></i>{{ it.n }}<span style="margin-left:auto;font-size:11.5px;color:{{ it.bc }};background:{{ it.bb }};border-radius:6px;padding:1px 6px;font-weight:600">{{ it.badge }}</span></div></sc-for>
+</div>
+</sc-for>
+<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;font-size:14px;color:#5E5357"><i class="icon-settings" style="font-size:16px;color:#8A7E82"></i>Settings</div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px"><div style="width:32px;height:32px;border-radius:50%;background:#F6D5DC;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#A63D57">EB</div><div style="display:flex;flex-direction:column;line-height:1.25"><span style="font-size:13.5px;font-weight:600">Elena Barbajosa</span><span style="font-size:12px;color:#5E5357">@elenabarbajosa</span></div></div>
+</div>
+</aside>
+<main style="flex:1;margin:10px 10px 10px 0;background:#FDFBFA;border-radius:18px;box-shadow:0 1px 3px rgba(60,30,40,.06);padding:32px 32px;display:flex;flex-direction:column;gap:20px;overflow:hidden">
+<div style="display:flex;align-items:flex-end;justify-content:space-between">
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;color:#5E5357;font-weight:500">Saturday, 14 November · Week 10</span><span style="font-size:32px;font-weight:600;letter-spacing:-0.035em;line-height:1.1">Good evening, Elena</span></div>
+<div style="display:flex;gap:8px"><span style="height:36px;display:flex;align-items:center;gap:7px;padding:0 14px;border-radius:999px;background:#F4EFEB;font-size:13.5px;font-weight:500"><i class="icon-plus" style="font-size:15px"></i>Task</span><span style="height:36px;display:flex;align-items:center;gap:7px;padding:0 14px;border-radius:999px;background:#F4EFEB;font-size:13.5px;font-weight:500"><i class="icon-calendar-plus" style="font-size:15px"></i>Event</span><span style="height:36px;display:flex;align-items:center;gap:7px;padding:0 14px;border-radius:999px;background:#F4EFEB;font-size:13.5px;font-weight:500"><i class="icon-users" style="font-size:15px"></i>Room</span></div>
+</div>
+<div style="flex:1;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:330px minmax(0,1fr);gap:14px;min-height:0">
+<div style="grid-column:span 7;background:#FBEDEF;border-radius:26px;padding:26px 28px;display:flex;gap:28px;align-items:center">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;min-width:0">
+<span style="font-size:12.5px;font-weight:600;color:#A63D57;letter-spacing:.05em;text-transform:uppercase">Up next</span>
+<span style="font-size:28px;font-weight:600;letter-spacing:-0.03em;line-height:1.15">Integration by parts — exercises 4–9</span>
+<span style="font-size:14.5px;color:#6B4450;line-height:1.5">Calculus I · Midterm 2 on Thursday. You've reviewed 3 of 7 topics.</span>
+<div style="display:flex;gap:6px;margin-top:6px"><span style="padding:7px 14px;border-radius:999px;background:#fff;font-size:13.5px;font-weight:600">Pomodoro</span><span style="padding:7px 14px;border-radius:999px;font-size:13.5px;font-weight:500;color:#6B4450">Stopwatch</span></div>
+</div>
+<div style="position:relative;width:220px;height:220px;flex:none;display:flex;align-items:center;justify-content:center">
+<svg width="220" height="220" viewBox="0 0 220 220" style="position:absolute;inset:0;transform:rotate(-90deg)"><circle cx="110" cy="110" r="96" fill="none" stroke="#F3D9DF" stroke-width="10"></circle><circle cx="110" cy="110" r="96" fill="none" stroke="#D98A9B" stroke-width="10" stroke-linecap="round" stroke-dasharray="603.2" stroke-dashoffset="{{ dialOff }}"></circle><circle cx="{{ knobX }}" cy="{{ knobY }}" r="11" fill="#fff" stroke="#D98A9B" stroke-width="3"></circle></svg>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px;position:relative">
+<span style="font-size:48px;font-weight:600;letter-spacing:-0.04em;font-variant-numeric:tabular-nums;line-height:1">{{ dialLabel }}</span>
+<div style="display:flex;gap:4px"><span onClick="{{ dialDown }}" style="cursor:pointer;width:28px;height:28px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center"><i class="icon-minus" style="font-size:14px"></i></span><span onClick="{{ dialUp }}" style="cursor:pointer;width:28px;height:28px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center"><i class="icon-plus" style="font-size:14px"></i></span></div>
+<span style="height:40px;padding:0 20px;border-radius:999px;background:#A63D57;color:#fff;display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:600"><i class="icon-play" style="font-size:14px"></i>Start</span>
+</div>
+</div>
+</div>
+<div style="grid-column:span 5;background:#F4EFEB;border-radius:26px;padding:24px 26px;display:flex;flex-direction:column;justify-content:space-between">
+<div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;color:#5E5357;font-weight:500">Focus this week</span><span style="font-size:40px;font-weight:600;letter-spacing:-0.04em;font-variant-numeric:tabular-nums;line-height:1">12h 40m</span><span style="font-size:13.5px;color:#5E5357">42% of 30h · on pace for 21h</span></div><div style="display:flex;align-items:center;gap:5px;background:#FAF0DF;color:#8A5A12;border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:600"><i class="icon-flame" style="font-size:14px"></i>6 days</div></div>
+<div style="display:flex;gap:10px;align-items:flex-end;height:120px"><sc-for list="{{ weekBars }}" as="b" hint-placeholder-count="7"><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:11.5px;color:#5E5357;font-variant-numeric:tabular-nums">{{ b.v }}</span><div style="width:100%;height:{{ b.h2 }}px;border-radius:10px;background:{{ b.bg }}"></div><span style="font-size:12px;color:{{ b.fg }};font-weight:600">{{ b.d }}</span></div></sc-for></div>
+</div>
+<div style="grid-column:span 5;background:#fff;border-radius:26px;padding:20px 22px;display:flex;flex-direction:column;box-shadow:0 0 0 1px #F0E9E5">
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding-bottom:4px"><span style="font-size:16px;font-weight:600">Today</span><span style="font-size:13px;color:#5E5357">4 open · 1 done</span></div>
+<sc-for list="{{ tasks }}" as="t" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:11px;height:41px">
+<span style="width:19px;height:19px;border-radius:50%;flex:none;border:1.5px solid {{ t.ring }};background:{{ t.fill }};display:flex;align-items:center;justify-content:center"><i class="{{ t.ck }}" style="font-size:11px;color:#fff"></i></span>
+<span style="font-size:14px;color:{{ t.fg }};text-decoration:{{ t.dec }};flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span>
+<span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ t.sc }}"></span>
+</div>
+</sc-for>
+</div>
+<div style="grid-column:span 4;background:#fff;border-radius:26px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;box-shadow:0 0 0 1px #F0E9E5">
+<span style="font-size:16px;font-weight:600">Countdown</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1">
+<sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="4">
+<div style="background:{{ u.bx }};border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;min-width:0">
+<span style="font-size:26px;font-weight:600;letter-spacing:-0.03em;color:{{ u.bf }};line-height:1">{{ u.days }}<span style="font-size:13px;font-weight:600"> d</span></span>
+<div style="display:flex;flex-direction:column;line-height:1.3;min-width:0"><span style="font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.title }}</span><span style="font-size:12px;color:{{ u.bf }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.type }} · {{ u.sn }}</span></div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="grid-column:span 3;background:#EEF3EF;border-radius:26px;padding:20px 22px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:#4E9E78"></span><span style="font-size:16px;font-weight:600">3 friends live</span></div>
+<div style="display:flex"><sc-for list="{{ friends }}" as="f" hint-placeholder-count="3"><div style="width:48px;height:48px;border-radius:50%;background:{{ f.bg }};color:{{ f.fg }};font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;border:3px solid #EEF3EF;margin-right:-10px">{{ f.i }}</div></sc-for></div>
+<span style="font-size:13.5px;color:#2F4A3C;line-height:1.45">Marco's room <strong>Late library</strong> is mid-pomodoro, 14 min left.</span>
+<span style="margin-top:auto;height:40px;border-radius:999px;background:#241C1F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600">Join room</span>
+</div>
+</div>
+</main>
+</div>
+<!-- 1b phone -->
+<div style="width:402px;height:874px;border-radius:56px;background:#FDFBFA;box-shadow:0 0 0 10px #1F1A1C,0 40px 60px -30px rgba(60,30,40,.5);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<div style="height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0;font-size:16px;font-weight:600"><span>9:41</span><span style="position:absolute;left:50%;top:11px;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000"></span><span style="display:flex;gap:6px;align-items:center"><i class="icon-signal" style="font-size:15px"></i><i class="icon-wifi" style="font-size:15px"></i><i class="icon-battery-full" style="font-size:18px"></i></span></div>
+<div style="flex:1;overflow:hidden;padding:12px 16px 0;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 4px"><span style="font-size:28px;font-weight:600;letter-spacing:-0.035em">Today</span><div style="width:36px;height:36px;border-radius:50%;background:#F6D5DC;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:#A63D57">EB</div></div>
+<div style="background:#FBEDEF;border-radius:24px;padding:18px;display:flex;align-items:center;gap:14px">
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0"><span style="font-size:12px;font-weight:600;color:#A63D57;letter-spacing:.05em;text-transform:uppercase">Up next</span><span style="font-size:18px;font-weight:600;letter-spacing:-0.02em;line-height:1.2">Integration by parts</span><span style="font-size:13px;color:#6B4450">Calculus I · ex. 4–9</span></div>
+<div style="position:relative;width:104px;height:104px;flex:none;display:flex;align-items:center;justify-content:center"><svg width="104" height="104" viewBox="0 0 104 104" style="position:absolute;inset:0;transform:rotate(-90deg)"><circle cx="52" cy="52" r="45" fill="none" stroke="#F3D9DF" stroke-width="7"></circle><circle cx="52" cy="52" r="45" fill="none" stroke="#D98A9B" stroke-width="7" stroke-linecap="round" stroke-dasharray="282.7" stroke-dashoffset="141"></circle></svg><div style="width:56px;height:56px;border-radius:50%;background:#A63D57;display:flex;align-items:center;justify-content:center;position:relative"><i class="icon-play" style="font-size:22px;color:#fff;margin-left:3px"></i></div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div style="background:#F4EFEB;border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:8px"><span style="font-size:12.5px;color:#5E5357">This week</span><span style="font-size:24px;font-weight:600;letter-spacing:-0.03em">12h 40m</span><div style="display:flex;gap:4px;align-items:flex-end;height:34px"><sc-for list="{{ weekBars }}" as="b" hint-placeholder-count="7"><div style="flex:1;height:{{ b.h3 }}px;border-radius:4px;background:{{ b.bg }}"></div></sc-for></div></div>
+<div style="background:#FBE9EC;border-radius:22px;padding:16px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-size:12.5px;color:#A23A55">Midterm 2</span><span style="font-size:40px;font-weight:600;letter-spacing:-0.04em;color:#A23A55;line-height:1">5<span style="font-size:15px"> days</span></span><span style="font-size:12.5px;color:#A23A55">Calculus I · Thu</span></div>
+</div>
+<div style="background:#fff;border-radius:22px;padding:6px 16px;box-shadow:0 0 0 1px #F0E9E5">
+<sc-for list="{{ tasksShort }}" as="t" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:12px;height:50px;border-bottom:1px solid #F4EFEB">
+<span style="width:22px;height:22px;border-radius:50%;flex:none;border:1.5px solid {{ t.ring }}"></span>
+<span style="font-size:14.5px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span>
+<span style="width:8px;height:8px;border-radius:50%;background:{{ t.sc }}"></span>
+</div>
+</sc-for>
+</div>
+<div style="background:#EEF3EF;border-radius:22px;padding:14px 16px;display:flex;align-items:center;gap:12px"><div style="display:flex"><sc-for list="{{ friends }}" as="f" hint-placeholder-count="3"><div style="width:32px;height:32px;border-radius:50%;background:{{ f.bg }};color:{{ f.fg }};font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #EEF3EF;margin-right:-8px">{{ f.i }}</div></sc-for></div><span style="font-size:13.5px;font-weight:600;margin-left:8px;flex:1">3 friends studying</span><span style="font-size:13.5px;font-weight:600;color:#2F6E50">Join</span></div>
+</div>
+<div style="height:88px;flex:none;background:rgba(253,251,250,.94);border-top:1px solid #EFE8E4;display:flex;justify-content:space-around;padding:8px 8px 0">
+<sc-for list="{{ tabsA }}" as="b" hint-placeholder-count="5"><div style="width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;color:{{ b.fg }}"><div style="width:{{ b.sz }}px;height:{{ b.sz }}px;margin-top:{{ b.mt }}px;border-radius:50%;background:{{ b.bg }};display:flex;align-items:center;justify-content:center"><i class="{{ b.ic }}" style="font-size:{{ b.isz }}px;color:{{ b.icc }}"></i></div><span style="font-size:11px;font-weight:600">{{ b.n }}</span></div></sc-for>
+</div>
+<span style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:136px;height:5px;border-radius:3px;background:#241C1F"></span>
+</div>
+</div>
+</div>
+
+<!-- ========== 1c DAY TIMELINE ========== -->
+<div id="1c" style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:baseline;gap:12px"><span style="background:#241C1F;color:#fff;border-radius:7px;padding:3px 9px;font-weight:600;font-size:14px">1c</span><span style="font-size:22px;font-weight:600;letter-spacing:-0.02em">Day timeline</span><span style="font-size:15px;color:#5E5357">Linear-style density. The day is a strip of time with a "now" line; focus lives in a docked bar on every page.</span></div>
+<div style="display:flex;gap:40px;align-items:flex-start">
+<div style="width:1440px;height:900px;background:#F4EFEB;border-radius:16px;overflow:hidden;box-shadow:0 30px 60px -30px rgba(60,30,40,.35);display:flex">
+<aside style="width:228px;flex:none;display:flex;flex-direction:column;padding:20px 12px 14px">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:0 10px 20px"><span style="font-size:24px;font-weight:600;letter-spacing:-0.045em;line-height:1">studi<span style="color:#D98A9B">.</span></span><i class="icon-panel-left" style="font-size:16px;color:#7A6E72"></i></div>
+<div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;margin-bottom:18px;background:#EAE3DE;border-radius:10px;font-size:13.5px;color:#7A6E72"><i class="icon-search" style="font-size:15px"></i>Search<span style="margin-left:auto;font-size:11.5px">⌘K</span></div>
+<sc-for list="{{ nav }}" as="g" hint-placeholder-count="4">
+<div style="display:flex;flex-direction:column;gap:1px;margin-bottom:16px">
+<sc-if value="{{ g.label }}"><div style="font-size:12px;font-weight:500;color:#7A6E72;padding:0 10px 5px">{{ g.label }}</div></sc-if>
+<sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3"><div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:10px;font-size:14px;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.w }};box-shadow:{{ it.sh }}"><i class="{{ it.ic }}" style="font-size:16px;color:{{ it.icc }}"></i>{{ it.n }}<span style="margin-left:auto;font-size:11.5px;color:{{ it.bc }};background:{{ it.bb }};border-radius:6px;padding:1px 6px;font-weight:600">{{ it.badge }}</span></div></sc-for>
+</div>
+</sc-for>
+<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;font-size:14px;color:#5E5357"><i class="icon-settings" style="font-size:16px;color:#8A7E82"></i>Settings</div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px"><div style="width:32px;height:32px;border-radius:50%;background:#F6D5DC;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#A63D57">EB</div><div style="display:flex;flex-direction:column;line-height:1.25"><span style="font-size:13.5px;font-weight:600">Elena Barbajosa</span><span style="font-size:12px;color:#5E5357">@elenabarbajosa</span></div></div>
+</div>
+</aside>
+<main style="flex:1;margin:10px 10px 10px 0;background:#FDFBFA;border-radius:18px;box-shadow:0 1px 3px rgba(60,30,40,.06);display:flex;flex-direction:column;position:relative;overflow:hidden">
+<div style="padding:28px 32px 0;display:flex;align-items:flex-end;justify-content:space-between">
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;color:#5E5357;font-weight:500">Saturday, 14 November</span><span style="font-size:30px;font-weight:600;letter-spacing:-0.035em;line-height:1.1">Good evening, Elena</span></div>
+<div style="display:flex;gap:28px">
+<div style="display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:12.5px;color:#5E5357">Today</span><span style="font-size:22px;font-weight:600;letter-spacing:-0.03em">1h 50m</span></div>
+<div style="display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:12.5px;color:#5E5357">Week · 30h goal</span><span style="font-size:22px;font-weight:600;letter-spacing:-0.03em">12h 40m</span></div>
+<div style="display:flex;flex-direction:column;align-items:flex-end"><span style="font-size:12.5px;color:#5E5357">Streak</span><span style="font-size:22px;font-weight:600;letter-spacing:-0.03em;display:flex;align-items:center;gap:5px"><i class="icon-flame" style="font-size:18px;color:#C98A2E"></i>6</span></div>
+</div>
+</div>
+<div style="margin:22px 32px 0;background:#F6F1EE;border-radius:20px;padding:16px 18px 18px">
+<div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px"><span style="font-size:14px;font-weight:600">Your day</span><span style="display:flex;gap:14px;font-size:12.5px;color:#5E5357"><span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:8px;border-radius:3px;background:#E6DDD8"></span>Class</span><span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:8px;border-radius:3px;border:1.5px dashed #8A7E82"></span>Planned focus</span><span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:8px;border-radius:3px;background:#8A7E82"></span>Done</span></span></div>
+<div style="position:relative;height:118px">
+<div style="position:absolute;inset:0 0 auto 0;height:18px;display:flex">
+<sc-for list="{{ hours }}" as="h" hint-placeholder-count="8"><div style="position:absolute;left:{{ h.x }}%;font-size:11.5px;color:#7A6E72;font-variant-numeric:tabular-nums;border-left:1px solid #E6DDD8;padding-left:5px">{{ h.l }}</div></sc-for>
+</div>
+<div style="position:absolute;left:0;right:0;top:22px;bottom:0">
+<sc-for list="{{ blocks }}" as="e" hint-placeholder-count="6">
+<div style="position:absolute;left:{{ e.left }}%;width:{{ e.width }}%;top:{{ e.top }}px;height:42px;border-radius:10px;background:{{ e.bg }};border:{{ e.bd }};color:{{ e.fg }};padding:5px 8px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;line-height:1.25;opacity:{{ e.op }}"><span style="font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.title }}</span><span style="font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:{{ e.tdisp }}">{{ e.time }}</span></div>
+</sc-for>
+<div style="position:absolute;left:{{ nowLeft }}%;top:-6px;bottom:-4px;width:2px;background:#A63D57;border-radius:1px"><span style="position:absolute;top:-4px;left:-4px;width:10px;height:10px;border-radius:50%;background:#A63D57"></span></div>
+</div>
+</div>
+</div>
+<div style="flex:1;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) 280px;gap:28px;padding:24px 32px 0;min-height:0">
+<div style="display:flex;flex-direction:column">
+<div style="display:flex;align-items:center;gap:10px;padding-bottom:6px"><span style="font-size:15px;font-weight:600">Tasks</span><div style="display:flex;gap:2px;background:#F4EFEB;border-radius:8px;padding:2px;font-size:12.5px;font-weight:500"><span style="background:#fff;border-radius:6px;padding:3px 9px;box-shadow:0 1px 2px rgba(0,0,0,.06)">Today 4</span><span style="padding:3px 9px;color:#5E5357">Upcoming 9</span><span style="padding:3px 9px;color:#5E5357">Done</span></div><span style="margin-left:auto;font-size:12.5px;color:#7A6E72;display:flex;align-items:center;gap:4px"><i class="icon-plus" style="font-size:14px"></i>N</span></div>
+<sc-for list="{{ tasks }}" as="t" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:11px;height:42px;border-bottom:1px solid #F1EBE7">
+<span style="width:18px;height:18px;border-radius:50%;flex:none;border:1.5px solid {{ t.ring }};background:{{ t.fill }};display:flex;align-items:center;justify-content:center"><i class="{{ t.ck }}" style="font-size:11px;color:#fff"></i></span>
+<span style="font-size:14px;color:{{ t.fg }};text-decoration:{{ t.dec }};flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span>
+<span style="font-size:12.5px;color:#7A6E72">{{ t.sub }}</span>
+<span style="display:inline-flex;align-items:center;gap:5px;background:{{ t.st }};color:{{ t.sd }};border-radius:999px;padding:2px 9px 2px 7px;font-weight:600;font-size:12px;max-width:150px;white-space:nowrap;overflow:hidden"><span style="width:6px;height:6px;flex:none;border-radius:50%;background:{{ t.sc }}"></span><span style="overflow:hidden;text-overflow:ellipsis">{{ t.sn }}</span></span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column">
+<span style="font-size:15px;font-weight:600;padding-bottom:8px">Exams &amp; deadlines</span>
+<sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:12px;height:52px;border-bottom:1px solid #F1EBE7">
+<div style="width:38px;display:flex;flex-direction:column;align-items:center;line-height:1.1"><span style="font-size:11px;color:#7A6E72;font-weight:600;text-transform:uppercase">{{ u.dow }}</span><span style="font-size:18px;font-weight:600">{{ u.dnum }}</span></div>
+<div style="display:flex;flex-direction:column;flex:1;min-width:0;line-height:1.3"><span style="font-size:14px;font-weight:600">{{ u.title }}</span><span style="font-size:12.5px;color:#5E5357;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.sn }}</span></div>
+<span style="font-size:11.5px;font-weight:600;color:{{ u.bf }};background:{{ u.bx }};border-radius:6px;padding:2px 7px">{{ u.type }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<span style="font-size:15px;font-weight:600">Friends</span>
+<sc-for list="{{ friends }}" as="f" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="position:relative;width:32px;height:32px;border-radius:50%;background:{{ f.bg }};color:{{ f.fg }};font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">{{ f.i }}<span style="position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;border-radius:50%;background:{{ f.live }};border:2px solid #FDFBFA"></span></div>
+<div style="display:flex;flex-direction:column;flex:1;min-width:0;line-height:1.3"><span style="font-size:13.5px;font-weight:600">{{ f.n }}</span><span style="font-size:12.5px;color:#5E5357;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.s }}</span></div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;align-items:center;gap:14px;background:#241C1F;color:#FAF7F5;border-radius:999px;padding:8px 8px 8px 22px;box-shadow:0 18px 40px -16px rgba(36,28,31,.6)">
+<span style="width:8px;height:8px;border-radius:50%;background:#E9A3B2"></span>
+<span style="font-size:14px;font-weight:500">Next: <strong>Calculus I</strong> · Integration by parts</span>
+<div style="display:flex;gap:2px;background:#3A3034;border-radius:999px;padding:3px;font-size:12.5px;font-weight:600"><span style="padding:4px 10px;border-radius:999px;background:#FAF7F5;color:#241C1F">25</span><span style="padding:4px 10px;color:#CFC4C8">50</span><span style="padding:4px 10px;color:#CFC4C8">∞</span></div>
+<span style="height:38px;padding:0 18px;border-radius:999px;background:#E9A3B2;color:#241C1F;display:flex;align-items:center;gap:7px;font-size:14px;font-weight:600"><i class="icon-play" style="font-size:14px"></i>Focus</span>
+</div>
+</main>
+</div>
+<!-- 1c phone -->
+<div style="width:402px;height:874px;border-radius:56px;background:#FDFBFA;box-shadow:0 0 0 10px #1F1A1C,0 40px 60px -30px rgba(60,30,40,.5);overflow:hidden;position:relative;display:flex;flex-direction:column">
+<div style="height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0;font-size:16px;font-weight:600"><span>9:41</span><span style="position:absolute;left:50%;top:11px;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000"></span><span style="display:flex;gap:6px;align-items:center"><i class="icon-signal" style="font-size:15px"></i><i class="icon-wifi" style="font-size:15px"></i><i class="icon-battery-full" style="font-size:18px"></i></span></div>
+<div style="flex:1;overflow:hidden;padding:12px 0 0;display:flex;flex-direction:column;gap:16px">
+<div style="padding:0 20px;display:flex;flex-direction:column;gap:2px"><span style="font-size:13.5px;color:#5E5357;font-weight:500">Sat, 14 Nov · 1h 50m today</span><span style="font-size:28px;font-weight:600;letter-spacing:-0.035em">Your day</span></div>
+<div style="position:relative;height:150px;margin-left:20px;overflow:hidden">
+<div style="position:absolute;top:0;left:0;width:720px;height:150px">
+<div style="display:flex;height:18px"><sc-for list="{{ mHours }}" as="h" hint-placeholder-count="7"><div style="width:90px;flex:none;font-size:11.5px;color:#7A6E72;border-left:1px solid #EAE2DD;padding-left:5px;font-variant-numeric:tabular-nums">{{ h }}</div></sc-for></div>
+<sc-for list="{{ mBlocks }}" as="e" hint-placeholder-count="5">
+<div style="position:absolute;left:{{ e.x }}px;width:{{ e.w }}px;top:{{ e.y }}px;height:52px;border-radius:12px;background:{{ e.bg }};border:{{ e.bd }};color:{{ e.fg }};padding:6px 9px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;line-height:1.25;opacity:{{ e.op }}"><span style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.title }}</span><span style="font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.time }}</span></div>
+</sc-for>
+<div style="position:absolute;left:{{ mNow }}px;top:14px;bottom:0;width:2px;background:#A63D57"><span style="position:absolute;top:-4px;left:-4px;width:10px;height:10px;border-radius:50%;background:#A63D57"></span></div>
+</div>
+</div>
+<div style="padding:0 20px;display:flex;flex-direction:column">
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding-bottom:4px"><span style="font-size:17px;font-weight:600">Tasks</span><span style="font-size:13.5px;color:#5E5357">4 open</span></div>
+<sc-for list="{{ tasksShort }}" as="t" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:12px;height:52px;border-bottom:1px solid #F1EBE7">
+<span style="width:22px;height:22px;border-radius:50%;flex:none;border:1.5px solid {{ t.ring }}"></span>
+<div style="display:flex;flex-direction:column;min-width:0;flex:1;gap:1px"><span style="font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span><span style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#5E5357"><span style="width:7px;height:7px;border-radius:50%;background:{{ t.sc }}"></span>{{ t.sn }}</span></div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="position:absolute;left:14px;right:14px;bottom:100px;height:60px;background:#241C1F;border-radius:20px;display:flex;align-items:center;gap:12px;padding:0 8px 0 16px;color:#FAF7F5;box-shadow:0 14px 30px -12px rgba(36,28,31,.6)"><span style="width:8px;height:8px;border-radius:50%;background:#E9A3B2"></span><div style="display:flex;flex-direction:column;flex:1;line-height:1.25;min-width:0"><span style="font-size:14px;font-weight:600">Calculus I · 25 min</span><span style="font-size:12px;color:#CFC4C8">Integration by parts</span></div><span style="width:44px;height:44px;border-radius:14px;background:#E9A3B2;display:flex;align-items:center;justify-content:center"><i class="icon-play" style="font-size:18px;color:#241C1F;margin-left:2px"></i></span></div>
+<div style="height:88px;flex:none;background:rgba(253,251,250,.94);border-top:1px solid #EFE8E4;display:flex;justify-content:space-around;padding:10px 8px 0">
+<sc-for list="{{ tabsC }}" as="b" hint-placeholder-count="5"><div style="width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;color:{{ b.fg }}"><i class="{{ b.ic }}" style="font-size:22px"></i><span style="font-size:11px;font-weight:600">{{ b.n }}</span></div></sc-for>
+</div>
+<span style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:136px;height:5px;border-radius:3px;background:#241C1F"></span>
+</div>
+</div>
+</div>
+
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { dial: 25 };
+  renderVals() {
+    const S = {
+      alg:{n:'Linear Algebra',c:'#8E7CCB',t:'#EFEBFA',d:'#5B4A99'},
+      cal:{n:'Calculus I',c:'#D46A80',t:'#FBE9EC',d:'#A23A55'},
+      ada:{n:'Algorithms',c:'#4E9E78',t:'#E6F3EC',d:'#2F6E50'},
+      est:{n:'Inferential Statistics',c:'#6A7BCF',t:'#E9ECFA',d:'#3E4FA0'},
+      nube:{n:'Cloud Storage',c:'#4C93C9',t:'#E5F0F9',d:'#2B6896'},
+      ia:{n:'Natural & AI',c:'#C98A2E',t:'#FAF0DF',d:'#8A5A12'}
+    };
+    const P = {'!!!':'#A63D57','!!':'#B5702A','!':'#7A6E72'};
+    const raw = [
+      ['Integration by parts — exercises 4–9','cal','!!!','2/6'],
+      ['Summary, unit 5: confidence intervals','est','!!',''],
+      ['Implement Dijkstra with a binary heap','ada','!!!','1/3'],
+      ['Read "Attention Is All You Need"','ia','!',''],
+      ['Set up S3 bucket for lab 3','nube','',''  ,true]
+    ];
+    const tasks = raw.map(([title,s,p,sub,done]) => ({
+      title, sub, p, pc:P[p]||'#7A6E72',
+      ring: done?'#A63D57':'#C9BDB8', fill: done?'#A63D57':'transparent', ck: done?'icon-check':'',
+      fg: done?'#8A7E82':'#241C1F', dec: done?'line-through':'none',
+      sc:S[s].c, st:S[s].t, sd:S[s].d, sn:S[s].n
+    }));
+    const tasksShort = tasks.slice(0,4);
+    const upcoming = [
+      {days:2,title:'Problem set 4',s:'alg',type:'Due',dow:'Mon',dnum:16},
+      {days:5,title:'Midterm 2',s:'cal',type:'Exam',dow:'Thu',dnum:19},
+      {days:9,title:'Lab 3 report',s:'nube',type:'Due',dow:'Mon',dnum:23},
+      {days:12,title:'Final exam',s:'est',type:'Exam',dow:'Thu',dnum:26}
+    ].map(u => ({...u, sn:S[u.s].n, bx:S[u.s].t, bf:S[u.s].d}));
+    const friends = [
+      {i:'IS',n:'Isabella',s:'Linear Algebra · 32 min in',bg:'#E5F0F9',fg:'#2B6896',live:'#4E9E78',cta:'Join'},
+      {i:'MR',n:'Marco Ruiz',s:'Room "Late library" · 3 people',bg:'#E6F3EC',fg:'#2F6E50',live:'#4E9E78',cta:'Join'},
+      {i:'LG',n:'Lucía Gómez',s:'On break · 4 min',bg:'#FAF0DF',fg:'#8A5A12',live:'#E0A84F',cta:'Wave'}
+    ];
+    const wv = [['M',2.4],['T',3.0],['W',1.2],['T',2.3],['F',2.0],['S',1.8],['S',0]];
+    const weekBars = wv.map(([d,v],i) => ({d, v: v? v.toFixed(1)+'h':'', h:Math.max(4,v/3*56), h2:Math.max(8,v/3*80), h3:Math.max(3,v/3*34),
+      bg: i===5?'#A63D57':(v?'#E9B8C3':'#E6DDD8'), fg: i===5?'#A63D57':'#7A6E72'}));
+    const streak = ['M','T','W','T','F','S','S'].map((d,i)=>({d, bg: i<5?'#F2C6D0':(i===5?'#A63D57':'transparent'), bd: i===6?'1.5px dashed #D9C9CE':'none'}));
+    const later = [
+      {t:'18:30',title:'Statistics study group',c:S.est.c,k:'Now',kc:'#A63D57'},
+      {t:'20:00',title:'Focus · Calculus I, 90 min',c:S.cal.c,k:'Planned',kc:'#7A6E72'},
+      {t:'22:00',title:'Flashcards · Linear Algebra',c:S.alg.c,k:'Planned',kc:'#7A6E72'}
+    ];
+    const navDef = [
+      {label:'', items:[['Dashboard','icon-layout-grid'],['Tasks','icon-circle-check','4'],['Calendar','icon-calendar'],['Study Planner','icon-calendar-range','New']]},
+      {label:'Study', items:[['Focus','icon-timer'],['Subjects','icon-book-open']]},
+      {label:'Together', items:[['Study Together','icon-coffee','2'],['Friends','icon-users']]},
+      {label:'Insights', items:[['Statistics','icon-chart-column'],['Progress','icon-trophy']]}
+    ];
+    const nav = navDef.map(g => ({label:g.label, items:g.items.map(([n,ic,badge]) => {
+      const a = n==='Dashboard';
+      return {n, ic, badge:badge||'', bg:a?'#FDFBFA':'transparent', fg:a?'#241C1F':'#4A3F43', w:a?600:500,
+        sh:a?'0 1px 2px rgba(60,30,40,.08)':'none', icc:a?'#A63D57':'#8A7E82',
+        bc: badge==='New'?'#A63D57':'#5E5357', bb: badge==='New'?'#FBE9EC':(badge?'#EAE3DE':'transparent')};
+    })}));
+    const tab = (n,ic,active,center) => center
+      ? {n,ic,fg:'#A63D57',sz:48,mt:-14,bg:'#A63D57',isz:20,icc:'#fff'}
+      : {n,ic,fg:active?'#A63D57':'#7A6E72',sz:30,mt:0,bg:'transparent',isz:22,icc:active?'#A63D57':'#7A6E72'};
+    const tabsA = [tab('Today','icon-house',true),tab('Calendar','icon-calendar'),tab('Focus','icon-play',false,true),tab('Tasks','icon-circle-check'),tab('More','icon-ellipsis')];
+    const tabsC = [['Today','icon-house',1],['Calendar','icon-calendar'],['Tasks','icon-circle-check'],['Together','icon-coffee'],['More','icon-ellipsis']].map(([n,ic,a])=>({n,ic,fg:a?'#A63D57':'#7A6E72'}));
+    // timeline 8–24
+    const hours = [9,11,13,15,17,19,21,23].map(h=>({l:h+':00', x:(h-8.5)/15*100}));
+    const blk = [
+      [9,1.5,'Calculus I lecture','cal','class',true],
+      [10.75,0.85,'Focus · Calculus I','cal','done',true],
+      [12.5,1,'Lunch',null,'personal',true],
+      [16,1.5,'Focus · Algorithms','ada','done',true],
+      [18.5,1,'Stats study group','est','class',false],
+      [20,1.5,'Focus · Calculus I','cal','plan',false],
+      [22,0.75,'Flashcards','alg','plan',false]
+    ];
+    const fmt = h => `${Math.floor(h)}:${String(Math.round((h%1)*60)).padStart(2,'0')}`;
+    const styleOf = (s,k) => {
+      if (k==='personal') return {bg:'#EFEAE6',bd:'none',fg:'#5E5357'};
+      const x = S[s];
+      if (k==='class') return {bg:x.t,bd:'none',fg:x.d};
+      if (k==='done') return {bg:x.c,bd:'none',fg:'#fff'};
+      return {bg:'#FDFBFA',bd:`1.5px dashed ${x.c}`,fg:x.d};
+    };
+    const short = {'Focus · Calculus I':'Calc','Focus · Algorithms':'Algo','Stats study group':'Stats','Flashcards':'Cards','Calculus I lecture':'Calc lecture'};
+    const blocks = blk.map(([st,du,t0,s,k,past],i) => ({title: du<1.2 ? (short[t0]||t0) : t0, time:`${fmt(st)}–${fmt(st+du)}`,
+      left:(st-8.5)/15*100, width:du/15*100-0.3, top: i%2? 50:2, op: past?0.75:1, tdisp: du>=1.2?'block':'none', ...styleOf(s,k)}));
+    const nowLeft = (19.33-8.5)/15*100;
+    const mHours = ['17:00','18:00','19:00','20:00','21:00','22:00','23:00'];
+    const mBlocks = blk.filter(b=>b[0]>=16).map(([st,du,t0,s,k,past],i)=>({title: du<1 ? (short[t0]||t0) : t0, time:`${fmt(st)}–${fmt(st+du)}`,
+      x:(st-17)*90, w:du*90-4, y: i%2?86:26, op: past?0.75:1, ...styleOf(s,k)}));
+    const mNow = (19.33-17)*90;
+    // dial
+    const d = this.state.dial, C = 603.2, frac = d/90;
+    const ang = (frac*360-90)*Math.PI/180;
+    return {
+      tasks, tasksShort, upcoming, friends, weekBars, streak, later, nav, tabsA, tabsC,
+      hours, blocks, nowLeft, mHours, mBlocks, mNow,
+      dialLabel: d+'m', dialOff: C*(1-frac),
+      knobX: 110 + 96*Math.cos(frac*2*Math.PI), knobY: 110 + 96*Math.sin(frac*2*Math.PI),
+      dialUp: () => this.setState(s=>({dial:Math.min(90,s.dial+5)})),
+      dialDown: () => this.setState(s=>({dial:Math.max(5,s.dial-5)}))
+    };
+  }
+}
+</script>
+</body>
+</html>

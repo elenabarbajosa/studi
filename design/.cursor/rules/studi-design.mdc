@@ -1,0 +1,37 @@
+---
+description: Studi UI/UX redesign rules
+globs:
+alwaysApply: true
+---
+
+Follow `design/HANDOFF.md` as the visual specification
+for all Studi redesign work.
+
+Use the `design/*.dc.html` files as visual references.
+
+Preserve all existing application functionality.
+
+Do not modify:
+- Supabase migrations
+- Database schemas
+- RLS policies
+- Authentication logic
+- Server actions
+- Data-fetching logic
+- Business logic
+
+Refactor UI components only when necessary.
+
+Maintain:
+- Responsive desktop and mobile layouts
+- Light/dark/system appearance
+- User-configurable accent colors
+- Accessibility
+- Existing application routes
+
+Do not remove features just because they are absent
+from the design prototype.
+
+Run TypeScript, lint, tests and build after each stage.
+
+Do not commit or push automatically.
