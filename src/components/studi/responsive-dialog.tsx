@@ -15,7 +15,9 @@ export function ResponsiveDialog({
   title,
   description,
   children,
+  footer,
   className,
+  contentClassName,
   hideTitle = false,
 }: {
   open: boolean;
@@ -23,7 +25,9 @@ export function ResponsiveDialog({
   title: React.ReactNode;
   description?: React.ReactNode;
   children: React.ReactNode;
+  footer?: React.ReactNode;
   className?: string;
+  contentClassName?: string;
   hideTitle?: boolean;
 }) {
   return (
@@ -33,7 +37,10 @@ export function ResponsiveDialog({
         <DialogPrimitive.Popup
           className={cn(
             "fixed z-50 flex flex-col bg-raised text-ink outline-none",
-            "inset-x-0 bottom-0 max-h-[calc(100svh-24px)] rounded-t-[30px] pb-[max(20px,env(safe-area-inset-bottom))] shadow-[0_-10px_40px_rgba(36,28,31,0.2)] transition-transform duration-300 ease-studi data-ending-style:translate-y-full data-starting-style:translate-y-full",
+            "inset-x-0 bottom-0 max-h-[calc(100svh-24px)] rounded-t-[30px] shadow-[0_-10px_40px_rgba(36,28,31,0.2)] transition-transform duration-300 ease-studi data-ending-style:translate-y-full data-starting-style:translate-y-full",
+            footer
+              ? "pb-0"
+              : "pb-[max(20px,env(safe-area-inset-bottom))]",
             "md:inset-x-auto md:top-1/2 md:bottom-auto md:left-1/2 md:max-h-[min(88svh,820px)] md:w-[min(560px,calc(100vw-48px))] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[24px] md:pb-0 md:shadow-pop md:transition-[opacity,scale] md:duration-200 md:data-ending-style:translate-y-[-50%] md:data-ending-style:scale-95 md:data-ending-style:opacity-0 md:data-starting-style:translate-y-[-50%] md:data-starting-style:scale-95 md:data-starting-style:opacity-0",
             "motion-reduce:transition-opacity motion-reduce:data-ending-style:translate-y-0 motion-reduce:data-starting-style:translate-y-0 motion-reduce:data-ending-style:opacity-0 motion-reduce:data-starting-style:opacity-0",
             className,
@@ -69,9 +76,20 @@ export function ResponsiveDialog({
               <span className="sr-only">Close</span>
             </DialogPrimitive.Close>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-3 pb-2 md:px-6 md:pb-6">
+          <div
+            className={cn(
+              "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-3 pb-2 md:px-6",
+              footer ? "md:pb-3" : "md:pb-6",
+              contentClassName,
+            )}
+          >
             {children}
           </div>
+          {footer ? (
+            <div className="shrink-0 border-t border-hairline bg-raised px-5 pt-3 pb-[max(16px,env(safe-area-inset-bottom))] md:rounded-b-[24px] md:px-6 md:pb-5">
+              {footer}
+            </div>
+          ) : null}
         </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

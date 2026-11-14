@@ -20,6 +20,7 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -34,6 +35,7 @@ import {
 } from "@/actions/topics";
 import { FormError } from "@/components/studi/form-controls";
 import { EmptyPanel } from "@/components/studi/progress-bits";
+import { ImportSyllabusDialog } from "@/components/subjects/import-syllabus/import-syllabus-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -72,10 +74,11 @@ const iconButton =
 
 type TopicsPanelProps = {
   subjectId: string;
+  subjectName: string;
   topics: Topic[];
 };
 
-export function TopicsPanel({ subjectId, topics }: TopicsPanelProps) {
+export function TopicsPanel({ subjectId, subjectName, topics }: TopicsPanelProps) {
   const roots = useMemo(() => topics.filter((t) => t.parent_id === null), [topics]);
   const childrenByParent = useMemo(() => {
     const map = new Map<string, Topic[]>();
@@ -89,6 +92,7 @@ export function TopicsPanel({ subjectId, topics }: TopicsPanelProps) {
   }, [topics]);
   const summary = topicProgressSummary(topics);
   const [isPending, startTransition] = useTransition();
+  const [importOpen, setImportOpen] = useState(false);
 
   function moveRoot(topicId: string, direction: -1 | 1) {
     const ids = roots.map((t) => t.id);
@@ -106,15 +110,27 @@ export function TopicsPanel({ subjectId, topics }: TopicsPanelProps) {
 
   return (
     <section aria-labelledby="topics-title" className="flex flex-col">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 pb-2">
-        <h2 id="topics-title" className="sr-only">
-          Topics
-        </h2>
-        {summary.total > 0 ? (
-          <p className="text-[12.5px] text-ink-2">
-            {summary.mastered} of {summary.total} mastered · progress counts top-level topics
-          </p>
-        ) : null}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pb-2">
+        <div className="min-w-0">
+          <h2 id="topics-title" className="sr-only">
+            Topics
+          </h2>
+          {summary.total > 0 ? (
+            <p className="text-[12.5px] text-ink-2">
+              {summary.mastered} of {summary.total} mastered · progress counts top-level topics
+            </p>
+          ) : (
+            <p className="text-[12.5px] text-ink-2">Build the syllabus manually or import with AI.</p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setImportOpen(true)}
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-sunken px-3.5 text-[13.5px] font-semibold text-ink outline-none transition-colors hover:bg-hover focus-visible:shadow-[0_0_0_2px_var(--raised),0_0_0_4px_var(--accent)] md:h-8"
+        >
+          <Sparkles className="size-[15px] text-accent-text" aria-hidden />
+          Import with AI
+        </button>
       </div>
 
       {roots.length === 0 ? (
@@ -140,6 +156,13 @@ export function TopicsPanel({ subjectId, topics }: TopicsPanelProps) {
       )}
 
       <AddTopicInline subjectId={subjectId} parentId={null} label="Add topic" />
+
+      <ImportSyllabusDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        subjectId={subjectId}
+        subjectName={subjectName}
+      />
     </section>
   );
 }

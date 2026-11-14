@@ -263,7 +263,9 @@ export function SubjectDetail({
             aria-labelledby={`subject-tab-${tab}`}
             className="p-4 md:p-5"
           >
-            {tab === "topics" ? <TopicsPanel subjectId={subject.id} topics={topics} /> : null}
+            {tab === "topics" ? (
+              <TopicsPanel subjectId={subject.id} subjectName={subject.name} topics={topics} />
+            ) : null}
             {tab === "materials" ? (
               <MaterialsPanel subjectId={subject.id} materials={materials} topics={topics} />
             ) : null}

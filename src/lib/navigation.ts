@@ -59,9 +59,8 @@ export const plannerNav: NavItem = {
   title: "Study Planner",
   href: "/planner",
   icon: CalendarRange,
-  description: "Coming soon",
-  comingSoon: true,
-  keywords: ["plan"],
+  description: "AI study schedules",
+  keywords: ["plan", "schedule", "ai"],
 };
 
 export const focusNav: NavItem = {

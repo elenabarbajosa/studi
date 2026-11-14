@@ -144,6 +144,84 @@ export type StudyPreferences = {
   updated_at: string;
 };
 
+export type AiUsageEvent = {
+  id: string;
+  user_id: string;
+  feature: string;
+  created_at: string;
+};
+
+export type AiImportSession = {
+  id: string;
+  user_id: string;
+  subject_id: string;
+  feature: string;
+  created_at: string;
+  expires_at: string;
+  consumed_at: string | null;
+};
+
+export type AiGenerationSession = {
+  id: string;
+  user_id: string;
+  feature: string;
+  created_at: string;
+  expires_at: string;
+  consumed_at: string | null;
+};
+
+export type StudyPlanStatus = "draft" | "active" | "completed" | "archived";
+
+export type PlannerPreferences = {
+  user_id: string;
+  planning_period: "7" | "14" | "30" | "until_exam";
+  intensity: "light" | "balanced" | "intensive";
+  max_hours_per_day: number;
+  preferred_session_minutes: number;
+  break_minutes: number;
+  include_revision: boolean;
+  include_incomplete_tasks: boolean;
+  weekday_availability: import("@/lib/subjects").WeekdayAvailability;
+  time_windows: Record<
+    import("@/lib/subjects").Weekday,
+    { start: string; end: string }[]
+  >;
+  rest_days: string[];
+  included_subject_ids: string[] | null;
+  prioritized_topic_ids: string[];
+  excluded_topic_ids: string[];
+  until_assessment_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StudyPlan = {
+  id: string;
+  user_id: string;
+  title: string;
+  status: StudyPlanStatus;
+  period_start: string;
+  period_end: string;
+  intensity: string;
+  timezone: string;
+  summary: string | null;
+  recommendations: unknown;
+  warnings: unknown;
+  generation_session_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StudyPlanSession = {
+  id: string;
+  plan_id: string;
+  study_session_id: string;
+  user_id: string;
+  locked: boolean;
+  user_edited: boolean;
+  created_at: string;
+};
+
 export type Subject = {
   id: string;
   user_id: string;
@@ -695,11 +773,112 @@ export type Database = {
         >;
         Relationships: [];
       };
+      ai_usage_events: {
+        Row: AiUsageEvent;
+        Insert: {
+          id?: string;
+          user_id: string;
+          feature: string;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
+      ai_import_sessions: {
+        Row: AiImportSession;
+        Insert: {
+          id?: string;
+          user_id: string;
+          subject_id: string;
+          feature?: string;
+          created_at?: string;
+          expires_at: string;
+          consumed_at?: string | null;
+        };
+        Update: Partial<Pick<AiImportSession, "consumed_at">>;
+        Relationships: [];
+      };
+      ai_generation_sessions: {
+        Row: AiGenerationSession;
+        Insert: {
+          id?: string;
+          user_id: string;
+          feature: string;
+          created_at?: string;
+          expires_at: string;
+          consumed_at?: string | null;
+        };
+        Update: Partial<Pick<AiGenerationSession, "consumed_at">>;
+        Relationships: [];
+      };
+      planner_preferences: {
+        Row: PlannerPreferences;
+        Insert: Partial<PlannerPreferences> & { user_id: string };
+        Update: Partial<Omit<PlannerPreferences, "user_id" | "created_at">>;
+        Relationships: [];
+      };
+      study_plans: {
+        Row: StudyPlan;
+        Insert: {
+          id?: string;
+          user_id: string;
+          title?: string;
+          status?: StudyPlanStatus;
+          period_start: string;
+          period_end: string;
+          intensity?: string;
+          timezone?: string;
+          summary?: string | null;
+          recommendations?: unknown;
+          warnings?: unknown;
+          generation_session_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Omit<StudyPlan, "id" | "user_id" | "created_at">
+        >;
+        Relationships: [];
+      };
+      study_plan_sessions: {
+        Row: StudyPlanSession;
+        Insert: {
+          id?: string;
+          plan_id: string;
+          study_session_id: string;
+          user_id: string;
+          locked?: boolean;
+          user_edited?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Pick<StudyPlanSession, "locked" | "user_edited">>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
       username_is_available: {
         Args: { desired: string };
+        Returns: boolean;
+      };
+      claim_ai_usage: {
+        Args: { p_feature: string; p_daily_limit?: number };
+        Returns: { allowed: boolean; used: number; limit: number }[];
+      };
+      create_ai_import_session: {
+        Args: { p_subject_id: string; p_feature?: string };
+        Returns: string;
+      };
+      consume_ai_import_session: {
+        Args: { p_session_id: string; p_subject_id: string };
+        Returns: boolean;
+      };
+      create_ai_generation_session: {
+        Args: { p_feature: string };
+        Returns: string;
+      };
+      consume_ai_generation_session: {
+        Args: { p_session_id: string; p_feature: string };
         Returns: boolean;
       };
       are_friends: {

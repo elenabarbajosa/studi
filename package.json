@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/study-together/timer-sync.test.ts src/lib/progress/streaks.test.ts src/lib/focus/stats-days.test.ts src/lib/dashboard.test.ts src/lib/planning.test.ts"
+    "test": "tsx --test src/lib/study-together/timer-sync.test.ts src/lib/progress/streaks.test.ts src/lib/focus/stats-days.test.ts src/lib/dashboard.test.ts src/lib/planning.test.ts src/lib/ai/*.test.ts src/lib/planner/*.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -17,6 +17,7 @@
     "@fullcalendar/interaction": "^6.1.22",
     "@fullcalendar/react": "^6.1.22",
     "@fullcalendar/timegrid": "^6.1.22",
+    "@google/genai": "^3.3.0",
     "@hookform/resolvers": "^7.0.5",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
@@ -27,6 +28,7 @@
     "lucide-react": "^1.72.0",
     "next": "16.4.6",
     "next-themes": "^0.4.6",
+    "pdf-lib": "^1.17.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-easy-crop": "^6.2.5",
