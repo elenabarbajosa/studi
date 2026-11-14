@@ -3,12 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { createClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
 import {
   FOCUS_TIMER_MODES,
   SOUNDSCAPE_IDS,
 } from "@/lib/calendar";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { createClient } from "@/lib/supabase/server";
 
 export type FocusActionState = {
   error?: string;
@@ -223,8 +223,38 @@ export async function finishFocusSession(
     .eq("user_id", auth.user.id)
     .eq("client_session_id", parsed.data.client_session_id);
 
+  // Gamification is best-effort — never block a successful save.
+  let unlocked: string[] = [];
+  try {
+    const { evaluateAndAwardAchievements } = await import(
+      "@/lib/progress/evaluate"
+    );
+    const { data: gprefs } = await auth.supabase
+      .from("gamification_preferences")
+      .select("*")
+      .eq("user_id", auth.user.id)
+      .maybeSingle();
+    unlocked = await evaluateAndAwardAchievements(auth.user.id, {
+      enabled: gprefs?.enabled ?? true,
+      timezone: gprefs?.timezone ?? "UTC",
+      min_daily_focus_minutes: gprefs?.min_daily_focus_minutes ?? 15,
+      rest_days: Array.isArray(gprefs?.rest_days)
+        ? (gprefs.rest_days as never)
+        : [],
+    });
+  } catch (err) {
+    console.error("post-save achievement eval failed:", err);
+  }
+
   revalidateFocus();
-  return { success: "Session saved", id: data.id };
+  revalidatePath("/progress");
+  return {
+    success:
+      unlocked.length > 0
+        ? `Session saved · ${unlocked.length} new achievement${unlocked.length === 1 ? "" : "s"}`
+        : "Session saved",
+    id: data.id,
+  };
 }
 
 export async function discardFocusSession(

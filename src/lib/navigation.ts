@@ -7,6 +7,7 @@ import {
   Handshake,
   LayoutDashboard,
   Settings,
+  Trophy,
   Users,
   ClipboardList,
   type LucideIcon,
@@ -75,6 +76,12 @@ export const mainNav: NavItem[] = [
     href: "/statistics",
     icon: ChartColumn,
     description: "Productivity insights",
+  },
+  {
+    title: "Progress",
+    href: "/progress",
+    icon: Trophy,
+    description: "Streaks and achievements",
   },
 ];
 

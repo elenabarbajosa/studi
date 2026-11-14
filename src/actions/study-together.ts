@@ -381,8 +381,30 @@ export async function saveStudyTogetherSession(input: {
     return { error: error.message };
   }
 
+  try {
+    const { evaluateAndAwardAchievements } = await import(
+      "@/lib/progress/evaluate"
+    );
+    const { data: gprefs } = await auth.supabase
+      .from("gamification_preferences")
+      .select("*")
+      .eq("user_id", auth.user.id)
+      .maybeSingle();
+    await evaluateAndAwardAchievements(auth.user.id, {
+      enabled: gprefs?.enabled ?? true,
+      timezone: gprefs?.timezone ?? "UTC",
+      min_daily_focus_minutes: gprefs?.min_daily_focus_minutes ?? 15,
+      rest_days: Array.isArray(gprefs?.rest_days)
+        ? (gprefs.rest_days as never)
+        : [],
+    });
+  } catch (err) {
+    console.error("study-together achievement eval failed:", err);
+  }
+
   revalidatePath("/statistics");
   revalidatePath("/dashboard");
+  revalidatePath("/progress");
   revalidateRooms(input.room_id);
   return { success: "Focus time saved" };
 }

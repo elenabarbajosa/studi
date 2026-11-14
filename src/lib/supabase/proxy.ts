@@ -15,6 +15,7 @@ const PROTECTED_PREFIXES = [
   "/friends",
   "/study-together",
   "/statistics",
+  "/progress",
   "/settings",
   "/onboarding",
   "/u",

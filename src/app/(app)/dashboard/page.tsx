@@ -4,6 +4,7 @@ import { BookOpen, ClipboardList, Settings } from "lucide-react";
 
 import { AgendaPanels } from "@/components/dashboard/agenda-panels";
 import { FriendsPanel } from "@/components/dashboard/friends-panel";
+import { ProgressPanel } from "@/components/dashboard/progress-panel";
 import { PageHeader } from "@/components/shared/page-header";
 import { StudiAvatar } from "@/components/shared/studi-avatar";
 import { SubjectCard } from "@/components/subjects/subject-card";
@@ -13,6 +14,7 @@ import { requireProfile } from "@/lib/auth";
 import { resolveAvatarSrc } from "@/lib/avatar-server";
 import { getDashboardAgenda } from "@/lib/data/calendar";
 import { getFriendsDashboard } from "@/lib/data/friends";
+import { getProgressDashboard } from "@/lib/data/progress";
 import { listSubjects, listTopicsForSubject } from "@/lib/data/subjects";
 import { canResumeOnboarding } from "@/lib/onboarding";
 import { topicProgressSummary } from "@/lib/subjects";
@@ -45,12 +47,14 @@ async function DashboardContent({
   const name = profile.display_name || profile.username;
   const confirmed = params.confirmed === "1" || params.confirmed === "true";
   const resetSuccess = params.reset === "success";
-  const [subjects, agenda, avatarSrc, friendsDash] = await Promise.all([
-    listSubjects(),
-    getDashboardAgenda(),
-    resolveAvatarSrc(profile),
-    getFriendsDashboard(),
-  ]);
+  const [subjects, agenda, avatarSrc, friendsDash, progressDash] =
+    await Promise.all([
+      listSubjects(),
+      getDashboardAgenda(),
+      resolveAvatarSrc(profile),
+      getFriendsDashboard(),
+      getProgressDashboard(),
+    ]);
 
   const subjectCards = await Promise.all(
     subjects.slice(0, 3).map(async (subject) => {
@@ -129,7 +133,7 @@ async function DashboardContent({
 
       <AgendaPanels {...agenda} subjects={subjects} />
 
-      <div className="mb-10">
+      <div className="mb-10 grid gap-4 lg:grid-cols-2">
         <FriendsPanel
           friendCount={friendsDash.friendCount}
           pendingIncoming={friendsDash.pendingIncoming}
@@ -140,6 +144,7 @@ async function DashboardContent({
               : friendsDash.friends
           }
         />
+        <ProgressPanel data={progressDash} />
       </div>
 
       <section className="mb-10">

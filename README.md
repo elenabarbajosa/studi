@@ -66,8 +66,10 @@ In the Supabase dashboard → **SQL Editor**, run in order:
    Restores Phase 6 RPCs if an earlier partial `007` deploy left them missing.
 9. [`supabase/migrations/009_phase7_study_together.sql`](supabase/migrations/009_phase7_study_together.sql)  
    **Required for Study Together.** Rooms, members, invite token hashes, authoritative timer state, chat, `study_together` session source, and Realtime Presence policies.
+10. [`supabase/migrations/010_phase8_gamification.sql`](supabase/migrations/010_phase8_gamification.sql)  
+   **Required for Progress.** Gamification preferences, achievement definitions/unlocks, challenges, invitations, and friends weekly leaderboard RPC (opt-in).
 
-Confirm in **Table Editor** that these tables exist with RLS enabled, including `study_rooms`, `study_room_members`, `study_room_invitations`, `study_room_timer_state`, `study_room_messages`.
+Confirm in **Table Editor** that these tables exist with RLS enabled, including `study_rooms`, `study_room_members`, `study_room_invitations`, `study_room_timer_state`, `study_room_messages`, `gamification_preferences`, `achievement_definitions`, `user_achievements`, `study_challenges`, `challenge_participants`, `challenge_invitations`.
 
 Confirm in **Storage** that the `avatars` bucket exists and is **private** (not public).
 
@@ -227,6 +229,22 @@ No third-party sample packs are bundled. Playback starts only after a user click
 ### Chat retention
 
 Messages persist until soft-deleted by the sender or purged after **7 days** (manual/cron). Focus phases hide chat in the UI; members can still access history when chat is enabled.
+
+## Phase 8 — Progress (streaks, achievements, challenges)
+
+| Feature | Route |
+| --- | --- |
+| Progress hub | `/progress` |
+| Gamification settings | Settings → Progress & gamification |
+
+### Rules
+
+- Streaks and goals use verified `study_sessions` (`focus` + `study_together`, `status=completed`, `focus_seconds` only).
+- Local days use the user’s IANA timezone (DST-safe). Weeks start Monday.
+- Rest days preserve a streak without increasing it when inactive.
+- Incomplete “today” does not break a streak.
+- Leaderboard is **opt-in** (default off). Only opted-in friends appear; totals come from the same session rules as Statistics.
+- Achievements are awarded server-side (`award_achievement`) and evaluated after session saves without blocking the save.
 
 ## Scripts
 

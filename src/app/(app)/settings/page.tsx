@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { PageHeader } from "@/components/shared/page-header";
+import { GamificationSettingsForm } from "@/components/progress/gamification-settings-form";
 import { FocusPreferencesForm } from "@/components/settings/focus-preferences-form";
 import { PrivacySettingsForm } from "@/components/settings/privacy-settings-form";
 import { SettingsForm } from "@/components/settings/settings-form";
@@ -11,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { requireProfile } from "@/lib/auth";
 import { resolveAvatarSrc } from "@/lib/avatar-server";
 import type { SoundscapeId } from "@/lib/calendar";
+import { getGamificationPreferences } from "@/lib/data/progress";
 import { getStudyPreferences } from "@/lib/data/subjects";
 import type { FocusPreferences } from "@/lib/focus/types";
 import { canResumeOnboarding, onboardingLabel } from "@/lib/onboarding";
@@ -40,9 +42,10 @@ function toFocusPrefs(
 
 async function SettingsContent() {
   const { profile } = await requireProfile();
-  const [preferences, avatarSrc] = await Promise.all([
+  const [preferences, avatarSrc, gamification] = await Promise.all([
     getStudyPreferences(),
     resolveAvatarSrc(profile),
+    getGamificationPreferences(),
   ]);
 
   return (
@@ -55,6 +58,10 @@ async function SettingsContent() {
       <div className="space-y-8">
         <SettingsForm profile={profile} avatarSrc={avatarSrc} />
         <PrivacySettingsForm profile={profile} />
+        <GamificationSettingsForm
+          prefs={gamification}
+          weeklyGoalHours={preferences?.weekly_goal_hours ?? null}
+        />
         <StudyPreferencesForm preferences={preferences} />
         <FocusPreferencesForm preferences={toFocusPrefs(preferences)} />
 

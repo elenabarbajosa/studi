@@ -35,6 +35,15 @@ import type {
   StudyRoomMemberStatus,
   StudyRoomInviteStatus,
 } from "@/lib/study-together/types";
+import type {
+  AchievementDefinition,
+  ChallengeInvitation,
+  ChallengeParticipant,
+  GamificationPreferences,
+  StudyChallenge,
+  UserAchievement,
+} from "@/lib/progress/types";
+import type { ChallengeType } from "@/lib/progress/challenges";
 
 export type AvatarPreference = "custom" | "google" | "initials";
 export type AvatarVisibility = "private" | "friends" | "public";
@@ -626,6 +635,66 @@ export type Database = {
         Update: Partial<Pick<StudyRoomMessage, "body" | "deleted_at">>;
         Relationships: [];
       };
+      gamification_preferences: {
+        Row: GamificationPreferences & { rest_days: unknown };
+        Insert: {
+          user_id: string;
+          enabled?: boolean;
+          leaderboard_opt_in?: boolean;
+          achievement_notifications?: boolean;
+          accept_challenge_invites?: boolean;
+          timezone?: string;
+          min_daily_focus_minutes?: number;
+          rest_days?: unknown;
+          consistency_days_per_week?: number | null;
+        };
+        Update: Partial<
+          Omit<GamificationPreferences, "user_id" | "created_at" | "updated_at">
+        > & { rest_days?: unknown };
+        Relationships: [];
+      };
+      achievement_definitions: {
+        Row: AchievementDefinition;
+        Insert: AchievementDefinition;
+        Update: Partial<AchievementDefinition>;
+        Relationships: [];
+      };
+      user_achievements: {
+        Row: UserAchievement;
+        Insert: UserAchievement;
+        Update: never;
+        Relationships: [];
+      };
+      study_challenges: {
+        Row: StudyChallenge;
+        Insert: Omit<StudyChallenge, "id" | "created_at" | "updated_at"> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<StudyChallenge, "id" | "creator_id" | "created_at">>;
+        Relationships: [];
+      };
+      challenge_participants: {
+        Row: ChallengeParticipant;
+        Insert: ChallengeParticipant;
+        Update: Partial<
+          Omit<ChallengeParticipant, "challenge_id" | "user_id">
+        >;
+        Relationships: [];
+      };
+      challenge_invitations: {
+        Row: ChallengeInvitation;
+        Insert: Omit<ChallengeInvitation, "id" | "created_at" | "responded_at"> & {
+          id?: string;
+          created_at?: string;
+          responded_at?: string | null;
+        };
+        Update: Partial<
+          Pick<ChallengeInvitation, "status" | "responded_at" | "expires_at">
+        >;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -796,6 +865,58 @@ export type Database = {
           p_client_message_id: string;
         };
         Returns: string;
+      };
+      award_achievement: {
+        Args: { p_user_id: string; p_achievement_id: string };
+        Returns: boolean;
+      };
+      friends_weekly_leaderboard: {
+        Args: { p_week_start: string; p_week_end: string };
+        Returns: {
+          user_id: string;
+          username: string;
+          display_name: string | null;
+          accent_color: AccentColor;
+          avatar_preference: AvatarPreference;
+          google_avatar_url: string | null;
+          storage_path: string | null;
+          can_view_avatar: boolean;
+          focus_seconds: number;
+          rank: number;
+        }[];
+      };
+      create_study_challenge: {
+        Args: {
+          p_name: string;
+          p_description: string | null;
+          p_challenge_type: ChallengeType;
+          p_target_value: number;
+          p_visibility: "individual" | "collaborative";
+          p_starts_at: string;
+          p_ends_at: string;
+          p_show_individual_contributions?: boolean;
+        };
+        Returns: string;
+      };
+      invite_to_challenge: {
+        Args: {
+          p_challenge_id: string;
+          p_invitee_id: string;
+          p_expires_at: string;
+        };
+        Returns: string;
+      };
+      respond_challenge_invite: {
+        Args: { p_invite_id: string; p_accept: boolean };
+        Returns: string;
+      };
+      cancel_challenge: {
+        Args: { p_challenge_id: string };
+        Returns: boolean;
+      };
+      mark_challenge_participant_completed: {
+        Args: { p_challenge_id: string };
+        Returns: boolean;
       };
     };
     Enums: {
