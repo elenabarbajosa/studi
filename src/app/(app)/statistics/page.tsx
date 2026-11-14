@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 
-import { PageHeader } from "@/components/shared/page-header";
 import { FocusStatsPanel } from "@/components/statistics/focus-stats-panel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireProfile } from "@/lib/auth";
@@ -17,25 +16,18 @@ async function StatisticsContent() {
   ]);
 
   return (
-    <div>
-      <PageHeader
-        title="Statistics"
-        description="Honest productivity from your saved focus sessions — breaks are excluded."
-      />
-      <FocusStatsPanel stats={stats} subjects={subjects} />
-    </div>
+    <FocusStatsPanel stats={stats} subjects={subjects} />
   );
 }
 
 function StatisticsFallback() {
   return (
-    <div className="space-y-4">
-      <Skeleton className="h-10 w-48" />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Skeleton className="h-28 rounded-2xl" />
-        <Skeleton className="h-28 rounded-2xl" />
-        <Skeleton className="h-28 rounded-2xl" />
-        <Skeleton className="h-28 rounded-2xl" />
+    <div className="flex flex-col gap-5" aria-busy>
+      <Skeleton className="h-9 w-48 rounded-full" />
+      <Skeleton className="h-[104px] rounded-[22px]" />
+      <div className="grid gap-5 min-[1100px]:grid-cols-12">
+        <Skeleton className="h-[300px] rounded-[26px] min-[1100px]:col-span-8" />
+        <Skeleton className="h-[300px] rounded-[26px] min-[1100px]:col-span-4" />
       </div>
     </div>
   );

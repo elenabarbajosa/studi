@@ -3,14 +3,9 @@
 import { useState, useTransition } from "react";
 
 import { finishFocusSession } from "@/actions/focus";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import { Field, FormError, PrimaryActions, SwitchRow } from "@/components/studi/form-controls";
+import { primaryPillClass, softPillClass } from "@/components/studi/page-title";
+import { ResponsiveDialog } from "@/components/studi/responsive-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDurationMinutes } from "@/lib/focus/timer-engine";
 import type { FocusTimerMode } from "@/lib/calendar";
@@ -73,55 +68,54 @@ export function FinishSessionDialog({
     });
   }
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Session summary</DialogTitle>
-        </DialogHeader>
+  const context = [payload.subjectName, payload.topicTitle].filter(Boolean).join(" · ");
 
-        <dl className="space-y-2 text-sm">
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Subject</dt>
-            <dd>{payload.subjectName || "None"}</dd>
-          </div>
-          {payload.topicTitle ? (
-            <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Topic</dt>
-              <dd>{payload.topicTitle}</dd>
+  return (
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Session summary"
+      description={context || "No subject"}
+    >
+      <div className="flex flex-col gap-4">
+        <div className="rounded-[20px] bg-accent-soft px-5 py-4">
+          <p className="text-[12px] font-semibold tracking-[0.08em] text-accent-text uppercase">
+            Verified focus
+          </p>
+          <p className="mt-1 text-[40px] leading-none font-semibold tracking-[-0.04em] text-ink tabular-nums">
+            {formatDurationMinutes(payload.focusMs)}
+          </p>
+          <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-ink-2">
+            <div className="flex gap-1.5">
+              <dt>Breaks</dt>
+              <dd className="font-semibold text-ink tabular-nums">
+                {formatDurationMinutes(payload.breakMs)}
+              </dd>
             </div>
-          ) : null}
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Focus time</dt>
-            <dd className="font-medium">
-              {formatDurationMinutes(payload.focusMs)}
-            </dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Break time</dt>
-            <dd>{formatDurationMinutes(payload.breakMs)}</dd>
-          </div>
-          {payload.goal ? (
-            <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Goal</dt>
-              <dd className="text-right">{payload.goal}</dd>
-            </div>
-          ) : null}
-        </dl>
+            {payload.timerMode === "pomodoro" ? (
+              <div className="flex gap-1.5">
+                <dt>Cycles</dt>
+                <dd className="font-semibold text-ink tabular-nums">{payload.pomodoroCycles}</dd>
+              </div>
+            ) : (
+              <div className="flex gap-1.5">
+                <dt>Mode</dt>
+                <dd className="font-semibold text-ink">Stopwatch</dd>
+              </div>
+            )}
+          </dl>
+        </div>
 
         {payload.goal ? (
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={goalCompleted}
-              onChange={(e) => setGoalCompleted(e.target.checked)}
-            />
-            Mark goal completed
-          </label>
+          <div className="flex flex-col gap-2">
+            <p className="text-[13px] text-ink-2">
+              Goal: <span className="font-medium text-ink">{payload.goal}</span>
+            </p>
+            <SwitchRow label="I reached this goal" checked={goalCompleted} onChange={setGoalCompleted} />
+          </div>
         ) : null}
 
-        <div className="space-y-2">
-          <Label htmlFor="session-notes">Notes</Label>
+        <Field label="Notes" htmlFor="session-notes" optional>
           <Textarea
             id="session-notes"
             rows={3}
@@ -129,28 +123,24 @@ export function FinishSessionDialog({
             onChange={(e) => setNotes(e.target.value)}
             placeholder="What did you cover?"
           />
-        </div>
+        </Field>
 
-        {error ? (
-          <p className="text-sm text-destructive" role="alert">
-            {error}
-          </p>
-        ) : null}
+        <FormError message={error ?? undefined} />
 
-        <div className="flex justify-end gap-2">
-          <Button
+        <PrimaryActions>
+          <button
             type="button"
-            variant="outline"
+            className={softPillClass}
             disabled={isPending}
             onClick={() => onOpenChange(false)}
           >
-            Keep editing
-          </Button>
-          <Button type="button" disabled={isPending} onClick={save}>
+            Not yet
+          </button>
+          <button type="button" className={primaryPillClass} disabled={isPending} onClick={save}>
             {isPending ? "Saving…" : "Save session"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          </button>
+        </PrimaryActions>
+      </div>
+    </ResponsiveDialog>
   );
 }

@@ -18,6 +18,7 @@ export function Segmented<T extends string>({
   label,
   size = "md",
   stretch = false,
+  disabled = false,
   className,
 }: {
   value: T;
@@ -26,6 +27,7 @@ export function Segmented<T extends string>({
   label: string;
   size?: "sm" | "md";
   stretch?: boolean;
+  disabled?: boolean;
   className?: string;
 }) {
   return (
@@ -48,11 +50,13 @@ export function Segmented<T extends string>({
             role="radio"
             aria-checked={selected}
             title={option.title}
+            disabled={disabled}
             onClick={() => onChange(option.value)}
             className={cn(
               "inline-flex items-center justify-center gap-1.5 rounded-full font-semibold whitespace-nowrap outline-none transition-[background-color,color,box-shadow] duration-200 ease-studi focus-visible:shadow-[0_0_0_2px_var(--raised),0_0_0_4px_var(--accent)]",
               size === "sm" ? "h-7 px-3 text-xs" : "h-[30px] px-3.5 text-[13px]",
               stretch && "flex-1",
+              disabled && !selected && "opacity-50",
               selected
                 ? "bg-raised text-ink shadow-[0_1px_2px_rgba(0,0,0,0.06)] dark:bg-hover"
                 : "text-ink-2 hover:text-ink",

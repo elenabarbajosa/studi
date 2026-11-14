@@ -37,11 +37,9 @@ async function ProfileContent({ params }: PageProps) {
 
 function ProfileFallback() {
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
-      <Skeleton className="mx-auto size-24 rounded-full" />
-      <Skeleton className="mx-auto h-8 w-48" />
-      <Skeleton className="mx-auto h-4 w-32" />
-      <Skeleton className="h-40 w-full rounded-2xl" />
+    <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4 md:gap-5">
+      <Skeleton className="h-5 w-20 rounded-lg" />
+      <Skeleton className="h-80 w-full rounded-[22px] md:rounded-[26px]" />
     </div>
   );
 }

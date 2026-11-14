@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTransition } from "react";
+import { Ban, Check, MoreHorizontal, UserMinus, UserPlus, UserRound, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -13,7 +14,15 @@ import {
   sendFriendRequest,
 } from "@/actions/friends";
 import { StudiAvatar } from "@/components/shared/studi-avatar";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { primaryPillClass, softPillClass } from "@/components/studi/page-title";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { formatDurationMinutes } from "@/lib/focus/timer-engine";
 import { presenceLabel, type PresenceStatus } from "@/lib/social";
 import type { AccentColor } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -34,11 +43,15 @@ type UserCardProps = {
   showBlock?: boolean;
 };
 
-function formatHours(seconds: number) {
-  const h = seconds / 3600;
-  if (h < 1) return `${Math.round(seconds / 60)}m this week`;
-  return `${h.toFixed(1)}h this week`;
-}
+const PRESENCE_DOT: Record<PresenceStatus, string> = {
+  focusing: "bg-accent-ink dark:bg-accent",
+  on_break: "bg-warning",
+  online: "bg-success",
+  offline: "bg-ink-4",
+};
+
+const iconAction =
+  "flex size-9 shrink-0 items-center justify-center rounded-full outline-none transition-colors focus-visible:shadow-[0_0_0_2px_var(--raised),0_0_0_4px_var(--accent)] disabled:opacity-50";
 
 export function UserCard({
   id,
@@ -55,6 +68,8 @@ export function UserCard({
   showBlock = false,
 }: UserCardProps) {
   const [isPending, startTransition] = useTransition();
+  const name = displayName || username;
+  const live = presenceStatus && presenceStatus !== "offline";
 
   const profileFields = {
     display_name: displayName,
@@ -73,132 +88,142 @@ export function UserCard({
     });
   }
 
+  function remove() {
+    if (!confirm(`Remove @${username} from friends?`)) return;
+    run(() => removeFriend(id));
+  }
+
+  function block() {
+    if (!confirm(`Block @${username}?`)) return;
+    run(() => blockUser(id));
+  }
+
+  const meta = [
+    `@${username}`,
+    live ? presenceLabel(presenceStatus) : null,
+    weeklyFocusSeconds != null ? `${formatDurationMinutes(weeklyFocusSeconds * 1000)} this week` : null,
+  ].filter(Boolean);
+
+  const showMenu = friendshipStatus === "friends" || showBlock;
+
   return (
-    <div className="studi-panel flex flex-wrap items-center gap-3 p-4">
-      <Link href={`/u/${username}`} className="shrink-0">
-        <StudiAvatar
-          profile={profileFields}
-          src={avatarSrc}
-          size="md"
-          showOnline={Boolean(
-            presenceStatus &&
-              presenceStatus !== "offline" &&
-              presenceStatus !== undefined,
-          )}
-          online={
-            presenceStatus === "focusing" ||
-            presenceStatus === "on_break" ||
-            presenceStatus === "online"
-          }
-        />
+    <div className="flex items-center gap-3 rounded-[18px] px-2.5 py-2.5 transition-colors hover:bg-hover/60">
+      <Link
+        href={`/u/${username}`}
+        className="relative shrink-0 rounded-full outline-none focus-visible:shadow-[0_0_0_2px_var(--raised),0_0_0_4px_var(--accent)]"
+        tabIndex={-1}
+        aria-hidden
+      >
+        <StudiAvatar profile={profileFields} src={avatarSrc} size={42} />
+        {live ? (
+          <span
+            className={cn(
+              "absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full shadow-[0_0_0_2.5px_var(--raised)]",
+              PRESENCE_DOT[presenceStatus],
+            )}
+          />
+        ) : null}
       </Link>
 
       <div className="min-w-0 flex-1">
         <Link
           href={`/u/${username}`}
-          className="font-medium hover:underline"
+          className="block truncate rounded text-[14.5px] font-semibold text-ink outline-none hover:underline focus-visible:shadow-[0_0_0_2px_var(--accent)]"
         >
-          {displayName || username}
+          {name}
         </Link>
-        <p className="text-xs text-muted-foreground">@{username}</p>
-        {bio ? (
-          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-            {bio}
-          </p>
-        ) : null}
-        {presenceStatus && presenceStatus !== "offline" ? (
-          <p className="mt-1 text-xs text-primary">
-            {presenceLabel(presenceStatus)}
-          </p>
-        ) : null}
-        {weeklyFocusSeconds != null ? (
-          <p className="mt-1 text-xs text-muted-foreground">
-            {formatHours(weeklyFocusSeconds)}
-          </p>
-        ) : null}
+        <p className="truncate text-[12.5px] text-ink-3">
+          {meta.map((m, i) => (
+            <span key={i} className={cn(i === 1 && live && "font-medium text-accent-text")}>
+              {i > 0 ? " · " : ""}
+              {m}
+            </span>
+          ))}
+        </p>
+        {bio ? <p className="mt-0.5 line-clamp-1 text-[12.5px] text-ink-2">{bio}</p> : null}
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex shrink-0 items-center gap-1.5">
         {friendshipStatus === "none" ? (
-          <Button
+          <button
             type="button"
-            size="sm"
+            className={cn(primaryPillClass, "h-9 px-3.5 md:h-8")}
             disabled={isPending}
             onClick={() => run(() => sendFriendRequest(username))}
           >
-            Add friend
-          </Button>
+            <UserPlus className="size-3.5" aria-hidden />
+            Add
+          </button>
         ) : null}
         {friendshipStatus === "outgoing" && requestId ? (
-          <Button
+          <button
             type="button"
-            size="sm"
-            variant="outline"
+            className={softPillClass}
             disabled={isPending}
             onClick={() => run(() => cancelFriendRequest(requestId))}
           >
             Cancel
-          </Button>
+          </button>
         ) : null}
         {friendshipStatus === "outgoing" && !requestId ? (
-          <span className="text-xs text-muted-foreground">Request sent</span>
+          <span className="px-2 text-[12.5px] text-ink-3">Requested</span>
         ) : null}
         {friendshipStatus === "incoming" && requestId ? (
           <>
-            <Button
+            <button
               type="button"
-              size="sm"
-              disabled={isPending}
-              onClick={() => run(() => acceptFriendRequest(requestId))}
-            >
-              Accept
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
+              aria-label={`Decline @${username}`}
+              className={cn(iconAction, "bg-sunken text-ink-2 hover:bg-hover hover:text-ink")}
               disabled={isPending}
               onClick={() => run(() => declineFriendRequest(requestId))}
             >
-              Decline
-            </Button>
-          </>
-        ) : null}
-        {friendshipStatus === "friends" ? (
-          <>
-            <Link
-              href={`/u/${username}`}
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-            >
-              Profile
-            </Link>
-            <Button
+              <X className="size-4" aria-hidden />
+            </button>
+            <button
               type="button"
-              size="sm"
-              variant="ghost"
+              aria-label={`Accept @${username}`}
+              className={cn(
+                iconAction,
+                "bg-primary text-primary-foreground hover:bg-accent-ink-hover dark:bg-accent dark:text-ink-on-accent",
+              )}
               disabled={isPending}
-              onClick={() => {
-                if (!confirm(`Remove @${username} from friends?`)) return;
-                run(() => removeFriend(id));
-              }}
+              onClick={() => run(() => acceptFriendRequest(requestId))}
             >
-              Remove
-            </Button>
+              <Check className="size-4" aria-hidden />
+            </button>
           </>
         ) : null}
-        {showBlock ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            disabled={isPending}
-            onClick={() => {
-              if (!confirm(`Block @${username}?`)) return;
-              run(() => blockUser(id));
-            }}
-          >
-            Block
-          </Button>
+        {showMenu ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label={`More for @${username}`}
+              disabled={isPending}
+              className={cn(iconAction, "text-ink-3 hover:bg-sunken hover:text-ink")}
+            >
+              <MoreHorizontal className="size-4" aria-hidden />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem render={<Link href={`/u/${username}`} />}>
+                <UserRound aria-hidden />
+                View profile
+              </DropdownMenuItem>
+              {friendshipStatus === "friends" ? (
+                <DropdownMenuItem onClick={remove}>
+                  <UserMinus aria-hidden />
+                  Remove friend
+                </DropdownMenuItem>
+              ) : null}
+              {showBlock ? (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onClick={block}>
+                    <Ban aria-hidden />
+                    Block
+                  </DropdownMenuItem>
+                </>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : null}
       </div>
     </div>

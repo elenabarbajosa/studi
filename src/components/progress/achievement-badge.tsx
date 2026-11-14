@@ -1,71 +1,117 @@
 "use client";
 
+import {
+  BookOpen,
+  Crown,
+  DoorOpen,
+  Flag,
+  Flame,
+  Hourglass,
+  Lock,
+  Medal,
+  Sparkles,
+  Timer,
+  Users,
+} from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
-const ICONS: Record<string, string> = {
-  spark: "✦",
-  hourglass: "⏳",
-  timer: "◎",
-  flame: "▴",
-  crown: "◈",
-  book: "▣",
-  medal: "◉",
-  users: "⚭",
-  room: "⌂",
-  flag: "⚑",
+const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  spark: Sparkles,
+  hourglass: Hourglass,
+  timer: Timer,
+  flame: Flame,
+  crown: Crown,
+  book: BookOpen,
+  medal: Medal,
+  users: Users,
+  room: DoorOpen,
+  flag: Flag,
 };
+
+const CATEGORY_TONE: Record<string, string> = {
+  getting_started: "bg-accent-soft text-accent-text",
+  consistency: "bg-warning-soft text-warning",
+  milestones: "bg-success-soft text-success",
+  social: "bg-accent-soft text-accent-text",
+  challenges: "bg-warning-soft text-warning",
+};
+
+const TILT = [-4, 3, -2, 4, -3, 2];
 
 type AchievementBadgeProps = {
   title: string;
   description: string;
   icon: string;
+  category?: string;
   unlocked: boolean;
   unlockedAt?: string | null;
-  compact?: boolean;
+  isNew?: boolean;
+  index?: number;
+  size?: "md" | "sm";
 };
 
+/** Collectible badge: tilted tile when unlocked, flat and quiet while locked. */
 export function AchievementBadge({
   title,
   description,
   icon,
+  category = "getting_started",
   unlocked,
   unlockedAt,
-  compact = false,
+  isNew = false,
+  index = 0,
+  size = "md",
 }: AchievementBadgeProps) {
+  const Icon = ICONS[icon] ?? Sparkles;
+  const tile = size === "sm" ? "size-[62px] rounded-[20px]" : "size-[66px] rounded-[22px]";
+
   return (
     <div
-      className={cn(
-        "studi-panel relative overflow-hidden p-4 transition-transform",
-        unlocked
-          ? "motion-safe:hover:-translate-y-0.5"
-          : "opacity-60 grayscale",
-        compact && "p-3",
-      )}
+      className="group/badge flex min-w-0 flex-col items-center gap-1.5 text-center"
+      title={
+        unlocked && unlockedAt
+          ? `${description} Unlocked ${new Date(unlockedAt).toLocaleDateString()}.`
+          : description
+      }
     >
       <div
         className={cn(
-          "mb-3 flex size-12 items-center justify-center rounded-2xl text-lg",
+          "relative flex shrink-0 items-center justify-center transition-[rotate] duration-300 ease-studi motion-reduce:transition-none",
+          tile,
           unlocked
-            ? "bg-gradient-to-br from-primary/25 via-brand-soft to-primary/10 text-primary shadow-sm"
-            : "border border-dashed border-border bg-muted/40 text-muted-foreground",
+            ? cn(
+                CATEGORY_TONE[category] ?? CATEGORY_TONE.getting_started,
+                "rotate-(--tilt) shadow-[0_6px_14px_-8px_rgba(36,28,31,0.35)] group-hover/badge:rotate-0 motion-reduce:rotate-0",
+              )
+            : "bg-sunken text-ink-4",
         )}
-        aria-hidden
+        style={unlocked ? ({ "--tilt": `${TILT[index % TILT.length]}deg` } as React.CSSProperties) : undefined}
       >
-        {ICONS[icon] ?? "✦"}
+        <Icon className={size === "sm" ? "size-6" : "size-7"} aria-hidden />
+        {!unlocked ? (
+          <span className="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full bg-raised text-ink-3 shadow-[0_0_0_2px_var(--raised)]">
+            <Lock className="size-2.5" aria-hidden />
+          </span>
+        ) : null}
+        {isNew ? (
+          <span className="absolute -top-1.5 -right-1.5 rounded-full bg-primary px-1.5 py-0.5 text-[9.5px] font-bold text-primary-foreground dark:bg-accent dark:text-ink-on-accent">
+            NEW
+          </span>
+        ) : null}
       </div>
-      <p className="font-medium">{title}</p>
-      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-        {description}
-      </p>
-      {unlocked && unlockedAt ? (
-        <p className="mt-2 text-[10px] uppercase tracking-wide text-primary">
-          Unlocked {new Date(unlockedAt).toLocaleDateString()}
-        </p>
-      ) : (
-        <p className="mt-2 text-[10px] uppercase tracking-wide text-muted-foreground">
-          Locked
-        </p>
-      )}
+      <span
+        className={cn(
+          "line-clamp-2 text-[12.5px] leading-tight font-semibold",
+          unlocked ? "text-ink" : "text-ink-3",
+        )}
+      >
+        {title}
+      </span>
+      {size === "md" ? (
+        <span className="line-clamp-2 text-[11.5px] leading-tight text-ink-3">{description}</span>
+      ) : null}
+      <span className="sr-only">{unlocked ? "Unlocked" : "Locked"}</span>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 
 import { FocusBoard } from "@/components/focus/focus-board";
-import { PageHeader } from "@/components/shared/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireProfile } from "@/lib/auth";
 import {
@@ -47,28 +46,30 @@ async function FocusContent() {
     ]);
 
   return (
-    <div>
-      <PageHeader
-        title="Focus"
-        description="Pomodoro or stopwatch — only real active focus time is saved."
-      />
-      <FocusBoard
-        subjects={subjects}
-        topics={topics}
-        tasks={tasks}
-        preferences={toFocusPrefs(preferences)}
-        todayFocusSeconds={todayFocusSeconds}
-        recentSessions={recent}
-      />
-    </div>
+    <FocusBoard
+      subjects={subjects}
+      topics={topics}
+      tasks={tasks}
+      preferences={toFocusPrefs(preferences)}
+      weeklyGoalHours={preferences?.weekly_goal_hours ?? null}
+      todayFocusSeconds={todayFocusSeconds}
+      recentSessions={recent}
+    />
   );
 }
 
 function FocusFallback() {
   return (
-    <div className="space-y-4">
-      <Skeleton className="h-10 w-40" />
-      <Skeleton className="h-72 w-full rounded-2xl" />
+    <div className="flex flex-col gap-4 md:gap-5" aria-busy>
+      <Skeleton className="h-9 w-40 rounded-full" />
+      <div className="grid gap-4 md:gap-5 min-[1100px]:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <Skeleton className="h-[560px] rounded-[28px]" />
+        <div className="flex flex-col gap-4 md:gap-5">
+          <Skeleton className="h-64 rounded-[26px]" />
+          <Skeleton className="h-28 rounded-[26px]" />
+          <Skeleton className="h-40 rounded-[26px]" />
+        </div>
+      </div>
     </div>
   );
 }

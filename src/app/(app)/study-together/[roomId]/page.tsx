@@ -1,9 +1,11 @@
+import { Lock } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { StudyRoomBoard } from "@/components/study-together/study-room-board";
-import { buttonVariants } from "@/components/ui/button";
+import { EmptyPanel } from "@/components/studi/progress-bits";
+import { softPillClass } from "@/components/studi/page-title";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireProfile } from "@/lib/auth";
 import { listTasks } from "@/lib/data/calendar";
@@ -17,7 +19,6 @@ import {
 import type { SoundscapeId } from "@/lib/calendar";
 import type { FocusPreferences } from "@/lib/focus/types";
 import { joinFriendsRoom } from "@/actions/study-together";
-import { cn } from "@/lib/utils";
 
 type PageProps = {
   params: Promise<{ roomId: string }>;
@@ -64,20 +65,21 @@ async function RoomContent({ params }: PageProps) {
 
   if (!bundle || !bundle.isMember || !bundle.timer) {
     return (
-      <div className="mx-auto max-w-lg space-y-4 py-16 text-center">
-        <h1 className="font-display text-3xl tracking-tight">
-          {bundle?.room.name ?? "Room"}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          You need a valid invitation to enter this private room, or friendship
-          for a friends-only room.
-        </p>
-        <Link
-          href="/study-together"
-          className={cn(buttonVariants({ variant: "outline" }))}
-        >
-          Back to hub
-        </Link>
+      <div className="mx-auto max-w-md py-16">
+        <EmptyPanel
+          icon={Lock}
+          title={bundle?.room.name ?? "Private room"}
+          body={
+            bundle?.room.status === "ended"
+              ? "This room has ended."
+              : "You need an invitation to enter a private room, or to be friends with the host for a friends-only room."
+          }
+          action={
+            <Link href="/study-together" className={softPillClass}>
+              Back to Study Together
+            </Link>
+          }
+        />
       </div>
     );
   }
@@ -114,16 +116,19 @@ async function RoomContent({ params }: PageProps) {
 
 function RoomFallback() {
   return (
-    <div className="space-y-4">
-      <Skeleton className="h-10 w-64" />
-      <Skeleton className="h-72 w-full rounded-2xl" />
+    <div
+      aria-busy
+      className="-mx-4 -mt-[max(18px,env(safe-area-inset-top))] -mb-6 flex min-h-[calc(100svh-76px)] items-center justify-center bg-[#1F1A1C] sm:-mx-5 md:m-0 md:rounded-[22px]"
+    >
+      <Skeleton className="size-[300px] rounded-full bg-white/[0.06]" />
     </div>
   );
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { roomId } = await params;
-  return { title: `Room ${roomId.slice(0, 8)}` };
+  const bundle = await getStudyRoomBundle(roomId);
+  return { title: bundle?.isMember ? bundle.room.name : "Study room" };
 }
 
 export default function StudyRoomPage(props: PageProps) {

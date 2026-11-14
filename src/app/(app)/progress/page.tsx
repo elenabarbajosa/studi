@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 
 import { ProgressBoard } from "@/components/progress/progress-board";
-import { PageHeader } from "@/components/shared/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireProfile } from "@/lib/auth";
 import { listFriends } from "@/lib/data/friends";
@@ -21,31 +20,21 @@ async function ProgressContent() {
   ]);
 
   return (
-    <div>
-      <PageHeader
-        title="Progress"
-        description="Streaks, weekly goals, achievements, challenges, and an optional friends leaderboard — all from verified focus time."
-      />
-      <ProgressBoard
-        data={data}
-        leaderboard={leaderboard}
-        friends={friends}
-      />
-    </div>
+    <ProgressBoard data={data} leaderboard={leaderboard} friends={friends} />
   );
 }
 
 function ProgressFallback() {
   return (
-    <div className="space-y-4">
-      <Skeleton className="h-10 w-48" />
-      <div className="grid gap-3 sm:grid-cols-4">
-        <Skeleton className="h-20 rounded-2xl" />
-        <Skeleton className="h-20 rounded-2xl" />
-        <Skeleton className="h-20 rounded-2xl" />
-        <Skeleton className="h-20 rounded-2xl" />
+    <div className="flex flex-col gap-5" aria-busy>
+      <Skeleton className="h-9 w-40 rounded-full" />
+      <div className="grid gap-5 min-[1100px]:grid-cols-12">
+        <Skeleton className="h-[250px] rounded-[26px] min-[1100px]:col-span-5" />
+        <Skeleton className="h-[250px] rounded-[26px] min-[1100px]:col-span-3" />
+        <Skeleton className="h-[250px] rounded-[26px] min-[1100px]:col-span-4" />
+        <Skeleton className="h-[280px] rounded-[26px] min-[1100px]:col-span-8" />
+        <Skeleton className="h-[280px] rounded-[26px] min-[1100px]:col-span-4" />
       </div>
-      <Skeleton className="h-64 w-full rounded-2xl" />
     </div>
   );
 }
