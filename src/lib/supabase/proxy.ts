@@ -74,7 +74,9 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthRoute) {
+  // Signed-in users skip the public welcome + auth screens.
+  // Incomplete onboarding is handled by requireProfile on /dashboard.
+  if (user && (isAuthRoute || pathname === "/")) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

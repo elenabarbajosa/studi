@@ -23,11 +23,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Studi — Study & productivity for university",
+    default: "Studi — Your space to study better",
     template: "%s · Studi",
   },
   description:
-    "A calm, Notion-inspired workspace for academic planning, focus, and studying together.",
+    "Plan your studies, stay focused, and make progress — all in one place.",
 };
 
 export const viewport: Viewport = {

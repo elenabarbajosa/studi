@@ -91,7 +91,7 @@ export function AuthForm({
         <Brand href="/" size="md" />
         <div>
           <h1 className="text-[30px] leading-[1.1] font-semibold tracking-[-0.035em] text-ink md:text-[32px]">
-            {mode === "login" ? "Welcome back" : "Create your space"}
+            {mode === "login" ? "Welcome back" : "Create your account"}
           </h1>
           <p className="mt-1.5 text-[14.5px] text-ink-2">
             {mode === "login"

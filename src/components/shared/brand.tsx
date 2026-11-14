@@ -3,12 +3,17 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 type BrandProps = {
-  href?: string;
+  /** Pass `null` for a non-linked wordmark (e.g. the landing hero). */
+  href?: string | null;
   className?: string;
   size?: "sm" | "md" | "lg";
 };
 
-export function Brand({ href = "/", className, size = "md" }: BrandProps) {
+export function Brand({
+  href = "/",
+  className,
+  size = "md",
+}: BrandProps) {
   const sizes = {
     sm: "text-xl",
     md: "text-2xl",
