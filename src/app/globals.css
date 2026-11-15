@@ -510,6 +510,14 @@
   color: var(--ink-2);
 }
 
+.studi-ev[data-kind="external"] {
+  background: var(--subject-tint, color-mix(in srgb, var(--ink-3) 12%, var(--raised)));
+  color: var(--subject-text, var(--ink-2));
+  border: 1.5px solid color-mix(in srgb, var(--subject-dot, var(--ink-3)) 35%, transparent);
+  border-left-width: 3px;
+  border-left-color: var(--subject-dot, var(--ink-3));
+}
+
 .dark .studi-ev[data-kind="deadline"] {
   background: color-mix(in srgb, var(--subject-dot) 22%, var(--raised));
   color: color-mix(in srgb, var(--subject-dot) 70%, white);

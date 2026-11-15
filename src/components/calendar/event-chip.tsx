@@ -1,5 +1,6 @@
 import {
   CircleCheck,
+  Cloud,
   Flag,
   GraduationCap,
   Timer,
@@ -19,6 +20,7 @@ export const KIND_ICON: Record<CalItemKind, LucideIcon> = {
   session_other: Timer,
   task: CircleCheck,
   personal: User,
+  external: Cloud,
 };
 
 const KIND_LABEL: Record<CalItemKind, string> = {
@@ -29,13 +31,23 @@ const KIND_LABEL: Record<CalItemKind, string> = {
   session_other: "Study session (not done)",
   task: "Task due",
   personal: "Personal event",
+  external: "External calendar",
 };
 
 export function kindLabel(kind: CalItemKind) {
   return KIND_LABEL[kind];
 }
 
-export function eventToneStyle(item: Pick<CalItem, "color">) {
+export function eventToneStyle(
+  item: Pick<CalItem, "color" | "kind" | "externalCalendarColor">,
+) {
+  if (item.kind === "external" && item.externalCalendarColor) {
+    return {
+      "--subject-dot": item.externalCalendarColor,
+      "--subject-tint": `color-mix(in srgb, ${item.externalCalendarColor} 22%, var(--raised))`,
+      "--subject-text": "var(--ink-2)",
+    } as React.CSSProperties;
+  }
   return item.color ? (subjectToneVars(item.color) as React.CSSProperties) : undefined;
 }
 

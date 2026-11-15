@@ -48,6 +48,27 @@ import type {
   UserAchievement,
 } from "@/lib/progress/types";
 import type { ChallengeType } from "@/lib/progress/challenges";
+import type {
+  ExternalCalendar,
+  ExternalCalendarConnection,
+  ExternalCalendarEvent,
+  ExternalCalendarProvider,
+  ExternalConnectionStatus,
+  ExternalEventLink,
+  ExternalEventLinkKind,
+  ExternalEventShowAs,
+} from "@/lib/calendar-sync/types";
+
+export type {
+  ExternalCalendar,
+  ExternalCalendarConnection,
+  ExternalCalendarEvent,
+  ExternalCalendarProvider,
+  ExternalConnectionStatus,
+  ExternalEventLink,
+  ExternalEventLinkKind,
+  ExternalEventShowAs,
+};
 
 export type AvatarPreference = "custom" | "google" | "initials";
 export type AvatarVisibility = "private" | "friends" | "public";
@@ -1037,6 +1058,167 @@ export type Database = {
         Update: Partial<Pick<StudyPlanSession, "locked" | "user_edited">>;
         Relationships: [];
       };
+      external_calendar_connections: {
+        Row: ExternalCalendarConnection;
+        Insert: {
+          id?: string;
+          user_id: string;
+          provider: ExternalCalendarProvider;
+          status?: ExternalConnectionStatus;
+          account_label?: string | null;
+          account_email?: string | null;
+          provider_account_id?: string | null;
+          scopes?: string[];
+          last_sync_at?: string | null;
+          last_successful_sync_at?: string | null;
+          last_sync_error?: string | null;
+          sync_cursor?: string | null;
+          dedupe_fingerprint?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Omit<ExternalCalendarConnection, "id" | "user_id" | "created_at">
+        >;
+        Relationships: [];
+      };
+      external_calendar_secrets: {
+        Row: {
+          connection_id: string;
+          user_id: string;
+          ciphertext: string;
+          iv: string;
+          auth_tag: string;
+          key_version: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          connection_id: string;
+          user_id: string;
+          ciphertext: string;
+          iv: string;
+          auth_tag: string;
+          key_version?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<{
+          ciphertext: string;
+          iv: string;
+          auth_tag: string;
+          key_version: number;
+        }>;
+        Relationships: [];
+      };
+      external_calendars: {
+        Row: ExternalCalendar;
+        Insert: {
+          id?: string;
+          user_id: string;
+          connection_id: string;
+          provider_calendar_id: string;
+          name: string;
+          color?: string | null;
+          timezone?: string | null;
+          enabled?: boolean;
+          is_primary?: boolean;
+          sync_token?: string | null;
+          ctag?: string | null;
+          etag?: string | null;
+          last_sync_at?: string | null;
+          last_successful_sync_at?: string | null;
+          last_sync_error?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Omit<ExternalCalendar, "id" | "user_id" | "connection_id" | "created_at">
+        >;
+        Relationships: [];
+      };
+      external_calendar_events: {
+        Row: ExternalCalendarEvent;
+        Insert: {
+          id?: string;
+          user_id: string;
+          connection_id: string;
+          calendar_id: string;
+          provider_event_id: string;
+          ical_uid?: string | null;
+          recurrence_id?: string | null;
+          title?: string;
+          description?: string | null;
+          location?: string | null;
+          starts_at: string;
+          ends_at?: string | null;
+          all_day?: boolean;
+          timezone?: string | null;
+          show_as?: ExternalEventShowAs;
+          status?: string | null;
+          is_cancelled?: boolean;
+          html_link?: string | null;
+          recurring?: boolean;
+          provider_updated_at?: string | null;
+          content_hash?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Omit<
+            ExternalCalendarEvent,
+            "id" | "user_id" | "connection_id" | "calendar_id" | "created_at"
+          >
+        >;
+        Relationships: [];
+      };
+      external_event_links: {
+        Row: ExternalEventLink;
+        Insert: {
+          id?: string;
+          user_id: string;
+          external_event_id: string;
+          kind: ExternalEventLinkKind;
+          assessment_id?: string | null;
+          task_id?: string | null;
+          proposed_title?: string | null;
+          proposed_type?: string | null;
+          source_fingerprint?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Omit<ExternalEventLink, "id" | "user_id" | "external_event_id" | "created_at">
+        >;
+        Relationships: [];
+      };
+      calendar_oauth_states: {
+        Row: {
+          id: string;
+          user_id: string;
+          provider: ExternalCalendarProvider;
+          state: string;
+          code_verifier: string;
+          redirect_path: string;
+          expires_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          provider: ExternalCalendarProvider;
+          state: string;
+          code_verifier: string;
+          redirect_path?: string;
+          expires_at: string;
+          created_at?: string;
+        };
+        Update: Partial<{
+          redirect_path: string;
+          expires_at: string;
+        }>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -1312,6 +1494,10 @@ export type Database = {
       study_room_member_role: StudyRoomMemberRole;
       study_room_member_status: StudyRoomMemberStatus;
       study_room_invite_status: StudyRoomInviteStatus;
+      external_calendar_provider: ExternalCalendarProvider;
+      external_connection_status: ExternalConnectionStatus;
+      external_event_show_as: ExternalEventShowAs;
+      external_event_link_kind: ExternalEventLinkKind;
     };
     CompositeTypes: Record<string, never>;
   };

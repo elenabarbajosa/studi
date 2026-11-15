@@ -51,6 +51,7 @@ type PlannerBoardProps = {
   completedFocusMinutesThisWeek: number;
   recommendations: string[];
   dailyAiLimit: number;
+  externalCalendarStale?: boolean;
 };
 
 export function PlannerBoard({
@@ -66,6 +67,7 @@ export function PlannerBoard({
   completedFocusMinutesThisWeek,
   recommendations,
   dailyAiLimit,
+  externalCalendarStale = false,
 }: PlannerBoardProps) {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [adjustOpen, setAdjustOpen] = useState(false);
@@ -195,6 +197,26 @@ export function PlannerBoard({
           </div>
         }
       />
+
+      {externalCalendarStale ? (
+        <div
+          role="status"
+          className="flex items-start gap-2 rounded-[16px] border border-hairline bg-sunken px-4 py-3 text-[13.5px] text-ink-2"
+        >
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-accent-ink" aria-hidden />
+          <p>
+            Connected calendar sync is stale or failed. New plans still use the last
+            successful sync — open{" "}
+            <Link
+              href="/calendar"
+              className="font-semibold text-accent-ink underline-offset-2 hover:underline"
+            >
+              Calendar → Import / Connect
+            </Link>{" "}
+            and Sync now for an up-to-date availability view.
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(280px,1fr)]">
         <section className="rounded-[24px] bg-raised p-4 shadow-[0_0_0_1px_var(--hairline)] md:p-5">

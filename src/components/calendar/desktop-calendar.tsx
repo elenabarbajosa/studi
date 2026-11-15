@@ -17,7 +17,7 @@ import type {
   EventInput,
 } from "@fullcalendar/core";
 import type { EventResizeDoneArg } from "@fullcalendar/interaction";
-import { ChevronLeft, ChevronRight, ListFilter, Plus } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight, ListFilter, Plus } from "lucide-react";
 
 import { AgendaList } from "@/components/calendar/agenda-list";
 import { EventChip } from "@/components/calendar/event-chip";
@@ -79,6 +79,7 @@ export function DesktopCalendar({
   onOpenItem,
   onMove,
   onNew,
+  onImportConnect,
   selectionOpen,
   pending,
   className,
@@ -101,6 +102,7 @@ export function DesktopCalendar({
     revert: () => void,
   ) => void;
   onNew: () => void;
+  onImportConnect: () => void;
   selectionOpen: boolean;
   pending: boolean;
   className?: string;
@@ -310,6 +312,10 @@ export function DesktopCalendar({
             </DropdownMenuContent>
           </DropdownMenu>
           <Segmented label="Calendar view" value={view} onChange={changeView} options={VIEW_OPTIONS} />
+          <button type="button" onClick={onImportConnect} className={softPillClass}>
+            <CalendarPlus className="size-[15px]" aria-hidden />
+            Import / Connect
+          </button>
           <button type="button" onClick={onNew} className={primaryPillClass}>
             <Plus className="size-[15px]" aria-hidden />
             New

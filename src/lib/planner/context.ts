@@ -1,12 +1,17 @@
 import "server-only";
 
 import { daysUntil } from "@/lib/dashboard";
+import { mergeBusyIntervals } from "@/lib/calendar-sync/busy";
 import {
   listAssessments,
   listCalendarEvents,
   listStudySessions,
   listTasks,
 } from "@/lib/data/calendar";
+import {
+  listBusyExternalEvents,
+  listExternalConnections,
+} from "@/lib/data/external-calendar";
 import { listCompletedFocusSessions } from "@/lib/data/focus";
 import { getGamificationPreferences } from "@/lib/data/progress";
 import { getStudyPreferences, listAllTopics, listSubjects } from "@/lib/data/subjects";
@@ -53,6 +58,8 @@ export type PlannerDashboardData = {
     session: StudySession;
   }[];
   busy: BusyInterval[];
+  /** True when a connected calendar has failed or stale sync. */
+  externalCalendarStale: boolean;
   context: PlannerContextSnapshot;
   plannedMinutesThisWeek: number;
   completedFocusMinutesThisWeek: number;
@@ -124,6 +131,8 @@ export async function loadPlannerDashboard(userId: string): Promise<PlannerDashb
     storedPrefs,
     recentFocus,
     calendarEvents,
+    externalBusyEvents,
+    externalConnections,
   ] = await Promise.all([
     listSubjects(),
     listAllTopics(),
@@ -135,6 +144,8 @@ export async function loadPlannerDashboard(userId: string): Promise<PlannerDashb
     getPlannerPreferences(userId),
     listCompletedFocusSessions(80),
     listCalendarEvents(),
+    listBusyExternalEvents(),
+    listExternalConnections(),
   ]);
 
   const timeZone = gamification.timezone || "UTC";
@@ -193,7 +204,7 @@ export async function loadPlannerDashboard(userId: string): Promise<PlannerDashb
   const weekEnd = addLocalDays(weekStart, 6);
   const bounds = resolvePeriodBounds(preferences, timeZone, assessments, now);
 
-  const busy: BusyInterval[] = [
+  const localBusy: BusyInterval[] = [
     ...studySessions
       .filter((s) => s.ends_at && (s.status === "planned" || s.status === "in_progress"))
       .map((s) => ({
@@ -221,6 +232,16 @@ export async function loadPlannerDashboard(userId: string): Promise<PlannerDashb
         label: t.title,
       })),
   ];
+
+  // External busy events (Free does not block; unknown defaults to busy).
+  // Deduped when the same commitment appears via multiple providers.
+  const busy = mergeBusyIntervals(localBusy, externalBusyEvents);
+  const externalCalendarStale = externalConnections.some(
+    (c) =>
+      c.status === "error" ||
+      c.status === "needs_reauth" ||
+      Boolean(c.last_sync_error),
+  );
 
   const included = preferences.included_subject_ids;
   const excludedTopics = new Set(preferences.excluded_topic_ids);
@@ -314,6 +335,7 @@ export async function loadPlannerDashboard(userId: string): Promise<PlannerDashb
     activePlan,
     planSessions,
     busy,
+    externalCalendarStale,
     context,
     plannedMinutesThisWeek,
     completedFocusMinutesThisWeek,

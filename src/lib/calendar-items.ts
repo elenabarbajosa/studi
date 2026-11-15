@@ -1,4 +1,10 @@
 import { ASSESSMENT_TYPE_META, type AssessmentType } from "@/lib/calendar";
+import type {
+  ExternalCalendar,
+  ExternalCalendarConnection,
+  ExternalCalendarEvent,
+  ExternalCalendarProvider,
+} from "@/lib/calendar-sync/types";
 import { hasDueTime } from "@/lib/planning";
 import type { SubjectColorValue } from "@/lib/subjects";
 import type {
@@ -17,9 +23,17 @@ export type CalItemKind =
   | "session_planned"
   | "session_other"
   | "task"
-  | "personal";
+  | "personal"
+  | "external";
 
-export type CalFilter = "sessions" | "planned" | "exams" | "deadlines" | "tasks" | "personal";
+export type CalFilter =
+  | "sessions"
+  | "planned"
+  | "exams"
+  | "deadlines"
+  | "tasks"
+  | "personal"
+  | "external";
 
 export const CAL_FILTERS: { value: CalFilter; label: string; kind: CalItemKind }[] = [
   { value: "sessions", label: "Study sessions", kind: "session_done" },
@@ -28,6 +42,7 @@ export const CAL_FILTERS: { value: CalFilter; label: string; kind: CalItemKind }
   { value: "deadlines", label: "Deadlines", kind: "deadline" },
   { value: "tasks", label: "Tasks", kind: "task" },
   { value: "personal", label: "Personal", kind: "personal" },
+  { value: "external", label: "External", kind: "external" },
 ];
 
 const FILTER_OF_KIND: Record<CalItemKind, CalFilter> = {
@@ -38,6 +53,7 @@ const FILTER_OF_KIND: Record<CalItemKind, CalFilter> = {
   session_planned: "planned",
   task: "tasks",
   personal: "personal",
+  external: "external",
 };
 
 export function filterOfKind(kind: CalItemKind) {
@@ -47,7 +63,12 @@ export function filterOfKind(kind: CalItemKind) {
 export const EXAM_TYPES: AssessmentType[] = ["final", "midterm", "quiz"];
 export const DEADLINE_TYPES: AssessmentType[] = ["assignment", "project", "presentation", "other"];
 
-export type CalSource = "assessment" | "personal" | "study_session" | "task";
+export type CalSource =
+  | "assessment"
+  | "personal"
+  | "study_session"
+  | "task"
+  | "external";
 
 export type CalItem = {
   /** `${source}:${id}`; the prefix routes drag and resize to the right action. */
@@ -66,7 +87,26 @@ export type CalItem = {
   personal?: CalendarEvent;
   session?: StudySession;
   task?: Task;
+  external?: ExternalCalendarEvent;
+  externalProvider?: ExternalCalendarProvider;
+  externalCalendarColor?: string | null;
+  externalHtmlLink?: string | null;
 };
+
+function providerMeta(provider: ExternalCalendarProvider | undefined) {
+  switch (provider) {
+    case "google":
+      return "Google";
+    case "microsoft":
+      return "Outlook";
+    case "icloud":
+      return "iCloud";
+    case "ics":
+      return "Imported";
+    default:
+      return "External";
+  }
+}
 
 function sessionKind(s: StudySession): CalItemKind {
   if (s.status === "completed" || s.status === "in_progress") return "session_done";
@@ -87,9 +127,18 @@ export function buildCalendarItems(input: {
   tasks: readonly Task[];
   subjects: readonly Subject[];
   topicTitles?: ReadonlyMap<string, string>;
+  externalEvents?: readonly ExternalCalendarEvent[];
+  externalCalendars?: readonly ExternalCalendar[];
+  externalConnections?: readonly ExternalCalendarConnection[];
 }): CalItem[] {
   const subjects = new Map(input.subjects.map((s) => [s.id, s]));
   const subjectOf = (id: string | null) => (id ? subjects.get(id) ?? null : null);
+  const calendars = new Map(
+    (input.externalCalendars ?? []).map((c) => [c.id, c]),
+  );
+  const connections = new Map(
+    (input.externalConnections ?? []).map((c) => [c.id, c]),
+  );
 
   const assessments = input.assessments.map<CalItem>((a) => {
     const subject = subjectOf(a.subject_id);
@@ -166,7 +215,36 @@ export function buildCalendarItems(input: {
       };
     });
 
-  return [...assessments, ...personal, ...sessions, ...tasks];
+  const external = (input.externalEvents ?? [])
+    .filter((e) => {
+      if (e.is_cancelled) return false;
+      const cal = calendars.get(e.calendar_id);
+      return !cal || cal.enabled;
+    })
+    .map<CalItem>((e) => {
+      const cal = calendars.get(e.calendar_id);
+      const conn = connections.get(e.connection_id);
+      const provider = conn?.provider;
+      return {
+        id: `external:${e.id}`,
+        source: "external",
+        kind: "external",
+        title: e.title || "(External event)",
+        meta: [providerMeta(provider), cal?.name].filter(Boolean).join(" · "),
+        start: e.starts_at,
+        end: e.ends_at,
+        allDay: e.all_day,
+        subjectId: null,
+        color: null,
+        editable: false,
+        external: e,
+        externalProvider: provider,
+        externalCalendarColor: cal?.color ?? null,
+        externalHtmlLink: e.html_link,
+      };
+    });
+
+  return [...assessments, ...personal, ...sessions, ...tasks, ...external];
 }
 
 /** Items overlapping the local calendar day starting at `dayStart`. */

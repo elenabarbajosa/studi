@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, List, Plus } from "lucide-react";
+import {
+  CalendarDays,
+  CalendarPlus,
+  ChevronLeft,
+  ChevronRight,
+  List,
+  Plus,
+} from "lucide-react";
 
 import { AgendaList, sortDayItems, timeRangeLabel } from "@/components/calendar/agenda-list";
 import { EventChip } from "@/components/calendar/event-chip";
@@ -69,6 +76,7 @@ export function MobileCalendar({
   onToggleFilter,
   onCreate,
   onOpenItem,
+  onImportConnect,
   className,
 }: {
   items: CalItem[];
@@ -80,6 +88,7 @@ export function MobileCalendar({
   onToggleFilter: (filter: CalFilter) => void;
   onCreate: (draft: QuickDraft) => void;
   onOpenItem: (item: CalItem) => void;
+  onImportConnect: () => void;
   className?: string;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -167,6 +176,10 @@ export function MobileCalendar({
           <button type="button" onClick={() => setPickerOpen(true)} className={iconButton}>
             <CalendarDays className="size-[17px]" aria-hidden />
             <span className="sr-only">Jump to date and filters</span>
+          </button>
+          <button type="button" onClick={onImportConnect} className={iconButton}>
+            <CalendarPlus className="size-[17px]" aria-hidden />
+            <span className="sr-only">Import or connect calendar</span>
           </button>
         </div>
       </div>
@@ -567,7 +580,9 @@ function SelectedDayAgenda({
 function dotsFor(items: readonly CalItem[]) {
   const colors: string[] = [];
   for (const item of items) {
-    const c = item.color ? subjectTone(item.color).dot : "var(--ink-4)";
+    const c = item.color
+      ? subjectTone(item.color).dot
+      : item.externalCalendarColor || "var(--ink-4)";
     if (!colors.includes(c)) colors.push(c);
     if (colors.length === 3) break;
   }

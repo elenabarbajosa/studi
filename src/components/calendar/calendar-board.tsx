@@ -2,7 +2,9 @@
 
 import {
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
   useTransition,
@@ -13,17 +15,29 @@ import { toast } from "sonner";
 import { moveAssessment } from "@/actions/assessments";
 import { movePersonalEvent } from "@/actions/calendar-events";
 import { moveStudySession } from "@/actions/study-sessions";
+import { AcademicImportReview } from "@/components/calendar/academic-import-review";
+import { ConnectCalendarDialog } from "@/components/calendar/connect-calendar-dialog";
 import { DesktopCalendar, type BoardView } from "@/components/calendar/desktop-calendar";
 import {
   EventFormDialog,
   type CalendarDraft,
 } from "@/components/calendar/event-form-dialog";
 import { CalendarSkeleton } from "@/components/calendar/calendar-skeleton";
+import { ExternalEventDialog } from "@/components/calendar/external-event-dialog";
 import { MobileCalendar } from "@/components/calendar/mobile-calendar";
+import { PlanConflictBanner } from "@/components/calendar/plan-conflict-banner";
 import { QuickCreateForm, type QuickDraft } from "@/components/calendar/quick-create";
 import { ResponsiveDialog } from "@/components/studi/responsive-dialog";
+import { softPillClass } from "@/components/studi/page-title";
 import { TaskFormDialog } from "@/components/tasks/task-form-dialog";
 import { toLocalDateInput } from "@/lib/calendar";
+import type { PlanConflict } from "@/lib/calendar-sync/busy";
+import type {
+  ExternalCalendar,
+  ExternalCalendarConnection,
+  ExternalCalendarEvent,
+  ProviderConfigStatus,
+} from "@/lib/calendar-sync/types";
 import {
   buildCalendarItems,
   CAL_FILTERS,
@@ -47,6 +61,21 @@ type CalendarBoardProps = {
   subjects: Subject[];
   topics: Topic[];
   tasks: Task[];
+  externalEvents: ExternalCalendarEvent[];
+  externalCalendars: ExternalCalendar[];
+  externalConnections: ExternalCalendarConnection[];
+  integrationStatus: {
+    google: ProviderConfigStatus;
+    microsoft: ProviderConfigStatus;
+    icloud: ProviderConfigStatus;
+    ics: ProviderConfigStatus;
+    cronConfigured: boolean;
+    encryptionConfigured: boolean;
+  };
+  planConflicts: PlanConflict[];
+  syncStale: boolean;
+  connectResult?: string | null;
+  connectMessage?: string | null;
 };
 
 const VIEW_STORAGE_KEY = "studi-calendar-view";
@@ -97,6 +126,14 @@ function CalendarBoardClient({
   subjects,
   topics,
   tasks,
+  externalEvents,
+  externalCalendars,
+  externalConnections,
+  integrationStatus,
+  planConflicts,
+  syncStale,
+  connectResult = null,
+  connectMessage = null,
 }: CalendarBoardProps) {
   const [view, setView] = useState<BoardView>(readView);
   const [date, setDate] = useState<Date>(() => readDate(DATE_STORAGE_KEY));
@@ -109,7 +146,37 @@ function CalendarBoardClient({
   const [formOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [quick, setQuick] = useState<QuickState | null>(null);
+  const [connectOpen, setConnectOpen] = useState(
+    () =>
+      connectResult === "success" ||
+      connectResult === "setup" ||
+      connectResult === "error",
+  );
+  const [academicOpen, setAcademicOpen] = useState(
+    () => connectResult === "success",
+  );
+  const [externalItem, setExternalItem] = useState<CalItem | null>(null);
   const [isPending, startTransition] = useTransition();
+  const connectToastRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!connectResult || connectToastRef.current === connectResult) return;
+    connectToastRef.current = connectResult;
+    if (connectResult === "success") {
+      toast.success("Calendar connected and synced.");
+    } else if (connectResult === "setup") {
+      toast.message(connectMessage ?? "Provider setup required.");
+    } else if (connectResult === "error") {
+      toast.error(connectMessage ?? "Calendar connection failed.");
+    }
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("calendar_connect")) {
+      url.searchParams.delete("calendar_connect");
+      url.searchParams.delete("provider");
+      url.searchParams.delete("message");
+      window.history.replaceState({}, "", url.pathname + url.search);
+    }
+  }, [connectResult, connectMessage]);
 
   const items = useMemo(
     () =>
@@ -120,8 +187,21 @@ function CalendarBoardClient({
         tasks,
         subjects,
         topicTitles: new Map(topics.map((t) => [t.id, t.title])),
+        externalEvents,
+        externalCalendars,
+        externalConnections,
       }),
-    [assessments, personalEvents, studySessions, tasks, subjects, topics],
+    [
+      assessments,
+      personalEvents,
+      studySessions,
+      tasks,
+      subjects,
+      topics,
+      externalEvents,
+      externalCalendars,
+      externalConnections,
+    ],
   );
 
   const changeView = useCallback((next: BoardView) => {
@@ -155,6 +235,10 @@ function CalendarBoardClient({
   }, []);
 
   const openItem = useCallback((item: CalItem) => {
+    if (item.source === "external") {
+      setExternalItem(item);
+      return;
+    }
     if (item.task) {
       setEditingTask(item.task);
       return;
@@ -165,6 +249,8 @@ function CalendarBoardClient({
     else if (item.session) setDraft({ kind: "study_session", date, session: item.session });
     setFormOpen(true);
   }, []);
+
+  const openConnect = useCallback(() => setConnectOpen(true), []);
 
   const openQuick = useCallback((next: QuickDraft, anchor: DOMRect | null) => {
     setQuick({ draft: next, anchor, key: Date.now() });
@@ -241,6 +327,26 @@ function CalendarBoardClient({
 
   return (
     <>
+      {syncStale ? (
+        <div
+          role="status"
+          className="mb-3 rounded-[16px] border border-hairline bg-sunken px-4 py-3 text-[13.5px] text-ink-2"
+        >
+          Connected calendar data may be out of date or last sync failed. Use{" "}
+          <button type="button" className="font-semibold text-accent-ink" onClick={openConnect}>
+            Import / Connect → Sync now
+          </button>{" "}
+          before relying on availability.
+        </div>
+      ) : null}
+      <PlanConflictBanner conflicts={planConflicts} />
+      {externalEvents.length > 0 ? (
+        <div className="mb-3 flex justify-end">
+          <button type="button" className={softPillClass} onClick={() => setAcademicOpen(true)}>
+            Review exams & deadlines
+          </button>
+        </div>
+      ) : null}
       <DesktopCalendar
         className="hidden md:flex"
         items={items}
@@ -255,6 +361,7 @@ function CalendarBoardClient({
         onOpenItem={openItem}
         onMove={persistMove}
         onNew={openNew}
+        onImportConnect={openConnect}
         selectionOpen={Boolean(quick?.anchor)}
         pending={isPending}
       />
@@ -269,6 +376,7 @@ function CalendarBoardClient({
         onToggleFilter={toggleFilter}
         onCreate={(next) => openQuick(next, null)}
         onOpenItem={openItem}
+        onImportConnect={openConnect}
       />
 
       <Popover.Root
@@ -321,6 +429,27 @@ function CalendarBoardClient({
         task={editingTask}
         subjects={subjects}
         topics={topics}
+      />
+      <ConnectCalendarDialog
+        open={connectOpen}
+        onOpenChange={setConnectOpen}
+        status={integrationStatus}
+        connections={externalConnections}
+        calendars={externalCalendars}
+      />
+      <ExternalEventDialog
+        open={externalItem !== null}
+        onOpenChange={(open) => {
+          if (!open) setExternalItem(null);
+        }}
+        item={externalItem}
+      />
+      <AcademicImportReview
+        open={academicOpen}
+        onOpenChange={setAcademicOpen}
+        events={externalEvents}
+        subjects={subjects}
+        assessments={assessments}
       />
     </>
   );

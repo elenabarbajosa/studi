@@ -34,6 +34,7 @@ async function PlannerContent() {
       completedFocusMinutesThisWeek={data.completedFocusMinutesThisWeek}
       recommendations={recommendations}
       dailyAiLimit={resolveAiDailyLimit(profile.id)}
+      externalCalendarStale={data.externalCalendarStale}
     />
   );
 }
