@@ -181,7 +181,17 @@ export async function updateSocialPrivacy(input: {
     .eq("id", auth.user.id);
 
   if (error) return { error: error.message };
+
+  const { data: profile } = await auth.supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", auth.user.id)
+    .maybeSingle();
+
   revalidatePath("/settings");
   revalidatePath("/friends");
+  revalidatePath("/progress");
+  revalidatePath("/", "layout");
+  if (profile?.username) revalidatePath(`/u/${profile.username}`);
   return { success: "Privacy settings saved" };
 }

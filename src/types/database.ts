@@ -1254,6 +1254,10 @@ export type Database = {
         Args: { a: string; b: string };
         Returns: boolean;
       };
+      can_read_avatar_object: {
+        Args: { object_name: string };
+        Returns: boolean;
+      };
       send_friend_request: {
         Args: { target_username: string };
         Returns: string;

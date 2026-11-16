@@ -2,7 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
-import { AVATAR_BUCKET, AVATAR_SIGNED_URL_TTL_SECONDS } from "@/lib/avatar";
+import { resolveSocialAvatarSrc } from "@/lib/avatar-server";
 import { getSessionUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type {
@@ -14,16 +14,6 @@ import type {
 } from "@/lib/study-together/types";
 import type { AccentColor } from "@/lib/theme";
 import type { AvatarPreference } from "@/types/database";
-
-async function signAvatarPath(path: string | null | undefined) {
-  if (!path) return null;
-  const supabase = await createClient();
-  const { data, error } = await supabase.storage
-    .from(AVATAR_BUCKET)
-    .createSignedUrl(path, AVATAR_SIGNED_URL_TTL_SECONDS);
-  if (error || !data?.signedUrl) return null;
-  return data.signedUrl;
-}
 
 async function profileCard(userId: string): Promise<{
   username: string;
@@ -48,14 +38,12 @@ async function profileCard(userId: string): Promise<{
       storage_path?: string | null;
     };
   };
-  let avatarSrc: string | null = null;
-  if (raw.avatar?.can_view) {
-    if (raw.avatar.preference === "google" && raw.avatar.google_avatar_url) {
-      avatarSrc = raw.avatar.google_avatar_url;
-    } else if (raw.avatar.storage_path) {
-      avatarSrc = await signAvatarPath(raw.avatar.storage_path);
-    }
-  }
+  const avatarSrc = await resolveSocialAvatarSrc({
+    canView: Boolean(raw.avatar?.can_view),
+    preference: raw.avatar?.preference ?? "initials",
+    googleAvatarUrl: raw.avatar?.google_avatar_url,
+    storagePath: raw.avatar?.storage_path,
+  });
   return {
     username: raw.username,
     display_name: raw.display_name,

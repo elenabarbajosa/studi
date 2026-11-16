@@ -2,7 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
-import { AVATAR_BUCKET, AVATAR_SIGNED_URL_TTL_SECONDS } from "@/lib/avatar";
+import { resolveSocialAvatarSrc } from "@/lib/avatar-server";
 import { getSessionUser } from "@/lib/auth";
 import {
   type DiscoverableProfile,
@@ -17,16 +17,6 @@ import type {
   AvatarVisibility,
   FriendRequest,
 } from "@/types/database";
-
-async function signAvatarPath(path: string | null | undefined) {
-  if (!path) return null;
-  const supabase = await createClient();
-  const { data, error } = await supabase.storage
-    .from(AVATAR_BUCKET)
-    .createSignedUrl(path, AVATAR_SIGNED_URL_TTL_SECONDS);
-  if (error || !data?.signedUrl) return null;
-  return data.signedUrl;
-}
 
 function parseSocialJson(data: unknown): SocialProfile | null {
   if (!data || typeof data !== "object") return null;
@@ -79,17 +69,12 @@ async function withSignedAvatar(
   profile: SocialProfile,
   storagePath?: string | null,
 ): Promise<SocialProfile> {
-  let avatarSrc: string | null = null;
-  if (profile.avatar.can_view) {
-    if (
-      profile.avatar.preference === "google" &&
-      profile.avatar.google_avatar_url
-    ) {
-      avatarSrc = profile.avatar.google_avatar_url;
-    } else if (storagePath) {
-      avatarSrc = await signAvatarPath(storagePath);
-    }
-  }
+  const avatarSrc = await resolveSocialAvatarSrc({
+    canView: profile.avatar.can_view,
+    preference: profile.avatar.preference,
+    googleAvatarUrl: profile.avatar.google_avatar_url,
+    storagePath,
+  });
   return { ...profile, avatarSrc };
 }
 
@@ -116,10 +101,15 @@ export const searchUsers = cache(
 
     return Promise.all(
       (data ?? []).map(async (row) => {
-        let avatarSrc: string | null = row.google_avatar_url;
-        if (!avatarSrc && row.storage_path) {
-          avatarSrc = await signAvatarPath(row.storage_path);
-        }
+        const canView = Boolean(
+          row.google_avatar_url || row.storage_path,
+        );
+        const avatarSrc = await resolveSocialAvatarSrc({
+          canView,
+          preference: row.avatar_preference,
+          googleAvatarUrl: row.google_avatar_url,
+          storagePath: row.storage_path,
+        });
         return {
           id: row.id,
           username: row.username,
@@ -193,12 +183,12 @@ export const listFriends = cache(async (): Promise<FriendListItem[]> => {
 
   return Promise.all(
     (data ?? []).map(async (row) => {
-      let avatarSrc: string | null = null;
-      if (row.can_view_avatar) {
-        if (row.google_avatar_url) avatarSrc = row.google_avatar_url;
-        else if (row.storage_path)
-          avatarSrc = await signAvatarPath(row.storage_path);
-      }
+      const avatarSrc = await resolveSocialAvatarSrc({
+        canView: Boolean(row.can_view_avatar),
+        preference: row.avatar_preference,
+        googleAvatarUrl: row.google_avatar_url,
+        storagePath: row.storage_path,
+      });
       return {
         id: row.id,
         username: row.username,

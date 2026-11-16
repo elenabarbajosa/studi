@@ -44,3 +44,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Large ambient source recordings (optimized MP3s are in public/audio/ambient/)
+/audio-source/

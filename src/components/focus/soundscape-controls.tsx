@@ -12,6 +12,7 @@ import {
   Trees,
   VolumeX,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Tile, TileHeader } from "@/components/dashboard/tile";
 import { SOUNDSCAPE_IDS, type SoundscapeId } from "@/lib/calendar";
@@ -40,7 +41,10 @@ export type SoundscapePlayer = {
   stop: () => void;
 };
 
-/** One audio engine per page, shared by every ambience control that renders it. */
+/**
+ * One audio engine per provider mount (Focus session / Study Together runtime).
+ * Survives Focus page remounts when owned by FocusSessionProvider.
+ */
 export function useSoundscapePlayer({
   enabled,
   volume,
@@ -54,9 +58,14 @@ export function useSoundscapePlayer({
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
-    engineRef.current = new SoundscapeEngine();
+    const engine = new SoundscapeEngine();
+    engine.setOnError((message) => {
+      toast.error(message);
+      setPlaying(false);
+    });
+    engineRef.current = engine;
     return () => {
-      engineRef.current?.dispose();
+      engine.dispose();
       engineRef.current = null;
     };
   }, []);
@@ -75,7 +84,7 @@ export function useSoundscapePlayer({
       return;
     }
     await engine.play(nextPrimary, nextSecondary);
-    setPlaying(true);
+    setPlaying(engine.isPlaying());
   }
 
   function stop() {

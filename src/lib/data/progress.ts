@@ -2,7 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
-import { AVATAR_BUCKET, AVATAR_SIGNED_URL_TTL_SECONDS } from "@/lib/avatar";
+import { resolveSocialAvatarSrc } from "@/lib/avatar-server";
 import { getSessionUser } from "@/lib/auth";
 import { ACHIEVEMENT_CATALOG } from "@/lib/progress/achievements";
 import {
@@ -32,16 +32,6 @@ import { createClient } from "@/lib/supabase/server";
 import type { Weekday } from "@/lib/subjects";
 import type { AccentColor } from "@/lib/theme";
 import type { AvatarPreference } from "@/types/database";
-
-async function signAvatarPath(path: string | null | undefined) {
-  if (!path) return null;
-  const supabase = await createClient();
-  const { data, error } = await supabase.storage
-    .from(AVATAR_BUCKET)
-    .createSignedUrl(path, AVATAR_SIGNED_URL_TTL_SECONDS);
-  if (error || !data?.signedUrl) return null;
-  return data.signedUrl;
-}
 
 function parseRestDays(raw: unknown): Weekday[] {
   if (!Array.isArray(raw)) return [];
@@ -300,10 +290,12 @@ export const getFriendsLeaderboard = cache(async (): Promise<{
 
   const rows: LeaderboardRow[] = await Promise.all(
     (data ?? []).map(async (row) => {
-      let avatarSrc: string | null = row.google_avatar_url;
-      if (!avatarSrc && row.storage_path && row.can_view_avatar) {
-        avatarSrc = await signAvatarPath(row.storage_path);
-      }
+      const avatarSrc = await resolveSocialAvatarSrc({
+        canView: Boolean(row.can_view_avatar),
+        preference: row.avatar_preference,
+        googleAvatarUrl: row.google_avatar_url,
+        storagePath: row.storage_path,
+      });
       return {
         user_id: row.user_id,
         username: row.username,

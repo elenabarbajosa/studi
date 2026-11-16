@@ -10,6 +10,7 @@ import {
   detectImageMime,
   isAvatarPreference,
 } from "@/lib/avatar";
+import { AVATAR_REVALIDATE_PATHS } from "@/lib/avatar-access";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import type { AvatarPreference } from "@/types/database";
@@ -32,10 +33,20 @@ async function authClient() {
   return { supabase, user } as const;
 }
 
-function revalidateAvatarPaths() {
-  revalidatePath("/settings");
-  revalidatePath("/dashboard");
+async function revalidateAvatarPaths(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+) {
+  for (const path of AVATAR_REVALIDATE_PATHS) {
+    revalidatePath(path);
+  }
   revalidatePath("/", "layout");
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", userId)
+    .maybeSingle();
+  if (profile?.username) revalidatePath(`/u/${profile.username}`);
 }
 
 async function deleteOwnedObject(
@@ -128,7 +139,7 @@ export async function uploadAvatar(
     .from(AVATAR_BUCKET)
     .createSignedUrl(objectPath, AVATAR_SIGNED_URL_TTL_SECONDS);
 
-  revalidateAvatarPaths();
+  await revalidateAvatarPaths(auth.supabase, auth.user.id);
   return {
     success: "Profile picture saved.",
     signedUrl: signed?.signedUrl,
@@ -178,7 +189,7 @@ export async function setAvatarPreference(
     await deleteOwnedObject(auth.supabase, auth.user.id, previousPath);
   }
 
-  revalidateAvatarPaths();
+  await revalidateAvatarPaths(auth.supabase, auth.user.id);
   return {
     success:
       preference === "google"
@@ -217,7 +228,7 @@ export async function removeCustomAvatar(): Promise<AvatarActionState> {
 
   await deleteOwnedObject(auth.supabase, auth.user.id, profile.avatar_path);
 
-  revalidateAvatarPaths();
+  await revalidateAvatarPaths(auth.supabase, auth.user.id);
   return {
     success:
       nextPreference === "google"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -25,15 +25,11 @@ import { toast } from "sonner";
 import {
   endRoom,
   kickMember,
-  leaveRoom,
-  saveStudyTogetherSession,
   transferHost,
 } from "@/actions/study-together";
-import {
-  SoundscapeControls,
-  useSoundscapePlayer,
-} from "@/components/focus/soundscape-controls";
+import { SoundscapeControls } from "@/components/focus/soundscape-controls";
 import { TimerDial } from "@/components/focus/timer-dial";
+import { useStudyTogetherSession } from "@/components/session/study-together-session-provider";
 import { RoomChat } from "@/components/study-together/room-chat";
 import { RoomInvitePanel } from "@/components/study-together/room-invite-panel";
 import { StudiAvatar } from "@/components/shared/studi-avatar";
@@ -48,15 +44,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { useRoomPresence } from "@/hooks/use-room-presence";
-import { useRoomTimer } from "@/hooks/use-room-timer";
-import type { SoundscapeId } from "@/lib/calendar";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { FriendListItem } from "@/lib/data/friends";
 import type { FocusPreferences } from "@/lib/focus/types";
-import {
-  accruePersonalFocusMs,
-  derivePersonalPresence,
-} from "@/lib/study-together/timer-sync";
 import {
   isBreakPhase,
   phaseLabel,
@@ -131,131 +121,30 @@ export function StudyRoomBoard({
   preferences,
 }: StudyRoomBoardProps) {
   const router = useRouter();
-  const roomTimer = useRoomTimer({
-    roomId: room.id,
-    initialTimer,
-    serverNowIso: serverNow,
-    enabled: room.status === "active",
-  });
+  const { live: sessionLive, attach } = useStudyTogetherSession();
+  const live = sessionLive?.room.id === room.id ? sessionLive : null;
 
-  const [personallyFocusing, setPersonallyFocusing] = useState(false);
-  const [subjectId, setSubjectId] = useState("");
-  const [topicId, setTopicId] = useState("");
-  const [taskId, setTaskId] = useState("");
-  const [goal, setGoal] = useState("");
   const [distractionFree, setDistractionFree] = useState(false);
   const [studyOpen, setStudyOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [primary, setPrimary] = useState<SoundscapeId>(
-    preferences.soundscape_primary,
-  );
-  const [secondary, setSecondary] = useState<SoundscapeId>(
-    preferences.soundscape_secondary,
-  );
-  const [volume, setVolume] = useState(preferences.soundscape_volume);
-  const [secondaryVolume, setSecondaryVolume] = useState(
-    preferences.soundscape_secondary_volume,
-  );
   const [isPending, startTransition] = useTransition();
-  const [personalFocusSec, setPersonalFocusSec] = useState(0);
-  const player = useSoundscapePlayer({
-    enabled: preferences.focus_sound_enabled,
-    volume,
-    secondaryVolume,
-  });
 
-  const clientSessionId = useRef(crypto.randomUUID());
-  const startedAtIso = useRef<string | null>(null);
-  const focusMsRef = useRef(0);
-  const breakMsRef = useRef(0);
-  const lastTickRef = useRef(0);
-  const cyclesRef = useRef(0);
-
-  const phase = roomTimer.timer?.phase ?? "idle";
-  const runState = roomTimer.timer?.run_state ?? "idle";
-  const presenceStatus = derivePersonalPresence(
-    phase,
-    runState,
-    personallyFocusing,
-  );
-
-  const presence = useRoomPresence({
-    roomId: room.id,
-    userId,
-    enabled: room.status === "active",
-    status: presenceStatus,
+  useEffect(() => {
+    attach({
+      room,
+      isHost,
+      initialTimer,
+      serverNow,
+      preferences,
+    });
+  }, [
+    attach,
+    room,
     isHost,
-  });
-
-  // Personal focus accrual (local only; never trusts host alone)
-  useEffect(() => {
-    lastTickRef.current = Date.now();
-    const id = window.setInterval(() => {
-      const now = Date.now();
-      const prev = lastTickRef.current || now;
-      const delta = now - prev;
-      lastTickRef.current = now;
-      const gained = accruePersonalFocusMs({
-        roomPhase: phase,
-        roomRun: runState,
-        personallyFocusing,
-        connected: presence.connected,
-        deltaMs: delta,
-      });
-      focusMsRef.current += gained;
-      if (gained > 0) {
-        setPersonalFocusSec(Math.round(focusMsRef.current / 1000));
-      }
-      if (isBreakPhase(phase) && runState === "running") {
-        breakMsRef.current += delta;
-      }
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [phase, runState, personallyFocusing, presence.connected]);
-
-  useEffect(() => {
-    if (
-      phase === "focus" &&
-      runState === "running" &&
-      personallyFocusing &&
-      !startedAtIso.current
-    ) {
-      startedAtIso.current = new Date().toISOString();
-    }
-  }, [phase, runState, personallyFocusing]);
-
-  useEffect(() => {
-    const prev = roomTimer.timer?.completed_focus_intervals ?? 0;
-    if (prev > cyclesRef.current) cyclesRef.current = prev;
-  }, [roomTimer.timer?.completed_focus_intervals]);
-
-  // Local cue on phase change
-  const lastPhaseRef = useRef(phase);
-  useEffect(() => {
-    if (lastPhaseRef.current === phase) return;
-    lastPhaseRef.current = phase;
-    if (!preferences.focus_sound_enabled) return;
-    try {
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.frequency.value = isBreakPhase(phase) ? 523 : 440;
-      gain.gain.value = 0.08;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.2);
-    } catch {
-      /* autoplay */
-    }
-    toast.message(
-      phase === "focus"
-        ? "Focus interval"
-        : phase === "idle"
-          ? "Room idle"
-          : "Break time",
-    );
-  }, [phase, preferences.focus_sound_enabled]);
+    initialTimer,
+    serverNow,
+    preferences,
+  ]);
 
   useEffect(() => {
     if (!distractionFree) return;
@@ -271,6 +160,44 @@ export function StudyRoomBoard({
     };
   }, [distractionFree]);
 
+  if (!live) {
+    return (
+      <div
+        aria-busy
+        className="-mx-4 -mt-[max(18px,env(safe-area-inset-top))] -mb-6 flex min-h-[calc(100svh-76px)] items-center justify-center bg-[#1F1A1C] sm:-mx-5 md:m-0 md:rounded-[22px]"
+      >
+        <Skeleton className="size-[300px] rounded-full bg-white/[0.06]" />
+      </div>
+    );
+  }
+
+  const {
+    roomTimer,
+    presence,
+    personallyFocusing,
+    setPersonallyFocusing,
+    personalFocusSec,
+    meta,
+    setMeta,
+    player,
+    soundscape,
+    setPrimary,
+    setSecondary,
+    setVolume,
+    setSecondaryVolume,
+    savePersonal,
+    leave: leaveSession,
+    clearWithoutLeave,
+  } = live;
+
+  const subjectId = meta.subjectId;
+  const topicId = meta.topicId;
+  const taskId = meta.taskId;
+  const goal = meta.goal;
+
+  const phase = roomTimer.timer?.phase ?? "idle";
+  const runState = roomTimer.timer?.run_state ?? "idle";
+
   function runHost(action: Parameters<typeof roomTimer.command>[0]) {
     startTransition(async () => {
       const result = await roomTimer.command(action);
@@ -278,51 +205,16 @@ export function StudyRoomBoard({
     });
   }
 
-  async function savePersonal(): Promise<boolean> {
-    const focusSeconds = Math.round(focusMsRef.current / 1000);
-    if (focusSeconds < 30) {
-      toast.error("Need at least 30 seconds of personal focus time to save.");
-      return false;
-    }
-    const started =
-      startedAtIso.current ??
-      new Date(Date.now() - focusMsRef.current).toISOString();
-    const result = await saveStudyTogetherSession({
-      client_session_id: clientSessionId.current,
-      room_id: room.id,
-      subject_id: subjectId || null,
-      topic_id: topicId || null,
-      task_id: taskId || null,
-      goal,
-      focus_seconds: focusSeconds,
-      break_seconds: Math.round(breakMsRef.current / 1000),
-      pomodoro_cycles: cyclesRef.current,
-      started_at: started,
-      ended_at: new Date().toISOString(),
-    });
-    if (result.error) {
-      toast.error(result.error);
-      return false;
-    }
-    toast.success(result.success ?? "Saved");
-    clientSessionId.current = crypto.randomUUID();
-    focusMsRef.current = 0;
-    breakMsRef.current = 0;
-    setPersonalFocusSec(0);
-    startedAtIso.current = null;
-    setPersonallyFocusing(false);
-    return true;
-  }
-
   function leave() {
     startTransition(async () => {
-      if (focusMsRef.current >= 30_000) {
-        await savePersonal();
-      }
-      const result = await leaveRoom(room.id);
-      if (result.error) toast.error(result.error);
-      else router.push("/study-together");
+      await leaveSession();
     });
+  }
+
+  /** Keep membership + runtime; return to the normal Studi shell with mini-player. */
+  function minimize() {
+    setDistractionFree(false);
+    router.push("/dashboard");
   }
 
   function end() {
@@ -330,7 +222,10 @@ export function StudyRoomBoard({
     startTransition(async () => {
       const result = await endRoom(room.id);
       if (result.error) toast.error(result.error);
-      else router.push("/study-together");
+      else {
+        clearWithoutLeave();
+        router.push("/study-together");
+      }
     });
   }
 
@@ -363,11 +258,11 @@ export function StudyRoomBoard({
 
   const soundProps = {
     player,
-    primary,
-    secondary,
-    volume,
-    secondaryVolume,
-    enabled: preferences.focus_sound_enabled,
+    primary: soundscape.primary,
+    secondary: soundscape.secondary,
+    volume: soundscape.volume,
+    secondaryVolume: soundscape.secondaryVolume,
+    enabled: soundscape.enabled,
     onPrimaryChange: setPrimary,
     onSecondaryChange: setSecondary,
     onVolumeChange: setVolume,
@@ -415,7 +310,16 @@ export function StudyRoomBoard({
             {room.visibility === "private" ? "Private" : "Friends only"} · {members.length} of{" "}
             {room.max_participants}
           </span>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            <button
+              type="button"
+              className={darkPill}
+              onClick={minimize}
+              aria-label="Minimize room and return to Studi"
+            >
+              <Minimize2 className="size-4" aria-hidden />
+              Minimize
+            </button>
             {canInvite && !distractionFree ? (
               <button type="button" className={darkPill} onClick={() => setInviteOpen(true)}>
                 <UserPlus className="size-4" aria-hidden />
@@ -427,7 +331,11 @@ export function StudyRoomBoard({
               type="button"
               className={darkIcon}
               onClick={() => setDistractionFree((v) => !v)}
-              aria-label={distractionFree ? "Leave full screen" : "Distraction-free view"}
+              aria-label={
+                distractionFree
+                  ? "Exit distraction-free view"
+                  : "Enter distraction-free view"
+              }
             >
               {distractionFree ? (
                 <Minimize2 className="size-4" aria-hidden />
@@ -440,6 +348,10 @@ export function StudyRoomBoard({
                 <MoreHorizontal className="size-4" aria-hidden />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem onClick={minimize}>
+                  <Minimize2 aria-hidden />
+                  Minimize to Studi
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setStudyOpen(true)}>
                   <SlidersHorizontal aria-hidden />
                   My study & sounds
@@ -550,7 +462,7 @@ export function StudyRoomBoard({
             <button
               type="button"
               aria-pressed={personallyFocusing}
-              onClick={() => setPersonallyFocusing((v) => !v)}
+              onClick={() => setPersonallyFocusing(!personallyFocusing)}
               className={cn(
                 "inline-flex h-11 items-center gap-2 rounded-full px-[18px] text-[14px] font-semibold outline-none transition-colors",
                 darkRing,
@@ -726,13 +638,18 @@ export function StudyRoomBoard({
             subjects={subjects}
             value={subjectId}
             onChange={(id) => {
-              setSubjectId(id);
-              setTopicId("");
+              setMeta((prev) => ({ ...prev, subjectId: id, topicId: "" }));
             }}
           />
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Topic" htmlFor="st-topic" optional>
-              <NativeSelect id="st-topic" value={topicId} onChange={(e) => setTopicId(e.target.value)}>
+              <NativeSelect
+                id="st-topic"
+                value={topicId}
+                onChange={(e) =>
+                  setMeta((prev) => ({ ...prev, topicId: e.target.value }))
+                }
+              >
                 <option value="">None</option>
                 {filteredTopics.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -742,7 +659,13 @@ export function StudyRoomBoard({
               </NativeSelect>
             </Field>
             <Field label="Task" htmlFor="st-task" optional>
-              <NativeSelect id="st-task" value={taskId} onChange={(e) => setTaskId(e.target.value)}>
+              <NativeSelect
+                id="st-task"
+                value={taskId}
+                onChange={(e) =>
+                  setMeta((prev) => ({ ...prev, taskId: e.target.value }))
+                }
+              >
                 <option value="">None</option>
                 {filteredTasks.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -756,7 +679,9 @@ export function StudyRoomBoard({
             <Input
               id="st-goal"
               value={goal}
-              onChange={(e) => setGoal(e.target.value)}
+              onChange={(e) =>
+                setMeta((prev) => ({ ...prev, goal: e.target.value }))
+              }
               maxLength={200}
               placeholder="e.g. Exercises 4–9"
             />

@@ -32,21 +32,33 @@ type StoredBundle = {
   lastKnownAt: number;
   clientSessionId: string;
   meta: SessionMeta;
+  /** Owner of the persisted session — ignore restore across account switches. */
+  userId?: string;
 };
 
-function readStoredBundle(): StoredBundle | null {
+function readStoredBundle(userId?: string | null): StoredBundle | null {
   try {
     const raw = window.localStorage.getItem(FOCUS_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as StoredBundle;
     if (!parsed?.engine || !parsed.clientSessionId) return null;
+    // Require an owner stamp when we know the signed-in user, so a previous
+    // account's session cannot resurface after logout/login.
+    if (userId && parsed.userId !== userId) {
+      window.localStorage.removeItem(FOCUS_STORAGE_KEY);
+      return null;
+    }
     return parsed;
   } catch {
     return null;
   }
 }
 
-export function useFocusTimer(initialConfig: FocusConfig) {
+export function useFocusTimer(
+  initialConfig: FocusConfig,
+  options?: { userId?: string | null },
+) {
+  const userId = options?.userId ?? null;
   const [config, setConfig] = useState(initialConfig);
   const configRef = useRef(config);
   const [engine, setEngine] = useState<FocusEngineState>(() =>
@@ -71,7 +83,7 @@ export function useFocusTimer(initialConfig: FocusConfig) {
   useEffect(() => {
     if (didRestoreRef.current) return;
     didRestoreRef.current = true;
-    const stored = readStoredBundle();
+    const stored = readStoredBundle(userId);
     const t = Date.now();
     startTransition(() => {
       setNow(t);
@@ -88,7 +100,7 @@ export function useFocusTimer(initialConfig: FocusConfig) {
       setClientSessionId(stored.clientSessionId);
       setMeta(stored.meta);
     });
-  }, []);
+  }, [userId]);
 
   const persist = useCallback(
     (next: FocusEngineState, sessionId: string | null, m: SessionMeta | null) => {
@@ -105,6 +117,7 @@ export function useFocusTimer(initialConfig: FocusConfig) {
         lastKnownAt: Date.now(),
         clientSessionId: sessionId,
         meta: m,
+        ...(userId ? { userId } : {}),
       };
       try {
         window.localStorage.setItem(FOCUS_STORAGE_KEY, JSON.stringify(bundle));
@@ -112,7 +125,7 @@ export function useFocusTimer(initialConfig: FocusConfig) {
         /* ignore */
       }
     },
-    [],
+    [userId],
   );
 
   useEffect(() => {

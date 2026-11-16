@@ -15,35 +15,25 @@ import { toast } from "sonner";
 
 import {
   discardFocusSession,
-  heartbeatFocusSession,
   startFocusSession,
 } from "@/actions/focus";
 import { Tile, tileLinkClass } from "@/components/dashboard/tile";
 import { FinishSessionDialog } from "@/components/focus/finish-session-dialog";
 import { FocusPresetChips } from "@/components/focus/focus-preset-chips";
 import { RhythmSummary } from "@/components/focus/rhythm-summary";
-import {
-  SoundscapeControls,
-  useSoundscapePlayer,
-} from "@/components/focus/soundscape-controls";
+import { SoundscapeControls } from "@/components/focus/soundscape-controls";
 import { StudySelection } from "@/components/focus/study-selection";
 import {
   FOCUS_DURATION_MAX,
   snapFocusMinutes,
   TimerDial,
 } from "@/components/focus/timer-dial";
+import { useFocusSession } from "@/components/session/focus-session-provider";
 import { PageTitle } from "@/components/studi/page-title";
 import { Segmented } from "@/components/studi/segmented";
 import { SubjectDot } from "@/components/studi/subject-chip";
-import { useFocusTimer } from "@/hooks/use-focus-timer";
-import { useStudyPresence } from "@/hooks/use-study-presence";
-import type { SoundscapeId } from "@/lib/calendar";
 import { formatDurationMinutes, formatTimer } from "@/lib/focus/timer-engine";
-import {
-  defaultFocusConfig,
-  type FocusPreferences,
-} from "@/lib/focus/types";
-import type { PresenceStatus } from "@/lib/social";
+import type { FocusPreferences } from "@/lib/focus/types";
 import { cn } from "@/lib/utils";
 import type { Subject, StudySession, Task, Topic } from "@/types/database";
 
@@ -133,8 +123,17 @@ export function FocusBoard({
   initialTaskId,
   initialTopicId,
 }: FocusBoardProps) {
-  const configDefaults = defaultFocusConfig(preferences);
-  const timer = useFocusTimer(configDefaults);
+  const focusSession = useFocusSession();
+  const {
+    timer,
+    player,
+    soundscape,
+    setPrimary,
+    setSecondary,
+    setVolume,
+    setSecondaryVolume,
+    hydrateFromPreferences,
+  } = focusSession;
   const isPhone = useIsPhone();
 
   const initial = resolveInitialSelection({
@@ -155,22 +154,11 @@ export function FocusBoard({
   const [finishPayload, setFinishPayload] = useState<
     React.ComponentProps<typeof FinishSessionDialog>["payload"] | null
   >(null);
-  const [primary, setPrimary] = useState<SoundscapeId>(
-    preferences.soundscape_primary,
-  );
-  const [secondary, setSecondary] = useState<SoundscapeId>(
-    preferences.soundscape_secondary,
-  );
-  const [volume, setVolume] = useState(preferences.soundscape_volume);
-  const [secondaryVolume, setSecondaryVolume] = useState(
-    preferences.soundscape_secondary_volume,
-  );
   const [isPending, startTransition] = useTransition();
-  const player = useSoundscapePlayer({
-    enabled: preferences.focus_sound_enabled,
-    volume,
-    secondaryVolume,
-  });
+
+  useEffect(() => {
+    hydrateFromPreferences(preferences);
+  }, [hydrateFromPreferences, preferences]);
 
   const { engine } = timer;
   const active = engine.runState === "running" || engine.runState === "paused";
@@ -224,61 +212,6 @@ export function FocusBoard({
   const displayTime = canCustomize
     ? formatTimer(timer.config.focusMinutes * 60_000)
     : timer.display;
-
-  const presenceStatus: PresenceStatus =
-    !active
-      ? "offline"
-      : timer.engine.phase === "short_break" ||
-          timer.engine.phase === "long_break"
-        ? "on_break"
-        : "focusing";
-
-  useStudyPresence({
-    enabled: active,
-    status: presenceStatus,
-    activityLabel:
-      presenceStatus === "focusing"
-        ? "Focusing"
-        : presenceStatus === "on_break"
-          ? "On break"
-          : null,
-  });
-
-  useEffect(() => {
-    timer.setOnPhaseComplete((phase) => {
-      if (preferences.focus_sound_enabled) {
-        try {
-          const ctx = new AudioContext();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.frequency.value = phase.includes("break") ? 523 : 440;
-          gain.gain.value = 0.08;
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.2);
-        } catch {
-          /* autoplay / audio blocked */
-        }
-      }
-      toast.message(
-        phase === "focus" ? "Focus interval complete" : "Break complete",
-      );
-    });
-  }, [preferences.focus_sound_enabled, timer]);
-
-  useEffect(() => {
-    if (!timer.clientSessionId || !active) return;
-    const id = window.setInterval(() => {
-      void heartbeatFocusSession({
-        client_session_id: timer.clientSessionId!,
-        engine_state: timer.engine as unknown as Record<string, unknown>,
-        focus_seconds: Math.round(timer.engine.totalFocusMs / 1000),
-        break_seconds: Math.round(timer.engine.totalBreakMs / 1000),
-      });
-    }, 20_000);
-    return () => window.clearInterval(id);
-  }, [timer.clientSessionId, active, timer.engine]);
 
   function setFocusMinutes(minutes: number) {
     if (!canCustomize) return;
@@ -434,11 +367,11 @@ export function FocusBoard({
 
   const soundProps = {
     player,
-    primary,
-    secondary,
-    volume,
-    secondaryVolume,
-    enabled: preferences.focus_sound_enabled,
+    primary: soundscape.primary,
+    secondary: soundscape.secondary,
+    volume: soundscape.volume,
+    secondaryVolume: soundscape.secondaryVolume,
+    enabled: soundscape.enabled,
     onPrimaryChange: setPrimary,
     onSecondaryChange: setSecondary,
     onVolumeChange: setVolume,
