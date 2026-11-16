@@ -18,11 +18,17 @@ import {
   disconnectConnectionAction,
   importIcsAction,
   parseIcsPreviewAction,
-  setCalendarEnabledAction,
+  updateExternalCalendarSettingsAction,
   syncNowAction,
 } from "@/actions/external-calendar";
 import { ResponsiveDialog } from "@/components/studi/responsive-dialog";
 import { primaryPillClass, softPillClass } from "@/components/studi/page-title";
+import {
+  EXTERNAL_CALENDAR_DESTINATIONS,
+  EXTERNAL_CALENDAR_DESTINATION_LABELS,
+  normalizeExternalCalendarDestination,
+  type ExternalCalendarDestination,
+} from "@/lib/calendar-sync/calendar-settings";
 import { cn } from "@/lib/utils";
 import type {
   ExternalCalendar,
@@ -450,48 +456,32 @@ export function ConnectCalendarDialog({
             <p className="mb-2 text-[12.5px] font-semibold uppercase tracking-[0.04em] text-ink-3">
               Calendars
             </p>
-            <ul className="space-y-1">
+            <p className="mb-2 text-[12.5px] text-ink-3">
+              Disable a calendar to hide it everywhere in Studi. Mapping only
+              changes how events look — it never creates native exams or tasks.
+            </p>
+            <ul className="space-y-2">
               {manageCalendars.map((cal) => (
-                <li
+                <ManagedCalendarRow
                   key={cal.id}
-                  className="flex items-center gap-2 rounded-[12px] bg-raised px-3 py-2"
-                >
-                  <span
-                    className="size-2.5 rounded-full"
-                    style={{ background: cal.color || "var(--accent)" }}
-                    aria-hidden
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13.5px] font-medium text-ink">
-                      {cal.name}
-                    </span>
-                    {cal.last_sync_error ? (
-                      <span className="block truncate text-[11.5px] text-accent-ink">
-                        {cal.last_sync_error}
-                      </span>
-                    ) : cal.last_successful_sync_at ? (
-                      <span className="block truncate text-[11.5px] text-ink-3">
-                        Synced {formatRelative(cal.last_successful_sync_at)}
-                      </span>
-                    ) : null}
-                  </span>
-                  <label className="flex items-center gap-1.5 text-[12.5px] text-ink-2">
-                    <input
-                      type="checkbox"
-                      checked={cal.enabled}
-                      onChange={(e) => {
-                        startTransition(async () => {
-                          const result = await setCalendarEnabledAction({
-                            calendarId: cal.id,
-                            enabled: e.target.checked,
-                          });
-                          if (!result.ok) toast.error(result.error);
-                        });
-                      }}
-                    />
-                    Enabled
-                  </label>
-                </li>
+                  calendar={cal}
+                  accountLabel={
+                    manageConnection.account_label ||
+                    manageConnection.account_email ||
+                    manageConnection.provider
+                  }
+                  pending={pending}
+                  onUpdate={(patch) => {
+                    startTransition(async () => {
+                      const result = await updateExternalCalendarSettingsAction({
+                        calendarId: cal.id,
+                        ...patch,
+                      });
+                      if (!result.ok) toast.error(result.error);
+                      else if (result.success) toast.success(result.success);
+                    });
+                  }}
+                />
               ))}
             </ul>
           </div>
@@ -566,6 +556,108 @@ export function ConnectCalendarDialog({
         </div>
       ) : null}
     </ResponsiveDialog>
+  );
+}
+
+function ManagedCalendarRow({
+  calendar,
+  accountLabel,
+  pending,
+  onUpdate,
+}: {
+  calendar: ExternalCalendar;
+  accountLabel: string;
+  pending: boolean;
+  onUpdate: (patch: {
+    enabled?: boolean;
+    studiDestination?: ExternalCalendarDestination;
+    blocksStudy?: boolean;
+  }) => void;
+}) {
+  const destination = normalizeExternalCalendarDestination(
+    calendar.studi_destination,
+  );
+  const blocksStudy = calendar.blocks_study !== false;
+
+  return (
+    <li className="rounded-[14px] bg-raised px-3 py-2.5">
+      <div className="flex items-start gap-2">
+        <span
+          className="mt-1.5 size-2.5 shrink-0 rounded-full"
+          style={{ background: calendar.color || "var(--accent)" }}
+          aria-hidden
+        />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate text-[13.5px] font-medium text-ink">
+                {calendar.name}
+              </p>
+              <p className="truncate text-[11.5px] text-ink-3">{accountLabel}</p>
+              {calendar.last_sync_error ? (
+                <p className="truncate text-[11.5px] text-accent-ink">
+                  {calendar.last_sync_error}
+                </p>
+              ) : calendar.last_successful_sync_at ? (
+                <p className="truncate text-[11.5px] text-ink-3">
+                  Synced {formatRelative(calendar.last_successful_sync_at)}
+                </p>
+              ) : null}
+            </div>
+            <label className="flex items-center gap-1.5 text-[12.5px] font-medium text-ink-2">
+              <input
+                type="checkbox"
+                className="size-3.5 accent-[var(--accent)]"
+                checked={calendar.enabled}
+                disabled={pending}
+                onChange={(e) => onUpdate({ enabled: e.target.checked })}
+              />
+              Enabled
+            </label>
+          </div>
+
+          {calendar.enabled ? (
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label className="flex flex-col gap-1 text-[12px] text-ink-2">
+                <span className="font-medium text-ink-3">Show in Studi as</span>
+                <select
+                  className="rounded-[10px] border border-hairline bg-sunken px-2.5 py-1.5 text-[13px] text-ink"
+                  value={destination}
+                  disabled={pending}
+                  onChange={(e) =>
+                    onUpdate({
+                      studiDestination: e.target
+                        .value as ExternalCalendarDestination,
+                    })
+                  }
+                >
+                  {EXTERNAL_CALENDAR_DESTINATIONS.map((value) => (
+                    <option key={value} value={value}>
+                      {EXTERNAL_CALENDAR_DESTINATION_LABELS[value]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex items-center gap-2 self-end pb-1 text-[12.5px] text-ink-2">
+                <input
+                  type="checkbox"
+                  className="size-3.5 accent-[var(--accent)]"
+                  checked={blocksStudy}
+                  disabled={pending}
+                  onChange={(e) => onUpdate({ blocksStudy: e.target.checked })}
+                />
+                Block study time
+              </label>
+            </div>
+          ) : (
+            <p className="text-[12px] text-ink-3">
+              Disabled — events stay hidden from Calendar, suggestions, and the
+              Study Planner.
+            </p>
+          )}
+        </div>
+      </div>
+    </li>
   );
 }
 

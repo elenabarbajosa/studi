@@ -51,6 +51,7 @@ import type { ChallengeType } from "@/lib/progress/challenges";
 import type {
   ExternalCalendar,
   ExternalCalendarConnection,
+  ExternalCalendarDestination,
   ExternalCalendarEvent,
   ExternalCalendarProvider,
   ExternalConnectionStatus,
@@ -62,6 +63,7 @@ import type {
 export type {
   ExternalCalendar,
   ExternalCalendarConnection,
+  ExternalCalendarDestination,
   ExternalCalendarEvent,
   ExternalCalendarProvider,
   ExternalConnectionStatus,
@@ -1125,6 +1127,8 @@ export type Database = {
           color?: string | null;
           timezone?: string | null;
           enabled?: boolean;
+          studi_destination?: ExternalCalendarDestination;
+          blocks_study?: boolean;
           is_primary?: boolean;
           sync_token?: string | null;
           ctag?: string | null;
@@ -1505,6 +1509,7 @@ export type Database = {
       external_connection_status: ExternalConnectionStatus;
       external_event_show_as: ExternalEventShowAs;
       external_event_link_kind: ExternalEventLinkKind;
+      external_calendar_destination: ExternalCalendarDestination;
     };
     CompositeTypes: Record<string, never>;
   };

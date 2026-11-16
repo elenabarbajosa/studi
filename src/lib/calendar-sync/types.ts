@@ -18,6 +18,14 @@ export type ExternalEventShowAs =
 
 export type ExternalEventLinkKind = "assessment" | "task" | "ignored";
 
+/** Presentation category in Studi Calendar (not a native record conversion). */
+export type ExternalCalendarDestination =
+  | "exams"
+  | "deadlines"
+  | "tasks"
+  | "personal"
+  | "external";
+
 /** Default when provider omits free/busy: treat as busy (conservative for study planning). */
 export const DEFAULT_SHOW_AS: ExternalEventShowAs = "busy";
 
@@ -108,6 +116,10 @@ export type ExternalCalendar = {
   color: string | null;
   timezone: string | null;
   enabled: boolean;
+  /** Where enabled events appear in Studi Calendar (presentation only). */
+  studi_destination: ExternalCalendarDestination;
+  /** When true (and enabled), busy events block Study Planner availability. */
+  blocks_study: boolean;
   is_primary: boolean;
   sync_token: string | null;
   ctag: string | null;

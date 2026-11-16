@@ -4,6 +4,7 @@ import { CalendarBoard } from "@/components/calendar/calendar-board";
 import { CalendarSkeleton } from "@/components/calendar/calendar-skeleton";
 import { requireProfile } from "@/lib/auth";
 import { detectExternalPlanConflicts } from "@/lib/calendar-sync/busy";
+import { filterBlockingExternalEvents } from "@/lib/calendar-sync/calendar-settings";
 import {
   listAssessments,
   listCalendarEvents,
@@ -54,7 +55,7 @@ async function CalendarContent({
 
   const planConflicts = detectExternalPlanConflicts(
     studySessions,
-    externalEvents,
+    filterBlockingExternalEvents(externalEvents, externalCalendars),
   );
 
   const syncStale = externalConnections.some(

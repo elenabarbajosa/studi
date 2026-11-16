@@ -12,6 +12,10 @@ import {
   isCalendarSecretsKeyConfigured,
   isServiceRoleKeyConfigured,
 } from "@/lib/calendar-sync/config";
+import {
+  DEFAULT_EXTERNAL_CALENDAR_BLOCKS_STUDY,
+  normalizeExternalCalendarDestination,
+} from "@/lib/calendar-sync/calendar-settings";
 import type {
   ExternalCalendar,
   ExternalCalendarConnection,
@@ -20,6 +24,19 @@ import type {
   ProviderConfigStatus,
 } from "@/lib/calendar-sync/types";
 import { createClient } from "@/lib/supabase/server";
+
+function normalizeCalendarRow(row: ExternalCalendar): ExternalCalendar {
+  return {
+    ...row,
+    studi_destination: normalizeExternalCalendarDestination(
+      row.studi_destination,
+    ),
+    blocks_study:
+      typeof row.blocks_study === "boolean"
+        ? row.blocks_study
+        : DEFAULT_EXTERNAL_CALENDAR_BLOCKS_STUDY,
+  };
+}
 
 export type CalendarIntegrationStatus = {
   google: ProviderConfigStatus;
@@ -94,7 +111,7 @@ export const listExternalCalendars = cache(
       console.error("listExternalCalendars:", error.message);
       return [];
     }
-    return (data ?? []) as ExternalCalendar[];
+    return ((data ?? []) as ExternalCalendar[]).map(normalizeCalendarRow);
   },
 );
 
@@ -139,20 +156,22 @@ export async function listBusyExternalEvents(): Promise<ExternalCalendarEvent[]>
   const user = await getSessionUser();
   if (!user) return [];
   const supabase = await createClient();
+  // Enabled + blocks_study — disabled calendars never block planner time.
   const { data: calendars } = await supabase
     .from("external_calendars")
     .select("id")
     .eq("user_id", user.id)
-    .eq("enabled", true);
-  const enabledIds = (calendars ?? []).map((c) => c.id);
-  if (enabledIds.length === 0) return [];
+    .eq("enabled", true)
+    .eq("blocks_study", true);
+  const blockingIds = (calendars ?? []).map((c) => c.id);
+  if (blockingIds.length === 0) return [];
 
   const { data, error } = await supabase
     .from("external_calendar_events")
     .select("*")
     .eq("user_id", user.id)
     .eq("is_cancelled", false)
-    .in("calendar_id", enabledIds)
+    .in("calendar_id", blockingIds)
     .neq("show_as", "free");
   if (error) {
     console.error("listBusyExternalEvents:", error.message);

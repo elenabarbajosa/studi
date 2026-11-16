@@ -17,6 +17,12 @@ import { syncConnection } from "@/lib/calendar-sync/engine";
 import { parseIcs } from "@/lib/calendar-sync/ics";
 import { contentHashForEvent } from "@/lib/calendar-sync/hash";
 import { detectAcademicCandidates } from "@/lib/calendar-sync/academic-detect";
+import {
+  DEFAULT_EXTERNAL_CALENDAR_BLOCKS_STUDY,
+  DEFAULT_EXTERNAL_CALENDAR_DESTINATION,
+  EXTERNAL_CALENDAR_DESTINATIONS,
+  isExternalCalendarVisible,
+} from "@/lib/calendar-sync/calendar-settings";
 import { assertSameOwner } from "@/lib/calendar-sync/ownership";
 import {
   deleteConnectionTokens,
@@ -151,6 +157,57 @@ export async function setCalendarEnabledAction(input: {
   return { ok: true, success: parsed.data.enabled ? "Calendar enabled." : "Calendar disabled." };
 }
 
+/** Update destination and/or block-study for a calendar the caller owns. */
+export async function updateExternalCalendarSettingsAction(input: {
+  calendarId: string;
+  enabled?: boolean;
+  studiDestination?: (typeof EXTERNAL_CALENDAR_DESTINATIONS)[number];
+  blocksStudy?: boolean;
+}): Promise<ActionResult> {
+  const auth = await authClient();
+  if (!auth.ok) return { ok: false, error: auth.error };
+  const { supabase, user } = auth;
+
+  const parsed = z
+    .object({
+      calendarId: z.string().uuid(),
+      enabled: z.boolean().optional(),
+      studiDestination: z.enum(EXTERNAL_CALENDAR_DESTINATIONS).optional(),
+      blocksStudy: z.boolean().optional(),
+    })
+    .safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid request." };
+
+  const patch: {
+    enabled?: boolean;
+    studi_destination?: (typeof EXTERNAL_CALENDAR_DESTINATIONS)[number];
+    blocks_study?: boolean;
+  } = {};
+  if (parsed.data.enabled !== undefined) patch.enabled = parsed.data.enabled;
+  if (parsed.data.studiDestination !== undefined) {
+    patch.studi_destination = parsed.data.studiDestination;
+  }
+  if (parsed.data.blocksStudy !== undefined) {
+    patch.blocks_study = parsed.data.blocksStudy;
+  }
+  if (Object.keys(patch).length === 0) {
+    return { ok: false, error: "No settings to update." };
+  }
+
+  const { data, error } = await supabase
+    .from("external_calendars")
+    .update(patch)
+    .eq("id", parsed.data.calendarId)
+    .eq("user_id", user.id)
+    .select("id")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: "Calendar not found." };
+
+  revalidateCalendar();
+  return { ok: true, success: "Calendar settings saved." };
+}
+
 export async function disconnectConnectionAction(
   connectionId: string,
 ): Promise<ActionResult> {
@@ -264,6 +321,8 @@ export async function importIcsAction(input: {
       provider_calendar_id: "ics-import",
       name: label || "Imported calendar",
       enabled: true,
+      studi_destination: DEFAULT_EXTERNAL_CALENDAR_DESTINATION,
+      blocks_study: DEFAULT_EXTERNAL_CALENDAR_BLOCKS_STUDY,
       is_primary: true,
       last_successful_sync_at: new Date().toISOString(),
     })
@@ -383,15 +442,29 @@ export async function listAcademicSuggestionsAction(): Promise<
     .eq("user_id", user.id);
   const linked = new Set((links ?? []).map((l) => l.external_event_id));
 
+  const { data: calendars } = await supabase
+    .from("external_calendars")
+    .select("id, enabled")
+    .eq("user_id", user.id);
+  const enabledIds = new Set(
+    (calendars ?? [])
+      .filter((c) => isExternalCalendarVisible(c))
+      .map((c) => c.id as string),
+  );
+
   const { data: events } = await supabase
     .from("external_calendar_events")
-    .select("id, title, description, all_day, is_cancelled")
+    .select("id, title, description, all_day, is_cancelled, calendar_id")
     .eq("user_id", user.id)
     .eq("is_cancelled", false)
     .order("starts_at", { ascending: true })
     .limit(400);
 
-  const candidates = detectAcademicCandidates(events ?? []).filter(
+  const visibleEvents = (events ?? []).filter((e) =>
+    enabledIds.has(e.calendar_id as string),
+  );
+
+  const candidates = detectAcademicCandidates(visibleEvents).filter(
     (c) => !linked.has(c.eventId),
   );
   return { ok: true, data: candidates };
@@ -438,6 +511,22 @@ export async function resolveAcademicSuggestionAction(input: {
     .eq("user_id", user.id)
     .maybeSingle();
   if (!event) return { ok: false, error: "Event not found." };
+
+  const { data: eventCalendar } = await supabase
+    .from("external_calendars")
+    .select("id, enabled")
+    .eq("id", event.calendar_id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (
+    parsed.data.action !== "ignore" &&
+    !isExternalCalendarVisible(eventCalendar)
+  ) {
+    return {
+      ok: false,
+      error: "This calendar is disabled in Studi.",
+    };
+  }
 
   const fingerprint = event.content_hash ?? event.provider_event_id;
 

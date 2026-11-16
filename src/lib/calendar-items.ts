@@ -1,4 +1,9 @@
 import { ASSESSMENT_TYPE_META, type AssessmentType } from "@/lib/calendar";
+import {
+  isExternalCalendarVisible,
+  normalizeExternalCalendarDestination,
+  type ExternalCalendarDestination,
+} from "@/lib/calendar-sync/calendar-settings";
 import type {
   ExternalCalendar,
   ExternalCalendarConnection,
@@ -25,6 +30,25 @@ export type CalItemKind =
   | "task"
   | "personal"
   | "external";
+
+/** Map presentation destination → calendar chip kind (no native record creation). */
+export function destinationToCalItemKind(
+  destination: ExternalCalendarDestination,
+): CalItemKind {
+  switch (destination) {
+    case "exams":
+      return "exam";
+    case "deadlines":
+      return "deadline";
+    case "tasks":
+      return "task";
+    case "personal":
+      return "personal";
+    case "external":
+    default:
+      return "external";
+  }
+}
 
 export type CalFilter =
   | "sessions"
@@ -219,18 +243,23 @@ export function buildCalendarItems(input: {
     .filter((e) => {
       if (e.is_cancelled) return false;
       const cal = calendars.get(e.calendar_id);
-      return !cal || cal.enabled;
+      // Fail closed: missing calendar metadata → hide.
+      return isExternalCalendarVisible(cal);
     })
     .map<CalItem>((e) => {
-      const cal = calendars.get(e.calendar_id);
+      const cal = calendars.get(e.calendar_id)!;
       const conn = connections.get(e.connection_id);
       const provider = conn?.provider;
+      const destination = normalizeExternalCalendarDestination(
+        cal.studi_destination,
+      );
+      const kind = destinationToCalItemKind(destination);
       return {
         id: `external:${e.id}`,
         source: "external",
-        kind: "external",
+        kind,
         title: e.title || "(External event)",
-        meta: [providerMeta(provider), cal?.name].filter(Boolean).join(" · "),
+        meta: [providerMeta(provider), cal.name].filter(Boolean).join(" · "),
         start: e.starts_at,
         end: e.ends_at,
         allDay: e.all_day,
@@ -239,7 +268,7 @@ export function buildCalendarItems(input: {
         editable: false,
         external: e,
         externalProvider: provider,
-        externalCalendarColor: cal?.color ?? null,
+        externalCalendarColor: cal.color ?? null,
         externalHtmlLink: e.html_link,
       };
     });
