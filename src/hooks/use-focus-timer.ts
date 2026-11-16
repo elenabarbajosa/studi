@@ -4,6 +4,10 @@ import { startTransition, useCallback, useEffect, useRef, useState } from "react
 
 import type { FocusTimerMode } from "@/lib/calendar";
 import {
+  restoreEngineFromAuthoritative,
+  type FocusSessionSnapshot,
+} from "@/lib/focus/session-sync";
+import {
   createEngine,
   displayMs,
   finish,
@@ -32,6 +36,7 @@ type StoredBundle = {
   lastKnownAt: number;
   clientSessionId: string;
   meta: SessionMeta;
+  revision?: number;
   /** Owner of the persisted session — ignore restore across account switches. */
   userId?: string;
 };
@@ -42,8 +47,6 @@ function readStoredBundle(userId?: string | null): StoredBundle | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as StoredBundle;
     if (!parsed?.engine || !parsed.clientSessionId) return null;
-    // Require an owner stamp when we know the signed-in user, so a previous
-    // account's session cannot resurface after logout/login.
     if (userId && parsed.userId !== userId) {
       window.localStorage.removeItem(FOCUS_STORAGE_KEY);
       return null;
@@ -68,9 +71,14 @@ export function useFocusTimer(
   const [now, setNow] = useState(0);
   const [clientSessionId, setClientSessionId] = useState<string | null>(null);
   const [meta, setMeta] = useState<SessionMeta | null>(null);
+  const [revision, setRevision] = useState(0);
   const lastKnownRef = useRef(0);
   const onPhaseCompleteRef = useRef<((phase: string) => void) | null>(null);
   const didRestoreRef = useRef(false);
+  const clientSessionIdRef = useRef<string | null>(null);
+  const metaRef = useRef<SessionMeta | null>(null);
+  const revisionRef = useRef(0);
+  const applyingRemoteRef = useRef(false);
 
   useEffect(() => {
     configRef.current = config;
@@ -81,29 +89,25 @@ export function useFocusTimer(
   }, [engine]);
 
   useEffect(() => {
-    if (didRestoreRef.current) return;
-    didRestoreRef.current = true;
-    const stored = readStoredBundle(userId);
-    const t = Date.now();
-    startTransition(() => {
-      setNow(t);
-      lastKnownRef.current = t;
-      if (!stored) return;
-      setEngine(
-        recoverAfterGap(
-          stored.engine,
-          t,
-          stored.lastKnownAt,
-          FOCUS_HEARTBEAT_STALE_MS,
-        ),
-      );
-      setClientSessionId(stored.clientSessionId);
-      setMeta(stored.meta);
-    });
-  }, [userId]);
+    clientSessionIdRef.current = clientSessionId;
+  }, [clientSessionId]);
 
-  const persist = useCallback(
-    (next: FocusEngineState, sessionId: string | null, m: SessionMeta | null) => {
+  useEffect(() => {
+    metaRef.current = meta;
+  }, [meta]);
+
+  useEffect(() => {
+    revisionRef.current = revision;
+  }, [revision]);
+
+  const writeBundle = useCallback(
+    (
+      next: FocusEngineState,
+      sessionId: string | null,
+      m: SessionMeta | null,
+      rev: number,
+      lastKnownAt: number,
+    ) => {
       if (!sessionId || !m) {
         try {
           window.localStorage.removeItem(FOCUS_STORAGE_KEY);
@@ -114,9 +118,10 @@ export function useFocusTimer(
       }
       const bundle: StoredBundle = {
         engine: next,
-        lastKnownAt: Date.now(),
+        lastKnownAt,
         clientSessionId: sessionId,
         meta: m,
+        revision: rev,
         ...(userId ? { userId } : {}),
       };
       try {
@@ -129,6 +134,31 @@ export function useFocusTimer(
   );
 
   useEffect(() => {
+    if (didRestoreRef.current) return;
+    didRestoreRef.current = true;
+    const stored = readStoredBundle(userId);
+    const t = Date.now();
+    startTransition(() => {
+      setNow(t);
+      lastKnownRef.current = t;
+      if (!stored) return;
+      // Local cache only — server hydrate in FocusSessionProvider may replace this.
+      setEngine(
+        recoverAfterGap(
+          stored.engine,
+          t,
+          stored.lastKnownAt,
+          FOCUS_HEARTBEAT_STALE_MS,
+        ),
+      );
+      setClientSessionId(stored.clientSessionId);
+      setMeta(stored.meta);
+      setRevision(stored.revision ?? 0);
+      lastKnownRef.current = stored.lastKnownAt;
+    });
+  }, [userId]);
+
+  useEffect(() => {
     const id = window.setInterval(() => {
       const t = Date.now();
       setNow(t);
@@ -138,11 +168,20 @@ export function useFocusTimer(
           onPhaseCompleteRef.current?.(result.completedPhase);
         }
         lastKnownRef.current = t;
+        // Always refresh lastKnownAt in localStorage while a session is live,
+        // even when the engine object identity does not change mid-countdown.
+        writeBundle(
+          result.state,
+          clientSessionIdRef.current,
+          metaRef.current,
+          revisionRef.current,
+          t,
+        );
         return result.state;
       });
     }, 250);
     return () => window.clearInterval(id);
-  }, []);
+  }, [writeBundle]);
 
   useEffect(() => {
     function onVis() {
@@ -157,6 +196,13 @@ export function useFocusTimer(
           FOCUS_HEARTBEAT_STALE_MS,
         );
         lastKnownRef.current = t;
+        writeBundle(
+          recovered,
+          clientSessionIdRef.current,
+          metaRef.current,
+          revisionRef.current,
+          t,
+        );
         return recovered;
       });
     }
@@ -166,11 +212,11 @@ export function useFocusTimer(
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("focus", onVis);
     };
-  }, []);
+  }, [writeBundle]);
 
   useEffect(() => {
-    persist(engine, clientSessionId, meta);
-  }, [engine, clientSessionId, meta, persist]);
+    writeBundle(engine, clientSessionId, meta, revision, Date.now());
+  }, [engine, clientSessionId, meta, revision, writeBundle]);
 
   const applyConfig = useCallback((patch: Partial<FocusConfig>) => {
     if (engineRef.current.runState !== "idle") return;
@@ -188,6 +234,7 @@ export function useFocusTimer(
       setEngine(createEngine(mode, configRef.current));
       setClientSessionId(null);
       setMeta(null);
+      setRevision(0);
     },
     [engine.runState],
   );
@@ -212,12 +259,55 @@ export function useFocusTimer(
       setEngine(next);
       setClientSessionId(opts.clientSessionId);
       setMeta(m);
+      setRevision(1);
       setNow(t);
       lastKnownRef.current = t;
       return { engine: next, meta: m, startedAt: t };
     },
     [engine.mode],
   );
+
+  const hydrateFromSnapshot = useCallback((snapshot: FocusSessionSnapshot) => {
+    applyingRemoteRef.current = true;
+    const t = Date.now();
+    const heartbeatMs = Date.parse(snapshot.lastHeartbeatAt) || t;
+    const restored = restoreEngineFromAuthoritative({
+      engine: snapshot.engine,
+      nowMs: t,
+      lastHeartbeatAtMs: heartbeatMs,
+    });
+    const m: SessionMeta = {
+      subjectId: snapshot.subjectId,
+      topicId: snapshot.topicId,
+      taskId: snapshot.taskId,
+      goal: snapshot.goal,
+      startedAtIso: snapshot.startedAtIso,
+    };
+    configRef.current = {
+      ...configRef.current,
+      focusMinutes: restored.focusMinutes,
+      shortBreakMinutes: restored.shortBreakMinutes,
+      longBreakMinutes: restored.longBreakMinutes,
+      intervalsBeforeLong: restored.intervalsBeforeLong,
+      autoStartBreaks: restored.autoStartBreaks,
+    };
+    setConfig(configRef.current);
+    setEngine(restored);
+    setClientSessionId(snapshot.clientSessionId);
+    setMeta(m);
+    setRevision(snapshot.revision);
+    setNow(t);
+    lastKnownRef.current = t;
+    writeBundle(restored, snapshot.clientSessionId, m, snapshot.revision, t);
+    queueMicrotask(() => {
+      applyingRemoteRef.current = false;
+    });
+  }, [writeBundle]);
+
+  const setRevisionFromServer = useCallback((rev: number) => {
+    setRevision(rev);
+    revisionRef.current = rev;
+  }, []);
 
   const doPause = useCallback(() => {
     const t = Date.now();
@@ -237,6 +327,7 @@ export function useFocusTimer(
     setEngine(createEngine(engine.mode, configRef.current));
     setClientSessionId(null);
     setMeta(null);
+    setRevision(0);
     try {
       window.localStorage.removeItem(FOCUS_STORAGE_KEY);
     } catch {
@@ -259,6 +350,7 @@ export function useFocusTimer(
     now,
     clientSessionId,
     meta,
+    revision,
     display: formatTimer(displayMs(engine, now)),
     displayMs: displayMs(engine, now),
     remaining: remainingMs(engine, now),
@@ -270,17 +362,22 @@ export function useFocusTimer(
     resume: doResume,
     reset: doReset,
     finish: doFinish,
+    hydrateFromSnapshot,
+    setRevisionFromServer,
+    isApplyingRemote: () => applyingRemoteRef.current,
     setOnPhaseComplete: (fn: ((phase: string) => void) | null) => {
       onPhaseCompleteRef.current = fn;
     },
     clearSession: () => {
       setClientSessionId(null);
       setMeta(null);
+      setRevision(0);
       try {
         window.localStorage.removeItem(FOCUS_STORAGE_KEY);
       } catch {
         /* ignore */
       }
     },
+    readLocalBundle: () => readStoredBundle(userId),
   };
 }

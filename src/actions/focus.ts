@@ -7,13 +7,24 @@ import {
   FOCUS_TIMER_MODES,
   SOUNDSCAPE_IDS,
 } from "@/lib/calendar";
+import {
+  isActiveSessionStale,
+  snapshotFromActiveRow,
+  type FocusSessionSnapshot,
+} from "@/lib/focus/session-sync";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
+import type { FocusActiveSession } from "@/types/database";
 
 export type FocusActionState = {
   error?: string;
   success?: string;
   id?: string;
+  /** Present when another device already owns the active session. */
+  adopted?: boolean;
+  conflict?: boolean;
+  revision?: number;
+  snapshot?: FocusSessionSnapshot;
 };
 
 async function authClient() {
@@ -57,6 +68,8 @@ const heartbeatSchema = z.object({
   engine_state: z.record(z.string(), z.unknown()),
   focus_seconds: z.number().int().min(0).max(86400),
   break_seconds: z.number().int().min(0).max(86400),
+  /** Optimistic lock — required for authoritative multi-device writes. */
+  expected_revision: z.number().int().min(1),
 });
 
 const finishSchema = z.object({
@@ -75,6 +88,32 @@ const finishSchema = z.object({
   ended_at: z.string().datetime({ offset: true }),
 });
 
+function toSnapshot(row: FocusActiveSession): FocusSessionSnapshot | null {
+  return snapshotFromActiveRow({
+    ...row,
+    revision: row.revision ?? 1,
+  });
+}
+
+/** Fetch the caller's authoritative active Focus session (if any). */
+export async function fetchActiveFocusSession(): Promise<{
+  error?: string;
+  snapshot?: FocusSessionSnapshot | null;
+}> {
+  const auth = await authClient();
+  if ("error" in auth) return { error: auth.error };
+
+  const { data, error } = await auth.supabase
+    .from("focus_active_sessions")
+    .select("*")
+    .eq("user_id", auth.user.id)
+    .maybeSingle();
+
+  if (error) return { error: error.message };
+  if (!data) return { snapshot: null };
+  return { snapshot: toSnapshot(data) };
+}
+
 export async function startFocusSession(
   payload: z.infer<typeof startSchema>,
 ): Promise<FocusActionState> {
@@ -86,7 +125,29 @@ export async function startFocusSession(
     return { error: parsed.error.issues[0]?.message ?? "Invalid session" };
   }
 
-  // Replace any existing active session for this user.
+  const { data: existing } = await auth.supabase
+    .from("focus_active_sessions")
+    .select("*")
+    .eq("user_id", auth.user.id)
+    .maybeSingle();
+
+  // Adopt a live session from another device instead of silently replacing it.
+  if (
+    existing &&
+    existing.client_session_id !== parsed.data.client_session_id &&
+    !isActiveSessionStale(existing.last_heartbeat_at, Date.now())
+  ) {
+    const snapshot = toSnapshot(existing);
+    return {
+      success: "Adopted existing session",
+      adopted: true,
+      id: existing.id,
+      revision: existing.revision ?? 1,
+      snapshot: snapshot ?? undefined,
+    };
+  }
+
+  // Same client re-starting, or reclaiming a stale row — replace.
   await auth.supabase
     .from("focus_active_sessions")
     .delete()
@@ -105,14 +166,20 @@ export async function startFocusSession(
       engine_state: parsed.data.engine_state,
       focus_seconds: 0,
       break_seconds: 0,
+      revision: 1,
       last_heartbeat_at: new Date().toISOString(),
     })
-    .select("id")
+    .select("*")
     .single();
 
   if (error) return { error: error.message };
   revalidatePath("/focus");
-  return { success: "Session started", id: data.id };
+  return {
+    success: "Session started",
+    id: data.id,
+    revision: data.revision ?? 1,
+    snapshot: toSnapshot(data) ?? undefined,
+  };
 }
 
 export async function heartbeatFocusSession(
@@ -126,19 +193,49 @@ export async function heartbeatFocusSession(
     return { error: parsed.error.issues[0]?.message ?? "Invalid heartbeat" };
   }
 
-  const { error } = await auth.supabase
+  const expected = parsed.data.expected_revision;
+  const { data, error } = await auth.supabase
     .from("focus_active_sessions")
     .update({
       engine_state: parsed.data.engine_state,
       focus_seconds: parsed.data.focus_seconds,
       break_seconds: parsed.data.break_seconds,
       last_heartbeat_at: new Date().toISOString(),
+      revision: expected + 1,
     })
     .eq("user_id", auth.user.id)
-    .eq("client_session_id", parsed.data.client_session_id);
+    .eq("client_session_id", parsed.data.client_session_id)
+    .eq("revision", expected)
+    .select("*")
+    .maybeSingle();
 
   if (error) return { error: error.message };
-  return { success: "ok" };
+
+  if (!data) {
+    // Stale revision or missing row — return authoritative state if present.
+    const { data: current } = await auth.supabase
+      .from("focus_active_sessions")
+      .select("*")
+      .eq("user_id", auth.user.id)
+      .maybeSingle();
+
+    if (!current) {
+      return { error: "No active session", conflict: true };
+    }
+
+    return {
+      conflict: true,
+      revision: current.revision ?? 1,
+      snapshot: toSnapshot(current) ?? undefined,
+      error: "Session was updated on another device",
+    };
+  }
+
+  return {
+    success: "ok",
+    revision: data.revision ?? expected + 1,
+    snapshot: toSnapshot(data) ?? undefined,
+  };
 }
 
 export async function finishFocusSession(

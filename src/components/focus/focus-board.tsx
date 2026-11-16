@@ -133,6 +133,7 @@ export function FocusBoard({
     setVolume,
     setSecondaryVolume,
     hydrateFromPreferences,
+    pushSessionNow,
   } = focusSession;
   const isPhone = useIsPhone();
 
@@ -252,9 +253,18 @@ export function FocusBoard({
         goal: meta.goal,
         engine_state: started as unknown as Record<string, unknown>,
       });
+      if (result.adopted && result.snapshot) {
+        timer.hydrateFromSnapshot(result.snapshot);
+        toast.message("Joined your session from another device");
+        return;
+      }
       if (result.error) {
         toast.error(result.error);
         timer.reset();
+        return;
+      }
+      if (result.revision) {
+        timer.setRevisionFromServer(result.revision);
       }
     });
   }
@@ -303,9 +313,13 @@ export function FocusBoard({
   }
 
   function togglePrimary() {
-    if (engine.runState === "running") timer.pause();
-    else if (engine.runState === "paused") timer.resume();
-    else if (finished) handleFinish();
+    if (engine.runState === "running") {
+      timer.pause();
+      void pushSessionNow();
+    } else if (engine.runState === "paused") {
+      timer.resume();
+      void pushSessionNow();
+    } else if (finished) handleFinish();
     else if (!isPending) handleStart();
   }
 
@@ -314,8 +328,13 @@ export function FocusBoard({
       if (isTypingTarget(e.target) || finishOpen) return;
       if (e.code === "Space") {
         e.preventDefault();
-        if (timer.engine.runState === "running") timer.pause();
-        else if (timer.engine.runState === "paused") timer.resume();
+        if (timer.engine.runState === "running") {
+          timer.pause();
+          void pushSessionNow();
+        } else if (timer.engine.runState === "paused") {
+          timer.resume();
+          void pushSessionNow();
+        }
       } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
         const state = timer.engine.runState;
         if (state === "running" || state === "paused" || state === "finished") {

@@ -50,7 +50,7 @@ function ControlButton({
 
 function FocusMiniPlayer() {
   const pathname = usePathname();
-  const { timer } = useFocusSession();
+  const { timer, pushSessionNow, syncStatus } = useFocusSession();
   const { engine } = timer;
 
   if (!shouldShowFocusMiniPlayer(pathname, engine.runState)) return null;
@@ -61,6 +61,12 @@ function FocusMiniPlayer() {
   });
   const canToggle =
     engine.runState === "running" || engine.runState === "paused";
+  const syncHint =
+    syncStatus === "offline"
+      ? " · Offline"
+      : syncStatus === "syncing"
+        ? " · Syncing"
+        : "";
 
   return (
     <div
@@ -79,14 +85,17 @@ function FocusMiniPlayer() {
           </span>
           {" · "}
           {status}
+          {syncHint}
         </p>
       </div>
       {canToggle ? (
         <ControlButton
           label={engine.runState === "running" ? "Pause" : "Resume"}
-          onClick={() =>
-            engine.runState === "running" ? timer.pause() : timer.resume()
-          }
+          onClick={() => {
+            if (engine.runState === "running") timer.pause();
+            else timer.resume();
+            void pushSessionNow();
+          }}
         >
           {engine.runState === "running" ? (
             <Pause className="size-4" aria-hidden />

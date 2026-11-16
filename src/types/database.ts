@@ -453,6 +453,8 @@ export type FocusActiveSession = {
   engine_state: Record<string, unknown>;
   focus_seconds: number;
   break_seconds: number;
+  /** Optimistic concurrency token (migration 022). */
+  revision: number;
   started_at: string;
   last_heartbeat_at: string;
   created_at: string;
@@ -805,6 +807,7 @@ export type Database = {
           engine_state?: Record<string, unknown>;
           focus_seconds?: number;
           break_seconds?: number;
+          revision?: number;
           started_at?: string;
           last_heartbeat_at?: string;
           created_at?: string;
