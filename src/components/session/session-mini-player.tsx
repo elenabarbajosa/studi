@@ -21,11 +21,14 @@ import { phaseLabel } from "@/lib/study-together/types";
 import { cn } from "@/lib/utils";
 
 const shellClass =
-  "pointer-events-auto fixed z-50 flex max-w-[calc(100vw-1.5rem)] items-center gap-3 rounded-[22px] border border-hairline bg-raised/95 px-3 py-2.5 shadow-pop backdrop-blur-md supports-backdrop-filter:bg-raised/90";
+  "pointer-events-auto fixed z-50 flex items-center gap-3 rounded-[22px] border border-hairline bg-raised/95 px-3 py-2.5 shadow-pop backdrop-blur-md supports-backdrop-filter:bg-raised/90";
 
-/** Desktop: bottom-right. Mobile: above tab bar + safe area. */
+/**
+ * Mobile: horizontally centered above the tab bar with balanced side margins
+ * and safe-area clearance. Desktop: bottom-right, content-sized.
+ */
 const positionClass =
-  "right-3 bottom-[calc(88px+env(safe-area-inset-bottom))] md:right-5 md:bottom-5";
+  "left-1/2 bottom-[calc(88px+env(safe-area-inset-bottom))] w-[calc(100%-1.5rem)] max-w-[min(420px,calc(100vw-1.5rem))] -translate-x-1/2 md:left-auto md:right-5 md:bottom-5 md:w-auto md:max-w-none md:translate-x-0";
 
 function ControlButton({
   label,

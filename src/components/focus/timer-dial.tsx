@@ -135,8 +135,13 @@ export function TimerDial({
     if (!dragging) return;
 
     function onMove(e: PointerEvent) {
+      // Non-passive so we can block touch-driven page scroll while scrubbing.
       e.preventDefault();
       applyFromPointer(e.clientX, e.clientY);
+    }
+    function onTouchMove(e: TouchEvent) {
+      // Cancel native scroll; position updates come from pointermove.
+      if (draggingRef.current) e.preventDefault();
     }
     function onUp() {
       draggingRef.current = false;
@@ -146,17 +151,24 @@ export function TimerDial({
     window.addEventListener("pointermove", onMove, { passive: false });
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
     return () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
+      window.removeEventListener("touchmove", onTouchMove);
     };
   }, [applyFromPointer, dragging]);
 
-  const startDrag = (e: React.PointerEvent) => {
+  const startDrag = (e: React.PointerEvent<HTMLButtonElement>) => {
     if (!showScrub) return;
     e.preventDefault();
     e.stopPropagation();
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* capture unsupported — window listeners still track the gesture */
+    }
     draggingRef.current = true;
     setDragging(true);
     applyFromPointer(e.clientX, e.clientY);
@@ -313,13 +325,15 @@ export function TimerDial({
           <button
             type="button"
             aria-label={`Focus duration ${durationMinutes} minutes. Drag around the ring to adjust.`}
-            className="absolute inset-0 z-[1] cursor-grab rounded-full outline-none active:cursor-grabbing focus-visible:shadow-[0_0_0_2px_var(--raised),0_0_0_4px_var(--accent)]"
+            className="absolute inset-0 z-[1] cursor-grab touch-none rounded-full outline-none active:cursor-grabbing focus-visible:shadow-[0_0_0_2px_var(--raised),0_0_0_4px_var(--accent)]"
             style={{
               // Donut hit area via mask — approximate with large transparent button + center pass-through
               WebkitMaskImage:
                 "radial-gradient(circle, transparent 58%, #000 59%, #000 78%, transparent 79%)",
               maskImage:
                 "radial-gradient(circle, transparent 58%, #000 59%, #000 78%, transparent 79%)",
+              // Critical for iOS: prevent the browser from taking over the gesture as a scroll.
+              touchAction: "none",
             }}
             onPointerDown={startDrag}
           />
@@ -343,6 +357,8 @@ export function TimerDial({
 
   const frame = cn(
     "@container relative mx-auto flex aspect-square w-full items-center justify-center rounded-full select-none",
+    // While the dial is a duration scrubber, keep pan gestures from scrolling the page.
+    showScrub && "touch-none",
     className,
   );
 
