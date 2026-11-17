@@ -6,6 +6,10 @@ import { Brand } from "@/components/shared/brand";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCurrentProfile, requireUser } from "@/lib/auth";
 import { getStudyPreferences, listSubjects } from "@/lib/data/subjects";
+import {
+  newAccountGamificationDefaults,
+  newAccountProfilePrivacyFields,
+} from "@/lib/privacy-defaults";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/types/database";
 
@@ -31,7 +35,17 @@ async function ensureProfile(userId: string, email?: string | null) {
     display_name: username,
     onboarding_status: "pending",
     onboarding_step: 1,
+    ...newAccountProfilePrivacyFields(),
   });
+
+  // Seed gamification prefs for fallback profile creation (trigger may already have done this).
+  await supabase.from("gamification_preferences").upsert(
+    {
+      user_id: userId,
+      ...newAccountGamificationDefaults(),
+    },
+    { onConflict: "user_id", ignoreDuplicates: true },
+  );
 
   return (await getCurrentProfile()) as Profile | null;
 }

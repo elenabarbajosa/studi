@@ -79,25 +79,25 @@ export function PrivacySettingsForm({ profile }: { profile: Profile }) {
 
       <VisibilityField
         label="Avatar"
-        description="Who can see your photo or initials avatar."
+        description="Who can see your photo or initials avatar. New accounts start as Public."
         value={avatarVisibility}
         onChange={(v) => setAvatarVisibility(v as AvatarVisibility)}
       />
       <VisibilityField
         label="Online status"
-        description="Whether friends can see that you’re online."
+        description="Whether accepted friends can see that you’re online. New accounts start as Friends."
         value={onlineVisibility}
         onChange={setOnlineVisibility}
       />
       <VisibilityField
         label="Study status"
-        description="Focusing / on break indicator. Defaults to private."
+        description="Focusing / on break indicator for accepted friends. New accounts start as Friends."
         value={studyVisibility}
         onChange={setStudyVisibility}
       />
       <VisibilityField
         label="Study statistics"
-        description="Aggregate weekly focus hours only. Defaults to private."
+        description="Aggregate weekly focus hours only — never tasks or exams. New accounts start as Friends."
         value={statsVisibility}
         onChange={setStatsVisibility}
       />

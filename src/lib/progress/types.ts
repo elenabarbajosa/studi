@@ -67,6 +67,12 @@ export type ChallengeInvitation = {
   responded_at: string | null;
 };
 
+/**
+ * In-app fallback when no gamification_preferences row exists.
+ * Leaderboard stays opted out here so legacy accounts without a row are not
+ * silently opted in. New accounts receive an explicit row with leaderboard on
+ * via handle_new_user / ensureProfile (see NEW_ACCOUNT_PRIVACY_DEFAULTS).
+ */
 export const DEFAULT_GAMIFICATION_PREFS = {
   enabled: true,
   leaderboard_opt_in: false,

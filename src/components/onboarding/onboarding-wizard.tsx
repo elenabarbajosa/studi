@@ -33,6 +33,7 @@ import {
   type AccentColor,
   type AppearanceMode,
 } from "@/lib/theme";
+import { NEW_ACCOUNT_PRIVACY_ONBOARDING_SUMMARY } from "@/lib/privacy-defaults";
 import {
   BREAK_DURATION_OPTIONS,
   DEFAULT_WEEKDAY_AVAILABILITY,
@@ -278,6 +279,29 @@ export function OnboardingWizard({
               <p className="mt-0.5 text-[13px] text-ink-2">
                 {appearance} · {ACCENT_META[accentColor].label}
               </p>
+            </div>
+
+            <div className="rounded-[20px] bg-sunken px-5 py-4">
+              <p className="text-[12px] font-semibold tracking-[0.05em] text-ink-3 uppercase">
+                Your default privacy
+              </p>
+              <p className="mt-1.5 text-[13.5px] text-ink-2">
+                New accounts start open to collaboration. Friends-only settings
+                apply to accepted friendships. Calendars, exams, tasks and notes
+                stay private. Change anything later in Settings → Privacy.
+              </p>
+              <ul className="mt-3 flex flex-col gap-2.5">
+                {NEW_ACCOUNT_PRIVACY_ONBOARDING_SUMMARY.map((item) => (
+                  <li key={item.label} className="text-[13px] text-ink-2">
+                    <span className="font-semibold text-ink">{item.label}</span>
+                    {" · "}
+                    <span className="font-medium text-accent-text">{item.value}</span>
+                    <span className="mt-0.5 block text-[12.5px] text-ink-3">
+                      {item.detail}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             {personalizeState.error ? (
