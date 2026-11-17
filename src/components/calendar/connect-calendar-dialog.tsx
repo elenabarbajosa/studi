@@ -169,8 +169,8 @@ export function ConnectCalendarDialog({
               </ul>
               {!status.cronConfigured ? (
                 <p className="mt-2 text-[12px] text-ink-3">
-                  Background sync is not active yet. Use Sync now, or configure the cron
-                  secret and scheduler.
+                  Background sync is not active yet. Use Sync now, or set CRON_SECRET
+                  in Vercel (and ensure the daily cron is deployed).
                 </p>
               ) : null}
             </div>

@@ -1,3 +1,4 @@
+import { resolveCalendarCronSecrets } from "@/lib/calendar-sync/cron-auth";
 import type {
   ExternalCalendarProvider,
   ProviderConfigStatus,
@@ -120,8 +121,14 @@ export function getProviderConfigStatus(
   }
 }
 
+/** True when Vercel `CRON_SECRET` and/or legacy calendar cron secret is set. */
 export function getCronSecretConfigured(): boolean {
-  return Boolean(process.env.CALENDAR_SYNC_CRON_SECRET?.trim());
+  return resolveCalendarCronSecrets(process.env).length > 0;
+}
+
+/** Secrets accepted by `/api/calendar/sync/cron` (never log these). */
+export function getCalendarCronSecrets(): string[] {
+  return resolveCalendarCronSecrets(process.env);
 }
 
 /** Google Calendar read-only scope (minimum for sync). */
@@ -145,4 +152,5 @@ export const ICS_MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 export const ICS_MAX_EVENTS = 2000;
 export const SYNC_LOOKBACK_DAYS = 30;
 export const SYNC_LOOKAHEAD_DAYS = 180;
+/** @deprecated Prefer SYNC_CRON_FETCH_BATCH from cron-runner — kept for imports. */
 export const SYNC_BATCH_CONNECTIONS = 20;
