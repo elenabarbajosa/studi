@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 
 import { extractSyllabus, importSyllabus } from "@/actions/ai-syllabus";
+import { browserTimeZone } from "@/lib/event-time";
 import { Field, FormError } from "@/components/studi/form-controls";
 import { ResponsiveDialog } from "@/components/studi/responsive-dialog";
 import { Segmented } from "@/components/studi/segmented";
@@ -232,7 +233,7 @@ export function ImportSyllabusDialog({
     }
 
     startTransition(async () => {
-      const result = await importSyllabus(subjectId, payload);
+      const result = await importSyllabus(subjectId, payload, browserTimeZone());
       setImporting(false);
       if (!result.ok) {
         submittingRef.current = false;

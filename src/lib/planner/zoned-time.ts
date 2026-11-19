@@ -19,8 +19,10 @@ export function zonedDateTimeToUtcIso(
   let lo = Date.UTC(y, m - 1, d) - 14 * 3600_000;
   let hi = Date.UTC(y, m - 1, d) + 38 * 3600_000;
 
-  while (hi - lo > 1000) {
-    const mid = Math.floor((lo + hi) / 2);
+  // Converge to the millisecond so stored instants land on :00.000, not a
+  // second past the requested minute. Stop at 1ms to avoid a floor-mid stall.
+  while (hi - lo > 1) {
+    const mid = lo + Math.floor((hi - lo) / 2);
     const instant = new Date(mid);
     const key = localDateKey(instant, timeZone);
     const parts = new Intl.DateTimeFormat("en-GB", {
@@ -29,7 +31,8 @@ export function zonedDateTimeToUtcIso(
       minute: "2-digit",
       hourCycle: "h23",
     }).formatToParts(instant);
-    const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+    const hourPart = parts.find((p) => p.type === "hour")?.value ?? "0";
+    const hour = Number(hourPart === "24" ? "0" : hourPart);
     const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
     const minutes = hour * 60 + minute;
 
@@ -47,7 +50,8 @@ export function utcIsoToLocalTime(iso: string, timeZone: string): string {
     minute: "2-digit",
     hourCycle: "h23",
   }).formatToParts(new Date(iso));
-  const hour = parts.find((p) => p.type === "hour")?.value ?? "00";
+  const hourRaw = parts.find((p) => p.type === "hour")?.value ?? "00";
+  const hour = hourRaw === "24" ? "00" : hourRaw;
   const minute = parts.find((p) => p.type === "minute")?.value ?? "00";
   return `${hour}:${minute}`;
 }

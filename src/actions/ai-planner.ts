@@ -13,6 +13,7 @@ import {
   defaultPrefsFromStudy,
   ensureDayAvailability,
   getActiveStudyPlan,
+  loadPlannerBusy,
   loadPlannerDashboard,
   resolvePeriodBounds,
 } from "@/lib/planner/context";
@@ -188,6 +189,11 @@ export async function generateStudyPlan(
     const { recommendation, usedAi } = await generateAiRecommendations(context);
     const allocations = allocationsFromRecommendation(context, recommendation);
 
+    const busyLoad = await busyForPlanningWindow(dashboard, bounds);
+    if (busyLoad.error) {
+      recommendation.workloadWarnings.push(busyLoad.error);
+    }
+
     resetProposalIds();
     const schedule = buildSchedule(
       {
@@ -202,14 +208,14 @@ export async function generateStudyPlan(
         breakMinutes: schedulingPrefs.break_minutes,
         includeRevision: schedulingPrefs.include_revision,
         nowIso: new Date().toISOString(),
-        busy: dashboard.busy,
+        busy: busyLoad.intervals,
       },
       allocations,
     );
 
     const conflicts = detectSessionConflicts(
       schedule.sessions,
-      dashboard.busy,
+      busyLoad.intervals,
       dashboard.timeZone,
     );
 
@@ -461,6 +467,10 @@ export async function adjustStudyPlan(payload: unknown): Promise<GeneratePlanRes
     ];
 
     const allocations = allocationsFromRecommendation(context, recommendation);
+    const busyLoad = await busyForPlanningWindow(dashboard, bounds);
+    if (busyLoad.error) {
+      recommendation.workloadWarnings.push(busyLoad.error);
+    }
     resetProposalIds();
     const schedule = buildSchedule(
       {
@@ -475,7 +485,7 @@ export async function adjustStudyPlan(payload: unknown): Promise<GeneratePlanRes
         breakMinutes: preferences.break_minutes,
         includeRevision: preferences.include_revision,
         nowIso: new Date().toISOString(),
-        busy: [...dashboard.busy, ...lockedBusy],
+        busy: [...busyLoad.intervals, ...lockedBusy],
       },
       allocations,
     );
@@ -509,7 +519,7 @@ export async function adjustStudyPlan(payload: unknown): Promise<GeneratePlanRes
 
     const conflicts = detectSessionConflicts(
       schedule.sessions,
-      [...dashboard.busy, ...lockedBusy],
+      [...busyLoad.intervals, ...lockedBusy],
       dashboard.timeZone,
     );
 
@@ -556,6 +566,19 @@ export async function togglePlanSessionLock(
   if (error) return { ok: false, error: error.message };
   revalidatePath("/planner");
   return { ok: true };
+}
+
+async function busyForPlanningWindow(
+  dashboard: Awaited<ReturnType<typeof loadPlannerDashboard>>,
+  bounds: { periodStart: string; periodEnd: string },
+) {
+  if (
+    bounds.periodStart === dashboard.context.periodStart &&
+    bounds.periodEnd === dashboard.context.periodEnd
+  ) {
+    return { intervals: dashboard.busy, error: dashboard.busyError };
+  }
+  return loadPlannerBusy(dashboard.timeZone, bounds.periodStart, bounds.periodEnd);
 }
 
 export async function getDefaultPlannerPreferences(): Promise<PlannerPreferencesInput> {

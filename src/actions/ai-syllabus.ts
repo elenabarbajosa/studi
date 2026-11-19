@@ -20,6 +20,7 @@ import {
   consumeImportSession,
   createImportSession,
 } from "@/lib/ai/usage";
+import { timeZoneForUser } from "@/lib/event-time-server";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -210,6 +211,7 @@ export async function extractSyllabus(
 export async function importSyllabus(
   subjectId: string,
   payload: unknown,
+  timeZone?: string,
 ): Promise<ImportSyllabusResult> {
   try {
     const auth = await requireAuthedClient();
@@ -250,7 +252,11 @@ export async function importSyllabus(
       .is("parent_id", null);
 
     const baseSort = count ?? 0;
-    const plan = planImportInserts(parsed.data, existingTitles);
+    const plan = planImportInserts(
+      parsed.data,
+      existingTitles,
+      await timeZoneForUser(timeZone),
+    );
 
     const errors: string[] = [];
     let importedTopics = 0;

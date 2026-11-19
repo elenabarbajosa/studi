@@ -4,6 +4,7 @@ import {
   SYNC_LOOKAHEAD_DAYS,
   SYNC_LOOKBACK_DAYS,
 } from "@/lib/calendar-sync/config";
+import { fetchAllPages } from "@/lib/data/paged-query";
 import { redactForLog } from "@/lib/calendar-sync/crypto";
 import {
   resolveConnectionSyncOutcome,
@@ -238,14 +239,24 @@ export async function syncConnection(
           result.nextCtag !== calendar.ctag
         ) {
           const keep = new Set(result.events.map((e) => e.providerEventId));
-          const { data: existing } = await supabase
-            .from("external_calendar_events")
-            .select("id, provider_event_id, starts_at")
-            .eq("calendar_id", calendar.id)
-            .eq("user_id", connection.user_id)
-            .gte("starts_at", window.timeMin)
-            .lte("starts_at", window.timeMax);
-          const toDelete = (existing ?? [])
+          const existing = await fetchAllPages<{
+            id: string;
+            provider_event_id: string;
+          }>((from, to) =>
+            supabase
+              .from("external_calendar_events")
+              .select("id, provider_event_id, starts_at")
+              .eq("calendar_id", calendar.id)
+              .eq("user_id", connection.user_id)
+              .gte("starts_at", window.timeMin)
+              .lte("starts_at", window.timeMax)
+              .order("id", { ascending: true })
+              .range(from, to),
+          );
+          if (existing.error) {
+            throw new Error(safeDbOpError("List events for reconcile", { message: existing.error }));
+          }
+          const toDelete = existing.data
             .filter((e) => !keep.has(e.provider_event_id))
             .map((e) => e.id);
           if (toDelete.length > 0) {

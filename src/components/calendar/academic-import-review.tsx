@@ -6,27 +6,24 @@ import { toast } from "sonner";
 import {
   listAcademicSuggestionsAction,
   resolveAcademicSuggestionAction,
+  type AcademicSuggestionView,
 } from "@/actions/external-calendar";
 import { ResponsiveDialog } from "@/components/studi/responsive-dialog";
 import { primaryPillClass, softPillClass } from "@/components/studi/page-title";
-import type { AcademicSuggestion } from "@/lib/calendar-sync/academic-detect";
-import type { ExternalCalendarEvent } from "@/lib/calendar-sync/types";
 import type { Assessment, Subject } from "@/types/database";
 
 export function AcademicImportReview({
   open,
   onOpenChange,
-  events,
   subjects,
   assessments,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  events: ExternalCalendarEvent[];
   subjects: Subject[];
   assessments: Assessment[];
 }) {
-  const [suggestions, setSuggestions] = useState<AcademicSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<AcademicSuggestionView[]>([]);
   const [pending, startTransition] = useTransition();
   const [subjectByEvent, setSubjectByEvent] = useState<Record<string, string>>(
     {},
@@ -49,8 +46,6 @@ export function AcademicImportReview({
     };
   }, [open]);
 
-  const byId = new Map(events.map((e) => [e.id, e]));
-
   return (
     <ResponsiveDialog
       open={open}
@@ -69,22 +64,20 @@ export function AcademicImportReview({
       ) : (
         <ul className="flex flex-col gap-3">
           {suggestions.map((s) => {
-            const event = byId.get(s.eventId);
-            if (!event) return null;
             return (
               <li
                 key={s.eventId}
                 className="rounded-[16px] border border-hairline bg-raised p-3"
               >
-                <p className="text-[14px] font-semibold text-ink">{event.title}</p>
+                <p className="text-[14px] font-semibold text-ink">{s.title}</p>
                 <p className="text-[12.5px] text-ink-2">
                   {s.reason} · {s.confidence} confidence · proposed{" "}
                   {s.proposedType}
                 </p>
                 <p className="mt-1 text-[12.5px] text-ink-3">
-                  {event.all_day
-                    ? event.starts_at.slice(0, 10)
-                    : new Date(event.starts_at).toLocaleString()}
+                  {s.allDay || !s.startsAt
+                    ? s.startsAt.slice(0, 10)
+                    : new Date(s.startsAt).toLocaleString()}
                 </p>
                 <label className="mt-2 flex flex-col gap-1">
                   <span className="text-[12px] font-semibold text-ink-3">
@@ -120,7 +113,7 @@ export function AcademicImportReview({
                           action:
                             s.kind === "assignment" ? "create_task" : "create_exam",
                           subjectId: subjectByEvent[s.eventId] || null,
-                          title: event.title,
+                          title: s.title,
                           assessmentType:
                             s.kind === "exam"
                               ? (s.proposedType as

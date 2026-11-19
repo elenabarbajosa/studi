@@ -16,7 +16,11 @@ import {
 import { syncConnection } from "@/lib/calendar-sync/engine";
 import { parseIcs } from "@/lib/calendar-sync/ics";
 import { contentHashForEvent } from "@/lib/calendar-sync/hash";
-import { detectAcademicCandidates } from "@/lib/calendar-sync/academic-detect";
+import {
+  detectAcademicCandidates,
+  type AcademicSuggestion,
+} from "@/lib/calendar-sync/academic-detect";
+import { fetchAllPages, overlapOrFilter } from "@/lib/data/paged-query";
 import {
   DEFAULT_EXTERNAL_CALENDAR_BLOCKS_STUDY,
   DEFAULT_EXTERNAL_CALENDAR_DESTINATION,
@@ -429,8 +433,14 @@ export async function parseIcsPreviewAction(input: {
   };
 }
 
+export type AcademicSuggestionView = AcademicSuggestion & {
+  title: string;
+  startsAt: string;
+  allDay: boolean;
+};
+
 export async function listAcademicSuggestionsAction(): Promise<
-  ActionResult<ReturnType<typeof detectAcademicCandidates>>
+  ActionResult<AcademicSuggestionView[]>
 > {
   const auth = await authClient();
   if (!auth.ok) return { ok: false, error: auth.error };
@@ -452,21 +462,45 @@ export async function listAcademicSuggestionsAction(): Promise<
       .map((c) => c.id as string),
   );
 
-  const { data: events } = await supabase
-    .from("external_calendar_events")
-    .select("id, title, description, all_day, is_cancelled, calendar_id")
-    .eq("user_id", user.id)
-    .eq("is_cancelled", false)
-    .order("starts_at", { ascending: true })
-    .limit(400);
-
-  const visibleEvents = (events ?? []).filter((e) =>
-    enabledIds.has(e.calendar_id as string),
+  const startIso = new Date(Date.now() - 30 * 86_400_000).toISOString();
+  const endIso = new Date(Date.now() + 400 * 86_400_000).toISOString();
+  const events = await fetchAllPages<{
+    id: string;
+    title: string;
+    description: string | null;
+    all_day: boolean;
+    is_cancelled: boolean;
+    calendar_id: string;
+    starts_at: string;
+  }>((from, to) =>
+    supabase
+      .from("external_calendar_events")
+      .select("id, title, description, all_day, is_cancelled, calendar_id, starts_at")
+      .eq("user_id", user.id)
+      .eq("is_cancelled", false)
+      .or(overlapOrFilter(startIso, endIso))
+      .order("starts_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, to),
   );
+  if (events.error) {
+    console.error("listAcademicSuggestionsAction:", events.error);
+    return { ok: false, error: "Couldn't load connected events. Try again." };
+  }
 
-  const candidates = detectAcademicCandidates(visibleEvents).filter(
-    (c) => !linked.has(c.eventId),
-  );
+  const visibleEvents = events.data.filter((e) => enabledIds.has(e.calendar_id));
+  const byId = new Map(visibleEvents.map((e) => [e.id, e]));
+  const candidates = detectAcademicCandidates(visibleEvents)
+    .filter((c) => !linked.has(c.eventId))
+    .map((c) => {
+      const event = byId.get(c.eventId);
+      return {
+        ...c,
+        title: event?.title ?? "Event",
+        startsAt: event?.starts_at ?? "",
+        allDay: Boolean(event?.all_day),
+      };
+    });
   return { ok: true, data: candidates };
 }
 

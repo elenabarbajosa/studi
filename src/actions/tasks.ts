@@ -2,9 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 
+import { friendlyWriteError } from "@/lib/event-time";
+import { timeZoneFromForm } from "@/lib/event-time-server";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { dueAtFromForm } from "@/lib/task-due";
+import { dueAtFromForm, scheduleRangeFromForm } from "@/lib/task-due";
 import { subtaskSchema, taskSchema } from "@/lib/validations/phase3";
 
 export type ActionState = { error?: string; success?: string };
@@ -23,19 +25,6 @@ function revalidateTasks() {
   revalidatePath("/tasks");
   revalidatePath("/dashboard");
   revalidatePath("/calendar");
-}
-
-function scheduleFromForm(
-  date?: string | null,
-  start?: string | null,
-  end?: string | null,
-) {
-  if (!date || !start) return { scheduled_start: null, scheduled_end: null };
-  const scheduled_start = new Date(`${date}T${start}:00`).toISOString();
-  const scheduled_end = end
-    ? new Date(`${date}T${end}:00`).toISOString()
-    : new Date(new Date(`${date}T${start}:00`).getTime() + 60 * 60 * 1000).toISOString();
-  return { scheduled_start, scheduled_end };
 }
 
 export async function createTask(
@@ -64,10 +53,12 @@ export async function createTask(
     return { error: parsed.error.issues[0]?.message ?? "Invalid task" };
   }
 
-  const schedule = scheduleFromForm(
+  const timeZone = await timeZoneFromForm(formData);
+  const schedule = scheduleRangeFromForm(
     parsed.data.scheduled_date,
     parsed.data.scheduled_start_time,
     parsed.data.scheduled_end_time,
+    timeZone,
   );
 
   const { error } = await auth.supabase.from("tasks").insert({
@@ -76,7 +67,7 @@ export async function createTask(
     description: parsed.data.description?.trim() || null,
     subject_id: parsed.data.subject_id || null,
     topic_id: parsed.data.topic_id || null,
-    due_at: dueAtFromForm(parsed.data.due_date, parsed.data.due_time),
+    due_at: dueAtFromForm(parsed.data.due_date, parsed.data.due_time, timeZone),
     scheduled_start: schedule.scheduled_start,
     scheduled_end: schedule.scheduled_end,
     priority: parsed.data.priority,
@@ -84,7 +75,10 @@ export async function createTask(
     status: parsed.data.status ?? "todo",
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("createTask:", error.message);
+    return { error: friendlyWriteError(error.message) };
+  }
   revalidateTasks();
   return { success: "Task created" };
 }
@@ -118,10 +112,12 @@ export async function updateTask(
     return { error: parsed.error.issues[0]?.message ?? "Invalid task" };
   }
 
-  const schedule = scheduleFromForm(
+  const timeZone = await timeZoneFromForm(formData);
+  const schedule = scheduleRangeFromForm(
     parsed.data.scheduled_date,
     parsed.data.scheduled_start_time,
     parsed.data.scheduled_end_time,
+    timeZone,
   );
 
   const { error } = await auth.supabase
@@ -131,7 +127,7 @@ export async function updateTask(
       description: parsed.data.description?.trim() || null,
       subject_id: parsed.data.subject_id || null,
       topic_id: parsed.data.topic_id || null,
-      due_at: dueAtFromForm(parsed.data.due_date, parsed.data.due_time),
+      due_at: dueAtFromForm(parsed.data.due_date, parsed.data.due_time, timeZone),
       scheduled_start: schedule.scheduled_start,
       scheduled_end: schedule.scheduled_end,
       priority: parsed.data.priority,
@@ -141,7 +137,10 @@ export async function updateTask(
     .eq("id", id)
     .eq("user_id", auth.user.id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("updateTask:", error.message);
+    return { error: friendlyWriteError(error.message) };
+  }
   revalidateTasks();
   return { success: "Task updated" };
 }

@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
-import { buildEventRange } from "@/lib/calendar";
+import { eventRangeOrError } from "@/lib/calendar";
+import { friendlyWriteError } from "@/lib/event-time";
+import { timeZoneFromForm } from "@/lib/event-time-server";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { eventMoveSchema, personalEventSchema } from "@/lib/validations/phase3";
@@ -49,12 +51,15 @@ export async function createPersonalEvent(
     return { error: parsed.error.issues[0]?.message ?? "Invalid event" };
   }
 
-  const range = buildEventRange({
+  const built = eventRangeOrError({
     date: parsed.data.date,
     startTime: allDay ? null : parsed.data.start_time || null,
     endTime: allDay ? null : parsed.data.end_time || null,
     allDay,
+    timeZone: await timeZoneFromForm(formData),
   });
+  if ("error" in built) return { error: built.error };
+  const range = built.range;
 
   const { error } = await auth.supabase.from("calendar_events").insert({
     user_id: auth.user.id,
@@ -65,7 +70,10 @@ export async function createPersonalEvent(
     all_day: range.all_day,
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("createPersonalEvent:", error.message);
+    return { error: friendlyWriteError(error.message) };
+  }
   revalidateCalendar();
   return { success: "Event created" };
 }
@@ -96,12 +104,15 @@ export async function updatePersonalEvent(
     return { error: parsed.error.issues[0]?.message ?? "Invalid event" };
   }
 
-  const range = buildEventRange({
+  const built = eventRangeOrError({
     date: parsed.data.date,
     startTime: allDay ? null : parsed.data.start_time || null,
     endTime: allDay ? null : parsed.data.end_time || null,
     allDay,
+    timeZone: await timeZoneFromForm(formData),
   });
+  if ("error" in built) return { error: built.error };
+  const range = built.range;
 
   const { error } = await auth.supabase
     .from("calendar_events")
@@ -115,7 +126,10 @@ export async function updatePersonalEvent(
     .eq("id", id)
     .eq("user_id", auth.user.id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("updatePersonalEvent:", error.message);
+    return { error: friendlyWriteError(error.message) };
+  }
   revalidateCalendar();
   return { success: "Event updated" };
 }
@@ -130,7 +144,10 @@ export async function deletePersonalEvent(id: string): Promise<ActionState> {
     .eq("id", id)
     .eq("user_id", auth.user.id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("deletePersonalEvent:", error.message);
+    return { error: friendlyWriteError(error.message) };
+  }
   revalidateCalendar();
   return { success: "Event deleted" };
 }
@@ -159,7 +176,10 @@ export async function movePersonalEvent(
     .eq("id", id)
     .eq("user_id", auth.user.id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("movePersonalEvent:", error.message);
+    return { error: friendlyWriteError(error.message) };
+  }
   revalidateCalendar();
   return { success: "Moved" };
 }

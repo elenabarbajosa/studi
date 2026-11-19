@@ -1,17 +1,38 @@
+import { resolveTimeZone } from "@/lib/event-time";
+import { zonedDateTimeToUtcIso } from "@/lib/planner/zoned-time";
 import { addLocalDays, localDateKey, localMidnightIso } from "@/lib/progress/timezone";
 import type { Task } from "@/types/database";
 
 /**
  * Date-only due dates are stored at noon UTC so the calendar day is stable
- * across common timezones (±12h). Timed dues use the exact local instant.
+ * across common timezones (±12h). Timed dues are the wall clock in `timeZone`.
  */
-export function dueAtFromForm(dueDate?: string | null, dueTime?: string | null) {
+export function dueAtFromForm(
+  dueDate?: string | null,
+  dueTime?: string | null,
+  timeZone?: string | null,
+) {
   if (!dueDate) return null;
   if (dueTime) {
-    // Interpret as the browser/server local wall time of the form submitter.
-    return new Date(`${dueDate}T${dueTime}:00`).toISOString();
+    return zonedDateTimeToUtcIso(dueDate, dueTime, resolveTimeZone(timeZone));
   }
   return `${dueDate}T12:00:00.000Z`;
+}
+
+/** Study-block start/end from a local date and clock times in `timeZone`. */
+export function scheduleRangeFromForm(
+  date?: string | null,
+  start?: string | null,
+  end?: string | null,
+  timeZone?: string | null,
+) {
+  if (!date || !start) return { scheduled_start: null, scheduled_end: null };
+  const zone = resolveTimeZone(timeZone);
+  const scheduled_start = zonedDateTimeToUtcIso(date, start, zone);
+  const scheduled_end = end
+    ? zonedDateTimeToUtcIso(date, end, zone)
+    : new Date(new Date(scheduled_start).getTime() + 60 * 60 * 1000).toISOString();
+  return { scheduled_start, scheduled_end };
 }
 
 /** True when the stored due_at represents a date-only value (no clock time). */

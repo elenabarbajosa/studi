@@ -4,8 +4,11 @@ import { daysUntil } from "@/lib/dashboard";
 import { mergeBusyIntervals } from "@/lib/calendar-sync/busy";
 import {
   listAssessments,
-  listCalendarEvents,
+  listAssessmentsInRange,
+  listCalendarEventsInRange,
+  listScheduledTasksInRange,
   listStudySessions,
+  listStudySessionsInRange,
   listTasks,
 } from "@/lib/data/calendar";
 import {
@@ -30,6 +33,7 @@ import {
 import {
   addLocalDays,
   localDateKey,
+  localMidnightIso,
   startOfLocalWeekKey,
 } from "@/lib/progress/timezone";
 import { createClient } from "@/lib/supabase/server";
@@ -58,6 +62,8 @@ export type PlannerDashboardData = {
     session: StudySession;
   }[];
   busy: BusyInterval[];
+  /** Set when the range-scoped busy lookup could not be completed. */
+  busyError: string | null;
   /** True when a connected calendar has failed or stale sync. */
   externalCalendarStale: boolean;
   context: PlannerContextSnapshot;
@@ -119,6 +125,66 @@ export async function getActiveStudyPlan(userId: string): Promise<StudyPlan | nu
   return (data as StudyPlan | null) ?? null;
 }
 
+/**
+ * Busy time for one planning window only. External calendars are not loaded
+ * in full — a student can have more events than the API row cap.
+ */
+export async function loadPlannerBusy(
+  timeZone: string,
+  periodStart: string,
+  periodEnd: string,
+): Promise<{ intervals: BusyInterval[]; error: string | null }> {
+  const startIso = localMidnightIso(addLocalDays(periodStart, -1), timeZone);
+  const endIso = localMidnightIso(addLocalDays(periodEnd, 2), timeZone);
+  const [sessions, assessments, events, tasks, external] = await Promise.all([
+    listStudySessionsInRange(startIso, endIso, ["planned", "in_progress"]),
+    listAssessmentsInRange(startIso, endIso),
+    listCalendarEventsInRange(startIso, endIso),
+    listScheduledTasksInRange(startIso, endIso),
+    listBusyExternalEvents(startIso, endIso),
+  ]);
+
+  const errors = [sessions, assessments, events, tasks, external]
+    .map((result) => result.error)
+    .filter((message): message is string => Boolean(message));
+
+  const localBusy: BusyInterval[] = [
+    ...sessions.data
+      .filter((s) => s.ends_at)
+      .map((s) => ({
+        startsAt: s.starts_at,
+        endsAt: s.ends_at!,
+        label: "Study session",
+      })),
+    ...assessments.data
+      .filter((a) => !a.completed)
+      .map((a) => ({
+        startsAt: a.starts_at,
+        endsAt: a.ends_at ?? a.starts_at,
+        label: a.title,
+      })),
+    ...events.data.map((e) => ({
+      startsAt: e.starts_at,
+      endsAt: e.ends_at ?? e.starts_at,
+      label: e.title,
+    })),
+    ...tasks.data
+      .filter((t) => t.scheduled_start && t.scheduled_end)
+      .map((t) => ({
+        startsAt: t.scheduled_start!,
+        endsAt: t.scheduled_end!,
+        label: t.title,
+      })),
+  ];
+
+  return {
+    intervals: mergeBusyIntervals(localBusy, external.data),
+    error: errors.length
+      ? "Some calendar events couldn't be loaded, so this plan may overlap them."
+      : null,
+  };
+}
+
 export async function loadPlannerDashboard(userId: string): Promise<PlannerDashboardData> {
   const [
     subjects,
@@ -130,8 +196,6 @@ export async function loadPlannerDashboard(userId: string): Promise<PlannerDashb
     gamification,
     storedPrefs,
     recentFocus,
-    calendarEvents,
-    externalBusyEvents,
     externalConnections,
   ] = await Promise.all([
     listSubjects(),
@@ -143,8 +207,6 @@ export async function loadPlannerDashboard(userId: string): Promise<PlannerDashb
     getGamificationPreferences(),
     getPlannerPreferences(userId),
     listCompletedFocusSessions(80),
-    listCalendarEvents(),
-    listBusyExternalEvents(),
     listExternalConnections(),
   ]);
 
@@ -203,39 +265,7 @@ export async function loadPlannerDashboard(userId: string): Promise<PlannerDashb
   const weekStart = startOfLocalWeekKey(todayKey, timeZone);
   const weekEnd = addLocalDays(weekStart, 6);
   const bounds = resolvePeriodBounds(preferences, timeZone, assessments, now);
-
-  const localBusy: BusyInterval[] = [
-    ...studySessions
-      .filter((s) => s.ends_at && (s.status === "planned" || s.status === "in_progress"))
-      .map((s) => ({
-        startsAt: s.starts_at,
-        endsAt: s.ends_at!,
-        label: "Study session",
-      })),
-    ...assessments
-      .filter((a) => !a.completed)
-      .map((a) => ({
-        startsAt: a.starts_at,
-        endsAt: a.ends_at ?? a.starts_at,
-        label: a.title,
-      })),
-    ...calendarEvents.map((e) => ({
-      startsAt: e.starts_at,
-      endsAt: e.ends_at ?? e.starts_at,
-      label: e.title,
-    })),
-    ...tasks
-      .filter((t) => t.status === "todo" && t.scheduled_start && t.scheduled_end)
-      .map((t) => ({
-        startsAt: t.scheduled_start!,
-        endsAt: t.scheduled_end!,
-        label: t.title,
-      })),
-  ];
-
-  // External busy events (Free does not block; unknown defaults to busy).
-  // Deduped when the same commitment appears via multiple providers.
-  const busy = mergeBusyIntervals(localBusy, externalBusyEvents);
+  const busyLoad = await loadPlannerBusy(timeZone, bounds.periodStart, bounds.periodEnd);
   const externalCalendarStale = externalConnections.some(
     (c) =>
       c.status === "error" ||
@@ -334,7 +364,8 @@ export async function loadPlannerDashboard(userId: string): Promise<PlannerDashb
     studySessions,
     activePlan,
     planSessions,
-    busy,
+    busy: busyLoad.intervals,
+    busyError: busyLoad.error,
     externalCalendarStale,
     context,
     plannedMinutesThisWeek,

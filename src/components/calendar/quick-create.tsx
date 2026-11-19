@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { createAssessment } from "@/actions/assessments";
 import { createPersonalEvent } from "@/actions/calendar-events";
 import { createStudySession } from "@/actions/study-sessions";
+import { PastEventNote, useTimedRange } from "@/components/calendar/event-time-fields";
 import type { CalendarDraft } from "@/components/calendar/event-form-dialog";
 import { FormError, NativeSelect } from "@/components/studi/form-controls";
 import { Segmented } from "@/components/studi/segmented";
@@ -59,10 +60,12 @@ export function QuickCreateForm({
   const [topicId, setTopicId] = useState("");
   const [examType, setExamType] = useState<AssessmentType>("midterm");
   const [deadlineType, setDeadlineType] = useState<AssessmentType>("assignment");
-  const [date, setDate] = useState(draft.date);
   const [allDay, setAllDay] = useState(draft.allDay);
-  const [startTime, setStartTime] = useState(draft.startTime ?? "10:00");
-  const [endTime, setEndTime] = useState(draft.endTime ?? "11:00");
+  const times = useTimedRange({
+    date: draft.date,
+    start: draft.startTime ?? "10:00",
+    end: draft.endTime ?? "11:00",
+  });
   const [error, setError] = useState<string>();
   const [pending, startTransition] = useTransition();
 
@@ -72,11 +75,19 @@ export function QuickCreateForm({
 
   const submit = () => {
     setError(undefined);
-    const fd = new FormData();
-    fd.set("date", date);
     if (timed) {
-      fd.set("start_time", startTime);
-      fd.set("end_time", endTime);
+      const message = times.orderError(kind === "study");
+      if (message) {
+        setError(message);
+        return;
+      }
+    }
+    const fd = new FormData();
+    fd.set("timezone", times.timeZone);
+    fd.set("date", times.date);
+    if (timed) {
+      fd.set("start_time", times.start);
+      fd.set("end_time", times.end);
     } else {
       fd.set("all_day", "true");
     }
@@ -110,10 +121,10 @@ export function QuickCreateForm({
   const moreOptions = () => {
     const base: CalendarDraft = {
       kind: kind === "study" ? "study_session" : kind === "event" ? "personal" : "assessment",
-      date,
+      date: times.date,
       allDay: kind === "study" ? false : allDay,
-      startTime: timed ? startTime : undefined,
-      endTime: timed ? endTime : undefined,
+      startTime: timed ? times.start : undefined,
+      endTime: timed ? times.end : undefined,
       defaultSubjectId: subjectId || undefined,
       defaultTitle: title || undefined,
       defaultAssessmentType: kind === "exam" || kind === "deadline" ? assessmentType : undefined,
@@ -187,20 +198,20 @@ export function QuickCreateForm({
           <input
             type="date"
             required
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
+            value={times.date}
+            onChange={(e) => times.setDate(e.target.value)}
             aria-label="Date"
-            className={cn(inlineInput, "w-[9.5rem]")}
+            className={cn(inlineInput, "w-[9.5rem] shrink-0")}
           />
           {timed ? (
-            <span className="flex items-center gap-1.5">
+            <span className="flex flex-wrap items-center gap-1.5">
               <input
                 type="time"
                 required
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
+                value={times.start}
+                onChange={(e) => times.changeStart(e.target.value)}
                 aria-label="Start time"
-                className={cn(inlineInput, "w-[5.75rem]")}
+                className={cn(inlineInput, "w-[8.75rem] min-w-[8.75rem] shrink-0")}
               />
               <span className="text-ink-3" aria-hidden>
                 →
@@ -208,10 +219,10 @@ export function QuickCreateForm({
               <input
                 type="time"
                 required={kind === "study"}
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
+                value={times.end}
+                onChange={(e) => times.changeEnd(e.target.value)}
                 aria-label="End time"
-                className={cn(inlineInput, "w-[5.75rem]")}
+                className={cn(inlineInput, "w-[8.75rem] min-w-[8.75rem] shrink-0")}
               />
             </span>
           ) : null}
@@ -267,6 +278,7 @@ export function QuickCreateForm({
         ) : null}
       </div>
 
+      <PastEventNote show={times.past(kind !== "study" && allDay)} />
       <FormError message={error} />
 
       <div className="flex items-center justify-end gap-1.5 pt-0.5">

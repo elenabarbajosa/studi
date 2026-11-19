@@ -23,6 +23,7 @@ import type {
   ExternalEventLink,
   ProviderConfigStatus,
 } from "@/lib/calendar-sync/types";
+import { fetchAllPages, overlapOrFilter, type PagedResult } from "@/lib/data/paged-query";
 import { createClient } from "@/lib/supabase/server";
 
 function normalizeCalendarRow(row: ExternalCalendar): ExternalCalendar {
@@ -115,23 +116,33 @@ export const listExternalCalendars = cache(
   },
 );
 
-export const listExternalCalendarEvents = cache(
-  async (): Promise<ExternalCalendarEvent[]> => {
+export const listExternalCalendarEventsInRange = cache(
+  async (
+    startIso: string,
+    endIso: string,
+  ): Promise<PagedResult<ExternalCalendarEvent>> => {
     const user = await getSessionUser();
-    if (!user) return [];
+    if (!user) return { data: [], error: null };
     const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("external_calendar_events")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("is_cancelled", false)
-      .order("starts_at", { ascending: true });
-    if (error) {
+    const result = await fetchAllPages<ExternalCalendarEvent>((from, to) =>
+      supabase
+        .from("external_calendar_events")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_cancelled", false)
+        .or(overlapOrFilter(startIso, endIso))
+        .order("starts_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
+    if (result.error) {
       // Table may not exist until migration 018 is applied.
-      console.error("listExternalCalendarEvents:", error.message);
-      return [];
+      console.error("listExternalCalendarEventsInRange:", result.error);
     }
-    return (data ?? []) as ExternalCalendarEvent[];
+    return {
+      data: result.data as ExternalCalendarEvent[],
+      error: result.error,
+    };
   },
 );
 
@@ -152,30 +163,43 @@ export const listExternalEventLinks = cache(
   },
 );
 
-export async function listBusyExternalEvents(): Promise<ExternalCalendarEvent[]> {
+export async function listBusyExternalEvents(
+  startIso: string,
+  endIso: string,
+): Promise<PagedResult<ExternalCalendarEvent>> {
   const user = await getSessionUser();
-  if (!user) return [];
+  if (!user) return { data: [], error: null };
   const supabase = await createClient();
   // Enabled + blocks_study — disabled calendars never block planner time.
-  const { data: calendars } = await supabase
+  const { data: calendars, error: calendarError } = await supabase
     .from("external_calendars")
     .select("id")
     .eq("user_id", user.id)
     .eq("enabled", true)
     .eq("blocks_study", true);
-  const blockingIds = (calendars ?? []).map((c) => c.id);
-  if (blockingIds.length === 0) return [];
-
-  const { data, error } = await supabase
-    .from("external_calendar_events")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq("is_cancelled", false)
-    .in("calendar_id", blockingIds)
-    .neq("show_as", "free");
-  if (error) {
-    console.error("listBusyExternalEvents:", error.message);
-    return [];
+  if (calendarError) {
+    console.error("listBusyExternalEvents:", calendarError.message);
+    return { data: [], error: calendarError.message };
   }
-  return (data ?? []) as ExternalCalendarEvent[];
+  const blockingIds = (calendars ?? []).map((c) => c.id);
+  if (blockingIds.length === 0) return { data: [], error: null };
+
+  const result = await fetchAllPages<ExternalCalendarEvent>((from, to) =>
+    supabase
+      .from("external_calendar_events")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_cancelled", false)
+      .in("calendar_id", blockingIds)
+      .neq("show_as", "free")
+      .or(overlapOrFilter(startIso, endIso))
+      .order("starts_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, to),
+  );
+  if (result.error) console.error("listBusyExternalEvents:", result.error);
+  return {
+    data: result.data as ExternalCalendarEvent[],
+    error: result.error,
+  };
 }

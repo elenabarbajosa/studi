@@ -1,3 +1,5 @@
+import { END_BEFORE_START_MESSAGE, resolveTimeZone } from "@/lib/event-time";
+import { zonedDateTimeToUtcIso } from "@/lib/planner/zoned-time";
 import { subjectTone, type SubjectColorValue } from "@/lib/subjects";
 
 export const ASSESSMENT_TYPES = [
@@ -125,37 +127,61 @@ export function examCountdown(startsAtIso: string, now = new Date()) {
 }
 
 /**
- * Build ISO strings for all-day vs timed events without shifting the calendar day.
- * Client should pass local date (`YYYY-MM-DD`) and optional local times (`HH:mm`).
+ * Build UTC instants for a wall-clock date and time in `timeZone`.
+ * `timeZone` is an IANA name (browser or profile). The server's own zone is
+ * never used: `new Date("YYYY-MM-DDTHH:mm")` would interpret that string in
+ * UTC on Vercel and shift the event for everyone outside UTC.
+ *
+ * All-day events cover local midnight through 23:59 in that timezone, so the
+ * calendar day does not move. A missing end time becomes 60 elapsed minutes.
+ * A wall time that does not exist (spring-forward gap) resolves to the next
+ * valid local time.
  */
 export function buildEventRange(input: {
   date: string;
   startTime?: string | null;
   endTime?: string | null;
   allDay: boolean;
+  timeZone: string;
 }) {
   const { date, startTime, endTime, allDay } = input;
+  const timeZone = resolveTimeZone(input.timeZone);
   if (allDay || !startTime) {
-    // Store local midnight → ISO via Date constructed in local TZ.
-    const start = new Date(`${date}T00:00:00`);
-    const end = new Date(`${date}T23:59:59`);
     return {
-      starts_at: start.toISOString(),
-      ends_at: end.toISOString(),
+      starts_at: zonedDateTimeToUtcIso(date, "00:00", timeZone),
+      ends_at: zonedDateTimeToUtcIso(date, "23:59", timeZone),
       all_day: true,
     };
   }
 
-  const start = new Date(`${date}T${startTime}:00`);
-  const end = endTime
-    ? new Date(`${date}T${endTime}:00`)
-    : new Date(start.getTime() + 60 * 60 * 1000);
+  const starts_at = zonedDateTimeToUtcIso(date, startTime, timeZone);
+  const ends_at = endTime
+    ? zonedDateTimeToUtcIso(date, endTime, timeZone)
+    : new Date(new Date(starts_at).getTime() + 60 * 60 * 1000).toISOString();
 
   return {
-    starts_at: start.toISOString(),
-    ends_at: end.toISOString(),
+    starts_at,
+    ends_at,
     all_day: false,
   };
+}
+
+export function eventRangeOrError(input: {
+  date: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  allDay: boolean;
+  timeZone: string;
+}): { error: string } | { range: ReturnType<typeof buildEventRange> } {
+  try {
+    const range = buildEventRange(input);
+    if (!range.all_day && range.ends_at <= range.starts_at) {
+      return { error: END_BEFORE_START_MESSAGE };
+    }
+    return { range };
+  } catch {
+    return { error: "Invalid date or time." };
+  }
 }
 
 export function toLocalDateInput(iso: string) {

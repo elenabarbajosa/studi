@@ -210,6 +210,7 @@ export type PlannedAssessmentInsert = {
 export function planImportInserts(
   payload: ImportSyllabusPayload,
   existingTopicTitles: string[],
+  timeZone = "UTC",
 ): {
   topics: PlannedTopicInsert[];
   assessments: PlannedAssessmentInsert[];
@@ -259,6 +260,7 @@ export function planImportInserts(
     const range = buildEventRange({
       date: assessment.date,
       allDay: true,
+      timeZone,
     });
     assessments.push({
       localId: assessment.localId,

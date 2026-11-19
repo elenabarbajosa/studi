@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
-import { buildEventRange, isStudySessionStatus } from "@/lib/calendar";
+import { eventRangeOrError, isStudySessionStatus } from "@/lib/calendar";
+import { friendlyWriteError } from "@/lib/event-time";
+import { timeZoneFromForm } from "@/lib/event-time-server";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { eventMoveSchema, studySessionSchema } from "@/lib/validations/phase3";
@@ -47,12 +49,15 @@ export async function createStudySession(
     return { error: parsed.error.issues[0]?.message ?? "Invalid session" };
   }
 
-  const range = buildEventRange({
+  const built = eventRangeOrError({
     date: parsed.data.date,
     startTime: parsed.data.start_time,
     endTime: parsed.data.end_time,
     allDay: false,
+    timeZone: await timeZoneFromForm(formData),
   });
+  if ("error" in built) return { error: built.error };
+  const range = built.range;
 
   const durationMinutes = Math.max(
     5,
@@ -75,7 +80,10 @@ export async function createStudySession(
     notes: parsed.data.notes?.trim() || null,
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("createStudySession:", error.message);
+    return { error: friendlyWriteError(error.message) };
+  }
   revalidateCalendar();
   return { success: "Study session created" };
 }
@@ -103,12 +111,15 @@ export async function updateStudySession(
     return { error: parsed.error.issues[0]?.message ?? "Invalid session" };
   }
 
-  const range = buildEventRange({
+  const built = eventRangeOrError({
     date: parsed.data.date,
     startTime: parsed.data.start_time,
     endTime: parsed.data.end_time,
     allDay: false,
+    timeZone: await timeZoneFromForm(formData),
   });
+  if ("error" in built) return { error: built.error };
+  const range = built.range;
 
   const durationMinutes = Math.max(
     5,
@@ -134,7 +145,10 @@ export async function updateStudySession(
     .eq("id", id)
     .eq("user_id", auth.user.id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("updateStudySession:", error.message);
+    return { error: friendlyWriteError(error.message) };
+  }
   revalidateCalendar();
   return { success: "Session updated" };
 }
@@ -153,7 +167,10 @@ export async function setStudySessionStatus(
     .eq("id", id)
     .eq("user_id", auth.user.id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("setStudySessionStatus:", error.message);
+    return { error: friendlyWriteError(error.message) };
+  }
   revalidateCalendar();
   return { success: "Status updated" };
 }
@@ -168,7 +185,10 @@ export async function deleteStudySession(id: string): Promise<ActionState> {
     .eq("id", id)
     .eq("user_id", auth.user.id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("deleteStudySession:", error.message);
+    return { error: friendlyWriteError(error.message) };
+  }
   revalidateCalendar();
   return { success: "Session deleted" };
 }
@@ -194,7 +214,10 @@ export async function moveStudySession(
     .eq("id", id)
     .eq("user_id", auth.user.id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("moveStudySession:", error.message);
+    return { error: friendlyWriteError(error.message) };
+  }
   revalidateCalendar();
   return { success: "Moved" };
 }

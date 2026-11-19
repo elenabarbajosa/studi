@@ -9,6 +9,7 @@ import {
   useSyncExternalStore,
   useTransition,
 } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Popover } from "@base-ui/react/popover";
 import { toast } from "sonner";
 
@@ -31,6 +32,7 @@ import { ResponsiveDialog } from "@/components/studi/responsive-dialog";
 import { softPillClass } from "@/components/studi/page-title";
 import { TaskFormDialog } from "@/components/tasks/task-form-dialog";
 import { toLocalDateInput } from "@/lib/calendar";
+import { rangeCovers, visibleCalendarSpan, windowAround } from "@/lib/calendar-range";
 import type { PlanConflict } from "@/lib/calendar-sync/busy";
 import type {
   ExternalCalendar,
@@ -74,6 +76,8 @@ type CalendarBoardProps = {
   };
   planConflicts: PlanConflict[];
   syncStale: boolean;
+  loadedRange: { from: string; to: string };
+  loadError?: string | null;
   connectResult?: string | null;
   connectMessage?: string | null;
 };
@@ -132,6 +136,8 @@ function CalendarBoardClient({
   integrationStatus,
   planConflicts,
   syncStale,
+  loadedRange,
+  loadError = null,
   connectResult = null,
   connectMessage = null,
 }: CalendarBoardProps) {
@@ -157,7 +163,28 @@ function CalendarBoardClient({
   );
   const [externalItem, setExternalItem] = useState<CalItem | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [rangePending, startRangeNav] = useTransition();
   const connectToastRef = useRef<string | null>(null);
+  const requestedRange = useRef<string | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const visible = visibleCalendarSpan([date, day]);
+    if (rangeCovers(loadedRange, visible)) return;
+    const next = windowAround(visible);
+    const key = `${next.from}:${next.to}`;
+    if (requestedRange.current === key) return;
+    if (loadedRange.from === next.from && loadedRange.to === next.to) return;
+    requestedRange.current = key;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("from", next.from);
+    params.set("to", next.to);
+    startRangeNav(() => {
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    });
+  }, [date, day, loadedRange, pathname, router, searchParams]);
 
   useEffect(() => {
     if (!connectResult || connectToastRef.current === connectResult) return;
@@ -327,6 +354,19 @@ function CalendarBoardClient({
 
   return (
     <>
+      {loadError ? (
+        <div
+          role="alert"
+          className="mb-3 rounded-[16px] border border-hairline bg-danger-soft px-4 py-3 text-[13.5px] font-medium text-danger"
+        >
+          {loadError}
+        </div>
+      ) : null}
+      {rangePending ? (
+        <p role="status" className="mb-3 text-[12.5px] text-ink-3">
+          Loading events for these dates…
+        </p>
+      ) : null}
       {syncStale ? (
         <div
           role="status"
@@ -340,7 +380,7 @@ function CalendarBoardClient({
         </div>
       ) : null}
       <PlanConflictBanner conflicts={planConflicts} />
-      {externalEvents.length > 0 ? (
+      {externalConnections.length > 0 || externalEvents.length > 0 ? (
         <div className="mb-3 flex justify-end">
           <button type="button" className={softPillClass} onClick={() => setAcademicOpen(true)}>
             Review exams & deadlines
@@ -394,7 +434,7 @@ function CalendarBoardClient({
             collisionPadding={16}
             className="z-50"
           >
-            <Popover.Popup className="studi-quick-create w-[320px] rounded-[20px] bg-raised p-4 text-ink shadow-[var(--shadow-pop),0_0_0_1px_var(--hairline)] outline-none transition-[opacity,scale] duration-150 ease-studi data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
+            <Popover.Popup className="studi-quick-create w-[min(24rem,calc(100vw-1.5rem))] rounded-[20px] bg-raised p-4 text-ink shadow-[var(--shadow-pop),0_0_0_1px_var(--hairline)] outline-none transition-[opacity,scale] duration-150 ease-studi data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
               <Popover.Title className="sr-only">New calendar entry</Popover.Title>
               {quick?.anchor ? quickForm : null}
             </Popover.Popup>
@@ -447,7 +487,6 @@ function CalendarBoardClient({
       <AcademicImportReview
         open={academicOpen}
         onOpenChange={setAcademicOpen}
-        events={externalEvents}
         subjects={subjects}
         assessments={assessments}
       />

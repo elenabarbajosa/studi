@@ -145,8 +145,8 @@ function findLocalMidnightUtc(dateKey: string, timeZone: string): number {
   // Binary-ish search around UTC midnight ±14h
   let lo = Date.UTC(y, m - 1, d) - 14 * 3600_000;
   let hi = Date.UTC(y, m - 1, d) + 14 * 3600_000;
-  while (hi - lo > 1000) {
-    const mid = Math.floor((lo + hi) / 2);
+  while (hi - lo > 1) {
+    const mid = lo + Math.floor((hi - lo) / 2);
     const key = localDateKey(new Date(mid), timeZone);
     if (key < dateKey) lo = mid;
     else hi = mid;

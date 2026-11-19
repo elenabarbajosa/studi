@@ -46,6 +46,7 @@ import {
   type CalendarEventKind,
 } from "@/lib/calendar";
 import { EXAM_TYPES } from "@/lib/calendar-items";
+import { PastEventNote, useTimedRange } from "@/components/calendar/event-time-fields";
 import type {
   Assessment,
   CalendarEvent,
@@ -184,25 +185,45 @@ function TimeRange({
   allDay,
   startName = "start_time",
   endName = "end_time",
-  startDefault,
-  endDefault,
+  start,
+  end,
+  onStart,
+  onEnd,
   required,
 }: {
   allDay: boolean;
   startName?: string;
   endName?: string;
-  startDefault: string;
-  endDefault: string;
+  start: string;
+  end: string;
+  onStart: (value: string) => void;
+  onEnd: (value: string) => void;
   required?: boolean;
 }) {
   if (allDay) return null;
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <Field label="Starts" htmlFor={startName}>
-        <Input id={startName} name={startName} type="time" required={required} defaultValue={startDefault} />
+        <Input
+          id={startName}
+          name={startName}
+          type="time"
+          required={required}
+          value={start}
+          onChange={(e) => onStart(e.target.value)}
+          className="min-w-[8.75rem]"
+        />
       </Field>
       <Field label="Ends" htmlFor={endName}>
-        <Input id={endName} name={endName} type="time" required={required} defaultValue={endDefault} />
+        <Input
+          id={endName}
+          name={endName}
+          type="time"
+          required={required}
+          value={end}
+          onChange={(e) => onEnd(e.target.value)}
+          className="min-w-[8.75rem]"
+        />
       </Field>
     </div>
   );
@@ -222,19 +243,46 @@ function AssessmentForm({
     ? updateAssessment.bind(null, existing.id)
     : createAssessment;
   const [state, formAction, pending] = useActionState(action, empty);
+  const [clientError, setClientError] = useState<string>();
   const [allDay, setAllDay] = useState(
     existing?.all_day ?? draft.allDay ?? !draft.startTime,
   );
   const [subjectId, setSubjectId] = useState(
     existing?.subject_id ?? draft.defaultSubjectId ?? "",
   );
+  const times = useTimedRange({
+    date: existing ? toLocalDateInput(existing.starts_at) : draft.date,
+    start:
+      existing && !existing.all_day
+        ? toLocalTimeInput(existing.starts_at)
+        : draft.startTime || "09:00",
+    end:
+      existing?.ends_at && !existing.all_day
+        ? toLocalTimeInput(existing.ends_at)
+        : draft.endTime || "10:00",
+  });
 
   useEffect(() => {
     if (state.success) onDone();
   }, [state.success, onDone]);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form
+      className="flex flex-col gap-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!allDay) {
+          const message = times.orderError(false);
+          if (message) {
+            setClientError(message);
+            return;
+          }
+        }
+        setClientError(undefined);
+        formAction(new FormData(event.currentTarget));
+      }}
+    >
+      <input type="hidden" name="timezone" value={times.timeZone} />
       <Field label="Title" htmlFor="a-title">
         <Input
           id="a-title"
@@ -265,7 +313,8 @@ function AssessmentForm({
             name="date"
             type="date"
             required
-            defaultValue={existing ? toLocalDateInput(existing.starts_at) : draft.date}
+            value={times.date}
+            onChange={(e) => times.setDate(e.target.value)}
           />
         </Field>
       </div>
@@ -278,17 +327,12 @@ function AssessmentForm({
       {allDay ? <input type="hidden" name="all_day" value="true" /> : null}
       <TimeRange
         allDay={allDay}
-        startDefault={
-          existing && !existing.all_day
-            ? toLocalTimeInput(existing.starts_at)
-            : draft.startTime || "09:00"
-        }
-        endDefault={
-          existing?.ends_at && !existing.all_day
-            ? toLocalTimeInput(existing.ends_at)
-            : draft.endTime || "10:00"
-        }
+        start={times.start}
+        end={times.end}
+        onStart={times.changeStart}
+        onEnd={times.changeEnd}
       />
+      <PastEventNote show={times.past(allDay)} />
       {subjects.length > 0 ? (
         <Field label="Subject">
           <SubjectPicker
@@ -330,7 +374,7 @@ function AssessmentForm({
           defaultChecked={existing?.completed ?? false}
         />
       </MoreOptions>
-      <FormError message={state.error} />
+      <FormError message={clientError || state.error} />
       <PrimaryActions>
         {existing ? (
           <DeleteButton
@@ -359,16 +403,43 @@ function PersonalForm({
     ? updatePersonalEvent.bind(null, existing.id)
     : createPersonalEvent;
   const [state, formAction, pending] = useActionState(action, empty);
+  const [clientError, setClientError] = useState<string>();
   const [allDay, setAllDay] = useState(
     existing?.all_day ?? draft.allDay ?? !draft.startTime,
   );
+  const times = useTimedRange({
+    date: existing ? toLocalDateInput(existing.starts_at) : draft.date,
+    start:
+      existing && !existing.all_day
+        ? toLocalTimeInput(existing.starts_at)
+        : draft.startTime || "12:00",
+    end:
+      existing?.ends_at && !existing.all_day
+        ? toLocalTimeInput(existing.ends_at)
+        : draft.endTime || "13:00",
+  });
 
   useEffect(() => {
     if (state.success) onDone();
   }, [state.success, onDone]);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form
+      className="flex flex-col gap-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!allDay) {
+          const message = times.orderError(false);
+          if (message) {
+            setClientError(message);
+            return;
+          }
+        }
+        setClientError(undefined);
+        formAction(new FormData(event.currentTarget));
+      }}
+    >
+      <input type="hidden" name="timezone" value={times.timeZone} />
       <Field label="Title" htmlFor="p-title">
         <Input
           id="p-title"
@@ -385,30 +456,26 @@ function PersonalForm({
           name="date"
           type="date"
           required
-          defaultValue={existing ? toLocalDateInput(existing.starts_at) : draft.date}
+          value={times.date}
+          onChange={(e) => times.setDate(e.target.value)}
         />
       </Field>
       <SwitchRow name="all_day" label="All day" checked={allDay} onChange={setAllDay} />
       {allDay ? <input type="hidden" name="all_day" value="true" /> : null}
       <TimeRange
         allDay={allDay}
-        startDefault={
-          existing && !existing.all_day
-            ? toLocalTimeInput(existing.starts_at)
-            : draft.startTime || "12:00"
-        }
-        endDefault={
-          existing?.ends_at && !existing.all_day
-            ? toLocalTimeInput(existing.ends_at)
-            : draft.endTime || "13:00"
-        }
+        start={times.start}
+        end={times.end}
+        onStart={times.changeStart}
+        onEnd={times.changeEnd}
       />
+      <PastEventNote show={times.past(allDay)} />
       <MoreOptions label="Notes" defaultOpen={Boolean(existing?.description)}>
         <Field label="Notes" htmlFor="p-description" optional>
           <Textarea id="p-description" name="description" rows={3} defaultValue={existing?.description ?? ""} />
         </Field>
       </MoreOptions>
-      <FormError message={state.error} />
+      <FormError message={clientError || state.error} />
       <PrimaryActions>
         {existing ? (
           <DeleteButton
@@ -443,9 +510,15 @@ function SessionForm({
     ? updateStudySession.bind(null, existing.id)
     : createStudySession;
   const [state, formAction, pending] = useActionState(action, empty);
+  const [clientError, setClientError] = useState<string>();
   const [subjectId, setSubjectId] = useState(
     existing?.subject_id ?? draft.defaultSubjectId ?? "",
   );
+  const times = useTimedRange({
+    date: existing ? toLocalDateInput(existing.starts_at) : draft.date,
+    start: existing ? toLocalTimeInput(existing.starts_at) : draft.startTime || "10:00",
+    end: existing?.ends_at ? toLocalTimeInput(existing.ends_at) : draft.endTime || "11:00",
+  });
 
   useEffect(() => {
     if (state.success) onDone();
@@ -459,7 +532,20 @@ function SessionForm({
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form
+      className="flex flex-col gap-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const message = times.orderError(true);
+        if (message) {
+          setClientError(message);
+          return;
+        }
+        setClientError(undefined);
+        formAction(new FormData(event.currentTarget));
+      }}
+    >
+      <input type="hidden" name="timezone" value={times.timeZone} />
       {subjects.length > 0 ? (
         <Field label="Subject">
           <SubjectPicker
@@ -478,17 +564,19 @@ function SessionForm({
           name="date"
           type="date"
           required
-          defaultValue={existing ? toLocalDateInput(existing.starts_at) : draft.date}
+          value={times.date}
+          onChange={(e) => times.setDate(e.target.value)}
         />
       </Field>
       <TimeRange
         allDay={false}
         required
-        startDefault={existing ? toLocalTimeInput(existing.starts_at) : draft.startTime || "10:00"}
-        endDefault={
-          existing?.ends_at ? toLocalTimeInput(existing.ends_at) : draft.endTime || "11:00"
-        }
+        start={times.start}
+        end={times.end}
+        onStart={times.changeStart}
+        onEnd={times.changeEnd}
       />
+      <PastEventNote show={times.past(false)} />
       <Field label="Status" htmlFor="s-status">
         <NativeSelect id="s-status" name="status" defaultValue={existing?.status ?? "planned"}>
           {STUDY_SESSION_STATUSES.map((s) => (
@@ -540,7 +628,7 @@ function SessionForm({
           />
         </Field>
       </MoreOptions>
-      <FormError message={state.error} />
+      <FormError message={clientError || state.error} />
       <PrimaryActions>
         {existing ? (
           <DeleteButton

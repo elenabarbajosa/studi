@@ -31,6 +31,7 @@ import {
   toLocalTimeInput,
   type PriorityLevel,
 } from "@/lib/calendar";
+import { browserTimeZone } from "@/lib/event-time";
 import { hasDueTime } from "@/lib/planning";
 import type { Subject, Task, Topic } from "@/types/database";
 
@@ -145,7 +146,14 @@ function TaskFormFields({
   };
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form
+      className="flex flex-col gap-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        formAction(new FormData(event.currentTarget));
+      }}
+    >
+      <input type="hidden" name="timezone" value={browserTimeZone()} />
       {task ? <input type="hidden" name="status" value={task.status} /> : null}
       <Field label="Task" htmlFor="task-title">
         <Input
@@ -176,7 +184,7 @@ function TaskFormFields({
         <input type="hidden" name="subject_id" value="" />
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
         <Field label="Due date" htmlFor="due_date" optional>
           <Input
             id="due_date"
@@ -190,6 +198,7 @@ function TaskFormFields({
             id="due_time"
             name="due_time"
             type="time"
+            className="min-w-[8.75rem]"
             defaultValue={
               task?.due_at && hasDueTime(task.due_at) ? toLocalTimeInput(task.due_at) : ""
             }
@@ -246,7 +255,7 @@ function TaskFormFields({
             />
           </Field>
         </div>
-        <div className="grid grid-cols-[1.3fr_1fr_1fr] gap-3">
+        <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:grid-cols-[1.3fr_1fr_1fr]">
           <Field label="Study on" htmlFor="scheduled_date" optional>
             <Input
               id="scheduled_date"
@@ -260,6 +269,7 @@ function TaskFormFields({
               id="scheduled_start_time"
               name="scheduled_start_time"
               type="time"
+              className="min-w-[8.75rem]"
               defaultValue={task?.scheduled_start ? toLocalTimeInput(task.scheduled_start) : ""}
             />
           </Field>
@@ -268,6 +278,7 @@ function TaskFormFields({
               id="scheduled_end_time"
               name="scheduled_end_time"
               type="time"
+              className="min-w-[8.75rem]"
               defaultValue={task?.scheduled_end ? toLocalTimeInput(task.scheduled_end) : ""}
             />
           </Field>

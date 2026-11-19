@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
-import { buildEventRange } from "@/lib/calendar";
+import { eventRangeOrError } from "@/lib/calendar";
+import { friendlyWriteError } from "@/lib/event-time";
+import { timeZoneFromForm } from "@/lib/event-time-server";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { assessmentSchema, eventMoveSchema } from "@/lib/validations/phase3";
@@ -56,12 +58,15 @@ export async function createAssessment(
     return { error: parsed.error.issues[0]?.message ?? "Invalid assessment" };
   }
 
-  const range = buildEventRange({
+  const built = eventRangeOrError({
     date: parsed.data.date,
     startTime: allDay ? null : parsed.data.start_time || null,
     endTime: allDay ? null : parsed.data.end_time || null,
     allDay,
+    timeZone: await timeZoneFromForm(formData),
   });
+  if ("error" in built) return { error: built.error };
+  const range = built.range;
 
   const { error } = await auth.supabase.from("assessments").insert({
     user_id: auth.user.id,
@@ -77,7 +82,10 @@ export async function createAssessment(
     completed: Boolean(parsed.data.completed),
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("createAssessment:", error.message);
+    return { error: friendlyWriteError(error.message) };
+  }
   revalidateCalendar();
   return { success: "Assessment saved" };
 }
@@ -113,12 +121,15 @@ export async function updateAssessment(
     return { error: parsed.error.issues[0]?.message ?? "Invalid assessment" };
   }
 
-  const range = buildEventRange({
+  const built = eventRangeOrError({
     date: parsed.data.date,
     startTime: allDay ? null : parsed.data.start_time || null,
     endTime: allDay ? null : parsed.data.end_time || null,
     allDay,
+    timeZone: await timeZoneFromForm(formData),
   });
+  if ("error" in built) return { error: built.error };
+  const range = built.range;
 
   const { error } = await auth.supabase
     .from("assessments")
@@ -137,7 +148,10 @@ export async function updateAssessment(
     .eq("id", id)
     .eq("user_id", auth.user.id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("updateAssessment:", error.message);
+    return { error: friendlyWriteError(error.message) };
+  }
   revalidateCalendar();
   return { success: "Assessment updated" };
 }
@@ -152,7 +166,10 @@ export async function deleteAssessment(id: string): Promise<ActionState> {
     .eq("id", id)
     .eq("user_id", auth.user.id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("deleteAssessment:", error.message);
+    return { error: friendlyWriteError(error.message) };
+  }
   revalidateCalendar();
   return { success: "Assessment deleted" };
 }
@@ -185,7 +202,10 @@ export async function moveAssessment(
     .eq("id", id)
     .eq("user_id", auth.user.id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("moveAssessment:", error.message);
+    return { error: friendlyWriteError(error.message) };
+  }
   revalidateCalendar();
   return { success: "Moved" };
 }
